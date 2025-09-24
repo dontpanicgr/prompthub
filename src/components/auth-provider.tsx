@@ -23,8 +23,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // Handle hash fragment OAuth redirects
+    const handleHashAuth = async () => {
+      if (typeof window !== 'undefined' && window.location.hash) {
+        const hashParams = new URLSearchParams(window.location.hash.substring(1))
+        const accessToken = hashParams.get('access_token')
+        const refreshToken = hashParams.get('refresh_token')
+
+        if (accessToken && refreshToken) {
+          // Set the session using the tokens from the hash
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          })
+
+          if (!error) {
+            // Clean up the URL
+            window.history.replaceState({}, document.title, window.location.pathname)
+          }
+        }
+      }
+    }
+
     // Get initial session
     const getInitialSession = async () => {
+      await handleHashAuth()
       const { data: { session } } = await supabase.auth.getSession()
       setUser(session?.user ?? null)
       setLoading(false)

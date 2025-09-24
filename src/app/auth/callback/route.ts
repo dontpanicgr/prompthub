@@ -14,6 +14,14 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  // Handle hash fragment redirects (common with OAuth providers)
+  // If no code parameter, check if this might be a hash-based redirect
+  const referer = request.headers.get('referer')
+  if (referer && referer.includes('#')) {
+    // This might be a hash-based redirect, let the client handle it
+    return NextResponse.redirect(origin)
+  }
+
   // Return the user to an error page with instructions
   return NextResponse.redirect(`${origin}/auth/auth-code-error`)
 }
