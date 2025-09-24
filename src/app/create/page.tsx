@@ -1,0 +1,49 @@
+'use client'
+
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import MainLayout from '@/components/layout/main-layout'
+import CreatePromptForm from '@/components/prompts/create-prompt-form'
+import { useAuth } from '@/components/auth-provider'
+
+export default function CreatePromptPage() {
+  const { user, loading } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push(`/login?redirect=${encodeURIComponent('/create')}`)
+    }
+  }, [user, loading, router])
+
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400"></div>
+        </div>
+      </MainLayout>
+    )
+  }
+
+  if (!user) {
+    return null
+  }
+
+  return (
+    <MainLayout>
+      <div className="w-full">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            Create New Prompt
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Share your AI prompt with the community
+          </p>
+        </div>
+
+        <CreatePromptForm />
+      </div>
+    </MainLayout>
+  )
+}

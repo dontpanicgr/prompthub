@@ -1,0 +1,43 @@
+import Link from 'next/link'
+import { AlertCircle, ArrowLeft } from 'lucide-react'
+
+export default function AuthCodeErrorPage() {
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
+      <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 text-center">
+        <div className="mb-6">
+          <div className="mx-auto w-16 h-16 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mb-4">
+            <AlertCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Authentication Error
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            There was an error signing you in. This could be due to:
+          </p>
+        </div>
+
+        <div className="text-left mb-8 space-y-2 text-sm text-gray-600 dark:text-gray-400">
+          <p>• The authentication process was cancelled</p>
+          <p>• Your session expired</p>
+          <p>• There was a network error</p>
+          <p>• The redirect URL is not configured correctly</p>
+        </div>
+
+        <div className="space-y-4">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <ArrowLeft size={20} />
+            Back to Home
+          </Link>
+          
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            <p>Try signing in again, or contact support if the problem persists.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

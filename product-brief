@@ -1,0 +1,222 @@
+# PromptHub — Weekend MVP
+
+## Product Brief
+PromptHub is a **prompt discovery and sharing platform** where users can:
+
+* **Browse** prompts created by others  
+* **Create and manage** their own prompts  
+* **Like** and **bookmark** prompts for quick access  
+
+This first version focuses on a **simple, lovable core**:  
+fast prompt discovery and personal collections, backed by easy sign-in with Google or GitHub.
+
+---
+
+## Features
+
+### Core
+- **Authentication**
+  - Supabase Auth with Google and GitHub OAuth.
+
+- **Prompt CRUD**
+  - Create, read, update, delete prompts.
+  - Each prompt includes:
+    - Title
+    - Creator
+    - Date posted
+    - Body (**actual prompt text**)
+    - Model (e.g. ChatGPT, Grok, Gemini)
+    - **Visibility**: Public or Private (toggleable by creator)
+
+- **Prompt Discovery**
+  - Home page with a grid of all **public** prompts.
+  - Search bar (searches **title and model**).
+  - Each prompt card shows:
+    - Title, creator name, date, truncated body, like count, bookmark count.
+    - Buttons to **like** and **bookmark** (toggle with counters).
+    - Click to view details.
+
+- **Prompt Details**
+  - Full prompt text and metadata.
+  - Copy-to-clipboard button.
+  - Share button (copies page URL to clipboard).
+  - Only visible for **public** prompts or private prompts owned by the logged-in user.
+
+- **User Profile**
+  - Public grid of all **public** prompts by @user.
+  - Search bar (searches title and model).
+  - Sidebar with:
+    - Name
+    - Optional description/bio
+    - Optional external URL
+    - Counts for created prompts, liked prompts, and bookmarked prompts.
+
+- **My Prompts**
+  - A private page showing:
+    - Prompts I created (with edit/delete and visibility toggle).
+    - Prompts I liked.
+    - Prompts I bookmarked.
+
+- **Add/Edit Prompt**
+  - Page with a form to add or edit a prompt.
+  - Fields: title, body, model, **visibility (public/private)**.
+
+- **Light/Dark Mode**
+  - Tailwind dark mode with system detection and manual toggle.
+
+---
+
+## Tech Stack
+- **Frontend**: Next.js (App Router) + TypeScript + Tailwind CSS  
+- **Backend**: Supabase (PostgreSQL + Auth)  
+- **Deployment**: Vercel + Supabase  
+
+---
+
+## Database Schema (Supabase)
+
+### users
+Managed by Supabase Auth.  
+Additional profile fields:
+- id
+- email
+- name
+- avatar_url
+- bio (optional)
+- website_url (optional)
+
+### prompts
+- id
+- title
+- body (text of the prompt)
+- model
+- creator_id
+- created_at
+- updated_at
+- **is_public** (boolean)
+
+### likes
+- id
+- prompt_id
+- user_id
+
+### bookmarks
+- id
+- prompt_id
+- user_id
+
+**Row-Level Security**
+- Users can edit/delete only their own prompts.
+- Likes and bookmarks can only be created/deleted by the logged-in user.
+- Private prompts are only visible to their creator.
+
+---
+
+## Development Plan
+
+### Day 1 – Saturday
+1. **Setup**
+   - Scaffold Next.js + Tailwind + TypeScript.
+   - Configure Supabase + Google/GitHub OAuth.
+
+2. **Database & Auth**
+   - Create tables: `prompts`, `likes`, `bookmarks`.
+   - Add Row-Level Security and policies.
+
+3. **Core Pages**
+   - `/` – Prompt grid with search, like, and bookmark buttons (only public prompts).
+   - `/prompt/[id]` – Prompt details with copy/share buttons.
+   - `/me` – My Space with created, liked, and bookmarked prompts.
+   - `/user/[id]` – Public user profile page.
+
+### Day 2 – Sunday
+1. **CRUD UI**
+   - Prompt create/edit forms with client-side validation.
+   - Delete functionality for owners.
+   - Visibility toggle (public/private).
+
+2. **Likes & Bookmarks**
+   - Toggle like/bookmark from grid and details pages with real-time updates.
+
+3. **Finishing Touches**
+   - Light/dark mode toggle.
+   - Responsive layout and basic styling.
+   - Deploy to Vercel.
+
+---
+
+## Success Criteria
+- Users can sign in with Google or GitHub.
+- Logged-in users can create, edit, and delete prompts.
+- Visitors can browse and search **public** prompts.
+- Logged-in users can like and bookmark prompts.
+- User profile pages display **public** prompts and stats.
+- “My Prompts” correctly lists created, liked, and bookmarked prompts.
+- Prompts can be marked public or private.
+- Deployed and usable on desktop and mobile.
+
+---
+
+## PromptHub — UI Layout Notes
+
+### Overall Layout
+Use a **two-pane structure** similar to ChatGPT, Copilot, Grok, and Perplexity:
+
+* **Sidebar (fixed left, ~240 px wide on desktop)**
+* **Main content area** (flex-1, scrollable)
+
+### Sidebar Sections
+Top → Bottom:
+
+1. **Brand / Logo**
+   - Small PromptHub wordmark or icon.
+
+2. **Primary Navigation**
+   - **Create Prompt** (highlighted button or plus icon).
+   - **Browse Prompts** (default landing).
+   - **Popular** (simple sort/filter).
+   - **My Prompts**.
+
+3. **User Section**
+   - Mini user card (avatar + name) linking to **User Profile**.
+   - Sign-in/out button if not authenticated.
+
+4. **Theme Toggle**
+   - Light/dark mode switch at the bottom.
+
+**Responsive Behavior**
+* On mobile, sidebar collapses into a slide-in drawer (hamburger menu).
+
+---
+
+### Main Content Area
+
+### Browse / Popular / My Prompts
+* **Sticky header bar** inside the main panel:
+  * Search field (title + model).
+  * Light/dark toggle.
+  * Optional sort dropdown.
+* **Prompt Grid**:
+  * Cards show title, creator avatar/name, truncated prompt body, model badge, like & bookmark buttons.
+  * Only **public** prompts are shown.
+
+### Create / Edit Prompt
+* Centered form page within the main panel.
+* Fields: Title, Model (dropdown), Prompt body (textarea), **Visibility toggle (public/private)**.
+* Save/Cancel buttons pinned top-right or bottom.
+
+### Prompt Details
+* Two-column on desktop, single column on mobile.
+  * Left: Full prompt text.
+  * Right/Top: Metadata & actions.
+* Copy-to-clipboard and Share buttons.
+* Like & Bookmark toggles.
+* Only visible for **public** prompts or private prompts owned by the logged-in user.
+
+### User Profile
+* Main panel grid of that user’s **public** prompts.
+* Sidebar section within main panel (right side) showing:
+  * Name
+  * Optional bio/description
+  * Optional external URL
+  * Stats: created prompts, liked prompts, bookmarked prompts.
