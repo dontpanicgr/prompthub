@@ -124,7 +124,7 @@ export default function CreatePromptForm() {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8">
+    <div className="bg-card text-card-foreground rounded-lg border border-border p-8">
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Title */}
         <div>

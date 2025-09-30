@@ -128,7 +128,7 @@ export default function EditPromptPage({ params }: EditPromptPageProps) {
       <MainLayout>
         <div className="p-6">
           <div className="text-center py-12">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            <h1 className="mb-2">
               Prompt not found
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
@@ -144,7 +144,7 @@ export default function EditPromptPage({ params }: EditPromptPageProps) {
     <MainLayout>
       <div className="w-full">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          <h1 className="mb-2">
             Edit Prompt
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
@@ -152,7 +152,7 @@ export default function EditPromptPage({ params }: EditPromptPageProps) {
           </p>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8">
+        <div className="bg-card text-card-foreground rounded-lg border border-border p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Title */}
             <div>

@@ -4,13 +4,8 @@ import { useState } from 'react'
 import { Search, Filter, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Badge } from '@/components/ui/badge'
 
 const MODELS = [
   'All Models',
@@ -25,110 +20,111 @@ const MODELS = [
 interface SearchFiltersProps {
   searchQuery: string
   setSearchQuery: (query: string) => void
-  selectedModel: string
-  setSelectedModel: (model: string) => void
-  onSearch: (query: string, model: string) => void
+  selectedModels: string[]
+  setSelectedModels: (models: string[]) => void
+  onSearch: (query: string, models: string[]) => void
   placeholder?: string
 }
 
 export default function SearchFilters({
   searchQuery,
   setSearchQuery,
-  selectedModel,
-  setSelectedModel,
+  selectedModels,
+  setSelectedModels,
   onSearch,
   placeholder = "Search prompts..."
 }: SearchFiltersProps) {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    onSearch(searchQuery, selectedModel)
+    onSearch(searchQuery, selectedModels)
   }
 
-  const handleModelSelect = (model: string) => {
-    setSelectedModel(model)
-    onSearch(searchQuery, model)
+  const toggleModel = (model: string) => {
+    const next = selectedModels.includes(model)
+      ? selectedModels.filter(m => m !== model)
+      : [...selectedModels, model]
+    setSelectedModels(next)
+    onSearch(searchQuery, next)
   }
 
   const clearFilters = () => {
     setSearchQuery('')
-    setSelectedModel('All Models')
-    onSearch('', 'All Models')
+    setSelectedModels([])
+    onSearch('', [])
   }
 
   return (
     <div className="mb-6">
-      <form onSubmit={handleSearch} className="flex gap-3 items-start">
-        {/* Search Input */}
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={20} />
+      <form onSubmit={handleSearch} className="flex items-center gap-3">
+        {/* Full-width Search */}
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={20} />
           <Input
             type="text"
             placeholder={placeholder}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-10 h-10 bg-card dark:bg-input/30"
           />
         </div>
 
-        {/* Model Filter Select */}
-        <Select value={selectedModel} onValueChange={handleModelSelect}>
-          <SelectTrigger className="w-48">
-            <Filter className="mr-2 h-4 w-4" />
-            <SelectValue placeholder="Select model" />
-          </SelectTrigger>
-          <SelectContent>
-            {MODELS.map((model) => (
-              <SelectItem key={model} value={model}>
+        {/* Icon-only 48x48 filter button with multi-select menu */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button type="button" variant="outline" className="h-12 w-12 p-0">
+              <Filter className="h-5 w-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            {MODELS.filter(m => m !== 'All Models').map((model) => (
+              <DropdownMenuCheckboxItem
+                key={model}
+                checked={selectedModels.includes(model)}
+                onCheckedChange={() => toggleModel(model)}
+              >
                 {model}
-              </SelectItem>
+              </DropdownMenuCheckboxItem>
             ))}
-          </SelectContent>
-        </Select>
-
-        {/* Clear Filters Button */}
-        {(searchQuery || selectedModel !== 'All Models') && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={clearFilters}
-          >
-            <X size={16} className="mr-2" />
-            Clear
-          </Button>
-        )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </form>
 
-      {/* Active Filters Display */}
-      {(searchQuery || selectedModel !== 'All Models') && (
-        <div className="mt-3 flex flex-wrap gap-2">
+      {/* Chips row with Clear */}
+      {(searchQuery || selectedModels.length > 0) && (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
           {searchQuery && (
-            <span className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary text-sm rounded-full">
-              Search: "{searchQuery}"
+            <Badge className="pr-1 rounded-lg" variant="outline">
+              <span className="mr-1">Search: "{searchQuery}"</span>
               <button
                 onClick={() => {
                   setSearchQuery('')
-                  onSearch('', selectedModel)
+                  onSearch('', selectedModels)
                 }}
-                className="ml-1 hover:text-primary-foreground"
+                aria-label="Clear search"
+                className="inline-flex items-center rounded-full hover:opacity-80"
               >
-                <X size={12} />
+                <X className="h-3.5 w-3.5" />
               </button>
-            </span>
+            </Badge>
           )}
-          {selectedModel !== 'All Models' && (
-            <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 text-sm rounded-full">
-              Model: {selectedModel}
+          {selectedModels.map(model => (
+            <Badge key={model} className="pr-1 rounded-lg" variant="outline">
+              <span className="mr-1">{model}</span>
               <button
-                onClick={() => {
-                  setSelectedModel('All Models')
-                  onSearch(searchQuery, 'All Models')
-                }}
-                className="ml-1 hover:text-green-600 dark:hover:text-green-200"
+                onClick={() => toggleModel(model)}
+                aria-label={`Remove ${model}`}
+                className="inline-flex items-center rounded-full hover:opacity-80"
               >
-                <X size={12} />
+                <X className="h-3.5 w-3.5" />
               </button>
-            </span>
-          )}
+            </Badge>
+          ))}
+
+          {/* Clear all in same row */}
+          <Button type="button" variant="ghost" size="sm" onClick={clearFilters}>
+            <X className="h-4 w-4 mr-1" />
+            Clear
+          </Button>
         </div>
       )}
     </div>

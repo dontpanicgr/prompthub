@@ -13,7 +13,7 @@ export default function PopularPage() {
   const [prompts, setPrompts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedModel, setSelectedModel] = useState('All Models')
+  const [selectedModels, setSelectedModels] = useState<string[]>([])
 
   useEffect(() => {
     async function fetchPrompts() {
@@ -31,8 +31,8 @@ export default function PopularPage() {
     fetchPrompts()
   }, [user?.id])
 
-  const handleSearch = (query: string, model: string) => {
-    console.log('Search query:', query, 'Model:', model)
+  const handleSearch = (query: string, models: string[]) => {
+    console.log('Search query:', query, 'Models:', models)
     // Search is handled by filtering the prompts
   }
 
@@ -56,8 +56,8 @@ export default function PopularPage() {
       prompt.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       prompt.body.toLowerCase().includes(searchQuery.toLowerCase())
     
-    const matchesModel = selectedModel === 'All Models' || 
-      prompt.model === selectedModel
+    const matchesModel = selectedModels.length === 0 || 
+      selectedModels.includes(prompt.model)
     
     return matchesSearch && matchesModel
   })
@@ -66,7 +66,7 @@ export default function PopularPage() {
     <MainLayout>
       <div className="w-full">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">
+          <h1 className="mb-2">
             Popular Prompts
           </h1>
           <p className="text-gray-400 mb-6">
@@ -77,8 +77,8 @@ export default function PopularPage() {
           <SearchFilters
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
-            selectedModel={selectedModel}
-            setSelectedModel={setSelectedModel}
+            selectedModels={selectedModels}
+            setSelectedModels={setSelectedModels}
             onSearch={handleSearch}
             placeholder="Search prompts..."
           />

@@ -14,7 +14,10 @@ import {
   LogOut,
   Menu,
   X,
-  ChevronDown
+  ChevronDown,
+  Compass,
+  Clock,
+  LogIn
 } from 'lucide-react'
 import { useTheme } from '@/components/theme-provider'
 import { useAuth } from '@/components/auth-provider'
@@ -28,9 +31,10 @@ export default function Navigation() {
   const { user, signOut } = useAuth()
 
   const navItems = [
-    { href: '/create', label: 'Create Prompt', icon: Plus, highlight: true },
-    { href: '/', label: 'Browse Prompts', icon: Search },
+    { href: '/create', label: 'Create', icon: Plus, highlight: true },
+    { href: '/', label: 'Discover', icon: Compass },
     { href: '/popular', label: 'Popular', icon: TrendingUp },
+    { href: '/latest', label: 'Latest', icon: Clock },
     { href: '/me', label: 'My Prompts', icon: User },
   ]
 
@@ -47,14 +51,14 @@ export default function Navigation() {
     <>
       {/* Mobile menu button */}
       <button
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-white dark:bg-gray-800 shadow-md"
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-card text-card-foreground shadow-md border border-border"
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
       >
         {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
       </button>
 
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700">
+      <nav className="fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
@@ -62,7 +66,7 @@ export default function Navigation() {
               <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">P</span>
               </div>
-              <span className="text-xl font-bold text-gray-900 dark:text-white">
+              <span className="text-xl font-bold text-foreground">
                 PromptHub
               </span>
             </Link>
@@ -80,8 +84,8 @@ export default function Navigation() {
                     className={`
                       flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
                       ${isActive 
-                        ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' 
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                        ? 'bg-blue-100 text-blue-700' 
+                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                       }
                       ${item.highlight ? 'bg-blue-600 text-white hover:bg-blue-700' : ''}
                     `}
@@ -93,13 +97,22 @@ export default function Navigation() {
               })}
             </div>
 
-            {/* Right side - User menu or Auth buttons */}
+            {/* Right side - Theme switch and User menu or Sign in */}
             <div className="flex items-center gap-4">
+              {/* Theme switch */}
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-lg hover:bg-muted transition-colors"
+                title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              >
+                {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+              </button>
+
               {user ? (
                 <div className="relative">
                   <button
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted transition-colors"
                   >
                     <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
                       {user.user_metadata?.avatar_url ? (
@@ -112,7 +125,7 @@ export default function Navigation() {
                         <User size={16} className="text-gray-500" />
                       )}
                     </div>
-                    <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    <span className="text-sm font-medium text-foreground">
                       {user.user_metadata?.name || user.email?.split('@')[0] || 'User'}
                     </span>
                     <ChevronDown size={16} className="text-gray-500" />
@@ -120,17 +133,10 @@ export default function Navigation() {
 
                   {/* User Dropdown Menu */}
                   {isUserMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1">
-                      <button
-                        onClick={toggleTheme}
-                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      >
-                        {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-                        {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-                      </button>
+                    <div className="absolute right-0 mt-2 w-48 bg-card text-card-foreground rounded-lg shadow-lg border border-border py-1">
                       <Link
                         href="/settings"
-                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
                         onClick={() => setIsUserMenuOpen(false)}
                       >
                         <Settings size={16} />
@@ -138,29 +144,22 @@ export default function Navigation() {
                       </Link>
                       <button
                         onClick={handleSignOut}
-                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-muted"
                       >
                         <LogOut size={16} />
-                        Logout
+                        Sign Out
                       </button>
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="flex items-center gap-2">
-                  <Link
-                    href="/login"
-                    className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:text-white transition-colors"
-                  >
-                    Sign In
-                  </Link>
-                  <Link
-                    href="/signup"
-                    className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    Sign Up
-                  </Link>
-                </div>
+                <Link
+                  href="/login"
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-lg transition-colors"
+                >
+                  <LogIn size={18} />
+                  Sign In
+                </Link>
               )}
             </div>
           </div>
@@ -168,7 +167,7 @@ export default function Navigation() {
 
         {/* Mobile Navigation */}
         {isMobileMenuOpen && (
-          <div className="lg:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+          <div className="lg:hidden border-t border-border bg-card text-card-foreground">
             <div className="px-4 py-2 space-y-1">
               {navItems.map((item) => {
                 const Icon = item.icon
@@ -181,8 +180,8 @@ export default function Navigation() {
                     className={`
                       flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
                       ${isActive 
-                        ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' 
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                        ? 'bg-blue-100 text-blue-700' 
+                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                       }
                       ${item.highlight ? 'bg-blue-600 text-white hover:bg-blue-700' : ''}
                     `}
@@ -193,6 +192,30 @@ export default function Navigation() {
                   </Link>
                 )
               })}
+              
+              {/* Mobile theme switch and auth */}
+              <div className="border-t border-border pt-2 mt-2">
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={toggleTheme}
+                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+                  >
+                    {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                    {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                  </button>
+                  
+                  {!user && (
+                    <Link
+                      href="/login"
+                      className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-lg transition-colors"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <LogIn size={18} />
+                      Sign In
+                    </Link>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         )}

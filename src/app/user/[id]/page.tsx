@@ -22,7 +22,7 @@ export default function UserPage({ params }: UserPageProps) {
   })
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedModel, setSelectedModel] = useState('All Models')
+  const [selectedModels, setSelectedModels] = useState<string[]>([])
 
   useEffect(() => {
     async function fetchUserData() {
@@ -74,8 +74,8 @@ export default function UserPage({ params }: UserPageProps) {
     fetchUserData()
   }, [params])
 
-  const handleSearch = (query: string, model: string) => {
-    console.log('Search query:', query, 'Model:', model)
+  const handleSearch = (query: string, models: string[]) => {
+    console.log('Search query:', query, 'Models:', models)
     // Search is handled by filtering the prompts
   }
 
@@ -98,94 +98,90 @@ export default function UserPage({ params }: UserPageProps) {
 
   return (
     <MainLayout>
-      <div className="w-full p-6">
-        {/* User Header */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8 mb-8">
-          <div className="flex items-start gap-6">
-            <div className="w-20 h-20 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
-              {user.avatar_url ? (
-                <img 
-                  src={user.avatar_url} 
-                  alt={user.name} 
-                  className="w-20 h-20 rounded-full"
-                />
-              ) : (
-                <div className="w-20 h-20 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
-                  <span className="text-2xl font-bold text-gray-500">
-                    {user.name?.charAt(0) || 'U'}
-                  </span>
+      <div className="w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* User Profile Card - Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="bg-card rounded-lg border border-border p-6 sticky top-6">
+              <div className="flex flex-col items-start">
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                  {user.avatar_url ? (
+                    <img 
+                      src={user.avatar_url} 
+                      alt={user.name} 
+                      className="w-16 h-16 rounded-full"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+                      <span className="text-2xl font-bold text-muted-foreground">
+                        {user.name?.charAt(0) || 'U'}
+                      </span>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                {user.name}
-              </h1>
-              {user.bio && (
-                <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  {user.bio}
-                </p>
-              )}
-              {user.website_url && (
-                <a
-                  href={user.website_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 dark:text-blue-400 hover:underline"
-                >
-                  {user.website_url}
-                </a>
-              )}
-            </div>
-            <div className="text-right">
-              <div className="grid grid-cols-3 gap-6 text-center">
-                <div>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {stats.prompts_created}
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    Prompts
-                  </div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {stats.prompts_liked}
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    Liked
-                  </div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {stats.prompts_bookmarked}
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    Bookmarked
+                <div className="w-full">
+                  <h2 className="text-xl font-bold text-card-foreground mb-4 truncate">
+                    {user.name}
+                  </h2>
+                  {user.bio && (
+                    <p className="text-sm text-muted-foreground mb-4">
+                      {user.bio}
+                    </p>
+                  )}
+                  {user.website_url && (
+                    <a
+                      href={user.website_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-primary hover:underline mb-6 block"
+                    >
+                      {user.website_url}
+                    </a>
+                  )}
+                  <div className="grid grid-cols-3 gap-4 w-full">
+                    <div className="text-left">
+                      <p className="text-sm font-medium text-muted-foreground">Prompts</p>
+                      <p className="text-xl font-bold text-card-foreground">{stats.prompts_created}</p>
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm font-medium text-muted-foreground">Likes</p>
+                      <p className="text-xl font-bold text-card-foreground">{stats.prompts_liked}</p>
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm font-medium text-muted-foreground">Bookmarks</p>
+                      <p className="text-xl font-bold text-card-foreground">{stats.prompts_bookmarked}</p>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Search and Filters */}
-        <div className="mb-8">
-          <SearchFilters
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            selectedModel={selectedModel}
-            setSelectedModel={setSelectedModel}
-            onSearch={handleSearch}
-            placeholder="Search user's prompts..."
-          />
-        </div>
+          {/* Prompts Section */}
+          <div className="lg:col-span-3">
+            <div className="mb-8">
+              <h1 className="mb-2">
+                {user.name}&apos;s Prompts
+              </h1>
+            </div>
 
-        {/* User's Prompts */}
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-            {user.name}&apos;s Public Prompts
-          </h2>
-          <UserPromptsGrid userId={user.id} />
+            {/* Search and Filters */}
+            <div className="mb-8">
+              <SearchFilters
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                selectedModels={selectedModels}
+                setSelectedModels={setSelectedModels}
+                onSearch={handleSearch}
+                placeholder="Search user's prompts..."
+              />
+            </div>
+
+            {/* Prompts Grid */}
+            <div>
+              <UserPromptsGrid userId={user.id} />
+            </div>
+          </div>
         </div>
       </div>
     </MainLayout>

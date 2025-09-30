@@ -6,9 +6,9 @@ import MainLayout from '@/components/layout/main-layout'
 import PromptCard from '@/components/prompts/prompt-card'
 import SearchFilters from '@/components/ui/search-filters'
 import { Plus, Heart, Bookmark, User } from 'lucide-react'
-import Link from 'next/link'
 import { useAuth } from '@/components/auth-provider'
-import { getUserPrompts, getLikedPrompts, getBookmarkedPrompts, toggleLike, toggleBookmark } from '@/lib/database'
+import { getUserPrompts, getLikedPrompts, getBookmarkedPrompts, toggleLike, toggleBookmark, getUserById } from '@/lib/database'
+import type { Prompt, User as ProfileUser } from '@/lib/database'
 
 export default function MyPromptsPage() {
   const { user, loading: authLoading } = useAuth()
@@ -16,24 +16,10 @@ export default function MyPromptsPage() {
   const [activeTab, setActiveTab] = useState<'created' | 'liked' | 'bookmarked'>('created')
   const [prompts, setPrompts] = useState<Prompt[]>([])
   const [filteredPrompts, setFilteredPrompts] = useState<Prompt[]>([])
+  const [profile, setProfile] = useState<ProfileUser | null>(null)
 
-  // Temporary type - should be moved to a shared types file
-  type Prompt = {
-    id: string
-    title: string
-    content: string
-    model: string
-    is_public: boolean
-    created_at: string
-    updated_at: string
-    user_id: string
-    like_count?: number
-    bookmark_count?: number
-    likes?: any[]
-    bookmarks?: any[]
-  }
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedModel, setSelectedModel] = useState('All Models')
+  const [selectedModels, setSelectedModels] = useState<string[]>([])
   const [userStats, setUserStats] = useState({
     prompts_created: 0,
     prompts_liked: 0,
@@ -55,6 +41,9 @@ export default function MyPromptsPage() {
       try {
         console.log('Fetching user data for:', user.id)
         setLoading(true)
+        // Load profile details from profiles table
+        const profileData = await getUserById(user.id)
+        setProfile(profileData)
         
         // Get user's created prompts
         const createdPrompts = await getUserPrompts(user.id, user.id)
@@ -91,12 +80,12 @@ export default function MyPromptsPage() {
     const filtered = prompts.filter(prompt => {
       const matchesSearch = prompt.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            prompt.body.toLowerCase().includes(searchQuery.toLowerCase())
-      const matchesModel = selectedModel === 'All Models' || prompt.model === selectedModel
+      const matchesModel = selectedModels.length === 0 || selectedModels.includes(prompt.model)
       return matchesSearch && matchesModel
     })
     
     setFilteredPrompts(filtered)
-  }, [searchQuery, selectedModel, prompts])
+  }, [searchQuery, selectedModels, prompts])
 
   // Show loading while auth is loading
   if (authLoading) {
@@ -118,11 +107,14 @@ export default function MyPromptsPage() {
   }
 
   // Redirect if not authenticated
-  if (!user) {
-    // Redirect to login with current page as redirect parameter
-    if (typeof window !== 'undefined') {
+  useEffect(() => {
+    if (!user && !authLoading) {
+      // Redirect to login with current page as redirect parameter
       router.push(`/login?redirect=${encodeURIComponent('/me')}`)
     }
+  }, [user, authLoading, router])
+
+  if (!user) {
     return null
   }
 
@@ -221,16 +213,16 @@ export default function MyPromptsPage() {
     }
   }
 
-  const handleSearch = (query: string, model: string) => {
-    console.log('Search triggered:', { query, model, totalPrompts: prompts.length })
+  const handleSearch = (query: string, models: string[]) => {
+    console.log('Search triggered:', { query, models, totalPrompts: prompts.length })
     setSearchQuery(query)
-    setSelectedModel(model)
+    setSelectedModels(models)
     
     const filtered = prompts.filter(prompt => {
       const matchesSearch = query === '' || 
                            prompt.title.toLowerCase().includes(query.toLowerCase()) ||
                            prompt.body.toLowerCase().includes(query.toLowerCase())
-      const matchesModel = model === 'All Models' || prompt.model === model
+      const matchesModel = models.length === 0 || models.includes(prompt.model)
       return matchesSearch && matchesModel
     })
     
@@ -240,175 +232,182 @@ export default function MyPromptsPage() {
 
   return (
     <MainLayout>
-      <div className="w-full p-6">
-        {/* User Header */}
-        <div className="bg-gray-800 rounded-lg border border-gray-700 p-8 mb-8">
-          <div className="flex items-start gap-6">
-            <div className="w-20 h-20 rounded-full bg-gray-600 flex items-center justify-center">
-              {user.user_metadata?.avatar_url ? (
-                <img 
-                  src={user.user_metadata.avatar_url} 
-                  alt={user.user_metadata.name || 'User'} 
-                  className="w-20 h-20 rounded-full"
-                />
-              ) : (
-                <div className="w-20 h-20 rounded-full bg-gray-600 flex items-center justify-center">
-                  <span className="text-2xl font-bold text-gray-300">
-                    {user.user_metadata?.name?.charAt(0) || user.email?.charAt(0) || 'U'}
-                  </span>
+      <div className="w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Sidebar - Profile Card */}
+          <div className="lg:col-span-1">
+            <div className="bg-card rounded-lg border border-border p-6 sticky top-6">
+              <div className="flex flex-col items-start">
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                  {(profile?.avatar_url || user.user_metadata?.avatar_url) ? (
+                    <img
+                      src={(profile?.avatar_url || user.user_metadata?.avatar_url) as string}
+                      alt={profile?.name || user.user_metadata?.name || 'User'}
+                      className="w-16 h-16 rounded-full"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+                      <span className="text-2xl font-bold text-muted-foreground">
+                        {(profile?.name?.charAt(0) || user.user_metadata?.name?.charAt(0) || user.email?.charAt(0) || 'U') as string}
+                      </span>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold text-white mb-2">
-                {user.user_metadata?.name || user.email?.split('@')[0] || 'User'}
-              </h1>
-              <p className="text-gray-400 mb-4">
-                Manage your created, liked, and bookmarked prompts
-              </p>
-            </div>
-            <div className="text-right">
-              <div className="grid grid-cols-3 gap-6 text-center">
-                <div>
-                  <div className="text-2xl font-bold text-white">
-                    {userStats.prompts_created}
+                <div className="w-full">
+                  <h2 className="text-xl font-bold text-card-foreground mb-4 truncate">
+                    {profile?.name || user.user_metadata?.name || user.email?.split('@')[0] || 'User'}
+                  </h2>
+                  {profile?.bio && (
+                    <p className="text-sm text-muted-foreground mb-4">
+                      {profile.bio}
+                    </p>
+                  )}
+                  {profile?.website_url && (
+                    <a
+                      href={profile.website_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-primary hover:underline mb-6 block"
+                    >
+                      {profile.website_url}
+                    </a>
+                  )}
+                  <div className="grid grid-cols-3 gap-4 w-full">
+                    <div className="text-left">
+                      <p className="text-sm font-medium text-muted-foreground">Prompts</p>
+                      <p className="text-xl font-bold text-card-foreground">{userStats.prompts_created}</p>
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm font-medium text-muted-foreground">Likes</p>
+                      <p className="text-xl font-bold text-card-foreground">{userStats.prompts_liked}</p>
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm font-medium text-muted-foreground">Bookmarks</p>
+                      <p className="text-xl font-bold text-card-foreground">{userStats.prompts_bookmarked}</p>
+                    </div>
                   </div>
-                  <div className="text-sm text-gray-400">
-                    Prompts
-                  </div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-white">
-                    {userStats.prompts_liked}
-                  </div>
-                  <div className="text-sm text-gray-400">
-                    Liked
-                  </div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-white">
-                    {userStats.prompts_bookmarked}
-                  </div>
-                  <div className="text-sm text-gray-400">
-                    Bookmarked
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-
-        {/* Tabs */}
-        <div className="mb-8">
-          <div className="flex flex-wrap gap-2">
-            <button 
-              onClick={() => handleTabChange('created')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                activeTab === 'created'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
-              }`}
-            >
-              <User size={16} />
-              My Prompts ({userStats.prompts_created})
-            </button>
-            <button 
-              onClick={() => handleTabChange('liked')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                activeTab === 'liked'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
-              }`}
-            >
-              <Heart size={16} />
-              Liked ({userStats.prompts_liked})
-            </button>
-            <button 
-              onClick={() => handleTabChange('bookmarked')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                activeTab === 'bookmarked'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
-              }`}
-            >
-              <Bookmark size={16} />
-              Bookmarked ({userStats.prompts_bookmarked})
-            </button>
-          </div>
-        </div>
-
-        {/* Search Filters */}
-        <div className="mb-6">
-          <SearchFilters 
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            selectedModel={selectedModel}
-            setSelectedModel={setSelectedModel}
-            onSearch={handleSearch}
-            placeholder={`Search ${activeTab} prompts...`}
-          />
-        </div>
-
-        {/* Prompt Grid */}
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="bg-gray-800 rounded-lg border border-gray-700 p-6 animate-pulse">
-                <div className="h-4 bg-gray-700 rounded mb-4"></div>
-                <div className="h-3 bg-gray-700 rounded mb-2"></div>
-                <div className="h-3 bg-gray-700 rounded mb-4"></div>
-                <div className="flex justify-between items-center">
-                  <div className="h-3 bg-gray-700 rounded w-16"></div>
-                  <div className="h-3 bg-gray-700 rounded w-20"></div>
                 </div>
               </div>
-            ))}
-          </div>
-        ) : filteredPrompts.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-gray-400 mb-4">
-              {searchQuery || selectedModel !== 'All Models' ? (
-                <div className="w-16 h-16 mx-auto bg-gray-700 rounded-full flex items-center justify-center">
-                  <span className="text-2xl">🔍</span>
-                </div>
-              ) : (
-                <>
-                  {activeTab === 'created' && <Plus className="w-16 h-16 mx-auto" />}
-                  {activeTab === 'liked' && <Heart className="w-16 h-16 mx-auto" />}
-                  {activeTab === 'bookmarked' && <Bookmark className="w-16 h-16 mx-auto" />}
-                </>
-              )}
             </div>
-            <h3 className="text-lg font-medium text-white mb-2">
-              {searchQuery || selectedModel !== 'All Models' 
-                ? 'No prompts found' 
-                : `No ${activeTab} prompts yet`
-              }
-            </h3>
-            <p className="text-gray-400">
-              {searchQuery || selectedModel !== 'All Models' 
-                ? 'Try adjusting your search or filter criteria.'
-                : activeTab === 'created' 
-                  ? "You haven't created any prompts yet."
-                  : activeTab === 'liked' 
-                    ? "You haven't liked any prompts yet."
-                    : "You haven't bookmarked any prompts yet."
-              }
-            </p>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredPrompts.map((prompt) => (
-              <PromptCard
-                key={prompt.id}
-                prompt={prompt}
-                onLike={handleLike}
-                onBookmark={handleBookmark}
+
+          {/* Main Content */}
+          <div className="lg:col-span-3">
+            <div className="mb-8">
+              <h1 className="mb-2">My Prompts</h1>
+              <p className="text-sm text-muted-foreground">Manage your created, liked, and bookmarked prompts</p>
+            </div>
+
+            {/* Tabs */}
+            <div className="mb-8">
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => handleTabChange('created')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    activeTab === 'created'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
+                  }`}
+                >
+                  <User size={16} />
+                  My Prompts ({userStats.prompts_created})
+                </button>
+                <button
+                  onClick={() => handleTabChange('liked')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    activeTab === 'liked'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
+                  }`}
+                >
+                  <Heart size={16} />
+                  Liked ({userStats.prompts_liked})
+                </button>
+                <button
+                  onClick={() => handleTabChange('bookmarked')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    activeTab === 'bookmarked'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
+                  }`}
+                >
+                  <Bookmark size={16} />
+                  Bookmarked ({userStats.prompts_bookmarked})
+                </button>
+              </div>
+            </div>
+
+            {/* Search Filters */}
+            <div className="mb-6">
+              <SearchFilters
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                selectedModels={selectedModels}
+                setSelectedModels={setSelectedModels}
+                onSearch={handleSearch}
+                placeholder={`Search ${activeTab} prompts...`}
               />
-            ))}
+            </div>
+
+            {/* Prompt Grid */}
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {[...Array(8)].map((_, i) => (
+                  <div key={i} className="bg-card text-card-foreground rounded-lg border border-border p-6 animate-pulse">
+                    <div className="h-4 bg-gray-700 rounded mb-4"></div>
+                    <div className="h-3 bg-gray-700 rounded mb-2"></div>
+                    <div className="h-3 bg-gray-700 rounded mb-4"></div>
+                    <div className="flex justify-between items-center">
+                      <div className="h-3 bg-gray-700 rounded w-16"></div>
+                      <div className="h-3 bg-gray-700 rounded w-20"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : filteredPrompts.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="text-gray-400 mb-4">
+                  {searchQuery || selectedModels.length > 0 ? (
+                    <div className="w-16 h-16 mx-auto bg-gray-700 rounded-full flex items-center justify-center">
+                      <span className="text-2xl">🔍</span>
+                    </div>
+                  ) : (
+                    <>
+                      {activeTab === 'created' && <Plus className="w-16 h-16 mx-auto" />}
+                      {activeTab === 'liked' && <Heart className="w-16 h-16 mx-auto" />}
+                      {activeTab === 'bookmarked' && <Bookmark className="w-16 h-16 mx-auto" />}
+                    </>
+                  )}
+                </div>
+                <h3 className="text-lg font-medium text-white mb-2">
+                  {searchQuery || selectedModels.length > 0
+                    ? 'No prompts found'
+                    : `No ${activeTab} prompts yet`}
+                </h3>
+                <p className="text-gray-400">
+                  {searchQuery || selectedModels.length > 0
+                    ? 'Try adjusting your search or filter criteria.'
+                    : activeTab === 'created'
+                      ? "You haven't created any prompts yet."
+                      : activeTab === 'liked'
+                        ? "You haven't liked any prompts yet."
+                        : "You haven't bookmarked any prompts yet."}
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {filteredPrompts.map((prompt) => (
+                  <PromptCard
+                    key={prompt.id}
+                    prompt={prompt}
+                    onLike={handleLike}
+                    onBookmark={handleBookmark}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </MainLayout>
   )

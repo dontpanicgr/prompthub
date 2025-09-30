@@ -77,7 +77,7 @@ export default function UserPromptsGrid({ userId }: UserPromptsGridProps) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {[...Array(6)].map((_, i) => (
-          <div key={i} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 animate-pulse">
+          <div key={i} className="bg-card text-card-foreground rounded-lg border border-border p-6 animate-pulse">
             <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
             <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
             <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>

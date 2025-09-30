@@ -12,7 +12,7 @@ export default function BrowsePage() {
   const [prompts, setPrompts] = useState<Prompt[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedModel, setSelectedModel] = useState('All Models')
+  const [selectedModels, setSelectedModels] = useState<string[]>([])
   const [sortBy, setSortBy] = useState<'recent' | 'popular' | 'bookmarked'>('recent')
 
   useEffect(() => {
@@ -50,8 +50,8 @@ export default function BrowsePage() {
     fetchPrompts()
   }, [user, sortBy])
 
-  const handleSearch = (query: string, model: string) => {
-    console.log('Search query:', query, 'Model:', model)
+  const handleSearch = (query: string, models: string[]) => {
+    console.log('Search query:', query, 'Models:', models)
     // Search is handled by filtering the prompts
   }
 
@@ -60,8 +60,8 @@ export default function BrowsePage() {
       prompt.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       prompt.body.toLowerCase().includes(searchQuery.toLowerCase())
     
-    const matchesModel = selectedModel === 'All Models' || 
-      prompt.model === selectedModel
+    const matchesModel = selectedModels.length === 0 || 
+      selectedModels.includes(prompt.model)
     
     return matchesSearch && matchesModel
   })
@@ -70,7 +70,7 @@ export default function BrowsePage() {
     <MainLayout>
       <div className="w-full">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          <h1 className="mb-2">
             Browse Prompts
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
@@ -81,8 +81,8 @@ export default function BrowsePage() {
           <SearchFilters
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
-            selectedModel={selectedModel}
-            setSelectedModel={setSelectedModel}
+            selectedModels={selectedModels}
+            setSelectedModels={setSelectedModels}
             onSearch={handleSearch}
             placeholder="Search prompts..."
           />

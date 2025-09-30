@@ -31,9 +31,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900">
+    <div className="min-h-screen bg-background">
       <Sidebar user={sidebarUser} onSignOut={handleSignOut} />
-      <main className="lg:ml-64 bg-white dark:bg-gray-900 min-h-screen">
+      <main className="lg:ml-64 bg-background min-h-screen lg:pt-0 pt-16 pb-16">
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
           {/* Email Verification Banner */}
           {user && !user.email_confirmed_at && (

@@ -16,6 +16,7 @@ import {
   Trash2,
   EyeOff
 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { useAuth } from '@/components/auth-provider'
 import { toggleLike, toggleBookmark, deletePrompt } from '@/lib/database'
 import Snackbar from '@/components/ui/snackbar'
@@ -150,139 +151,138 @@ export default function PromptDetails({ prompt }: PromptDetailsProps) {
 
   return (
     <div className="w-full">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Main Content */}
-        <div className="lg:col-span-2">
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8">
-            {/* Header */}
-            <div className="mb-6">
-              <div className="flex items-start justify-between mb-4">
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                  {prompt.title}
-                </h1>
-                <div className="flex items-center gap-2">
-                  {!prompt.is_public && (
-                    <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium flex items-center gap-1">
-                      <EyeOff size={14} />
-                      Private
-                    </span>
-                  )}
-                  <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-full text-sm font-medium">
-                    {prompt.model}
-                  </span>
-                </div>
+        <div className="order-1 lg:order-2 lg:col-span-3">
+          {/* Title and Models */}
+          <div className="mb-6">
+            <h1 className="mb-2">
+              {prompt.title}
+            </h1>
+            <div className="flex items-center gap-2">
+              {!prompt.is_public && (
+                <span className="px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-sm font-medium border border-border flex items-center gap-1">
+                  <EyeOff size={14} />
+                  Private
+                </span>
+              )}
+              <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium border border-primary/20">
+                {prompt.model}
+              </span>
+            </div>
+          </div>
+
+          {/* User Info */}
+          <div className="bg-card rounded-lg border border-border p-6 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                {prompt.creator.avatar_url ? (
+                  <img
+                    src={prompt.creator.avatar_url}
+                    alt={prompt.creator.name}
+                    className="w-12 h-12 rounded-full"
+                  />
+                ) : (
+                  <User size={24} className="text-muted-foreground" />
+                )}
               </div>
-              
-              {/* Creator Info */}
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
-                  {prompt.creator.avatar_url ? (
-                    <img 
-                      src={prompt.creator.avatar_url} 
-                      alt={prompt.creator.name} 
-                      className="w-12 h-12 rounded-full"
-                    />
-                  ) : (
-                    <User size={24} className="text-gray-500" />
-                  )}
-                </div>
-                <div>
-                  <Link 
-                    href={`/user/${prompt.creator.id}`}
-                    className="text-lg font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                  >
-                    {prompt.creator.name}
-                  </Link>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                    <Calendar size={14} />
-                    {formatDate(prompt.created_at)}
-                  </p>
-                </div>
+              <div>
+                <Link
+                  href={`/user/${prompt.creator.id}`}
+                  className="text-lg font-medium text-card-foreground hover:text-primary transition-colors"
+                >
+                  {prompt.creator.name}
+                </Link>
+                <p className="text-sm text-muted-foreground flex items-center gap-1">
+                  <Calendar size={14} />
+                  {formatDate(prompt.created_at)}
+                </p>
               </div>
             </div>
+          </div>
 
-            {/* Prompt Body */}
-            <div className="mb-8">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Prompt
-              </h2>
-              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-                <pre className="whitespace-pre-wrap text-gray-800 dark:text-gray-200 font-mono text-sm leading-relaxed">
-                  {prompt.body}
-                </pre>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-6">
-                <button
-                  onClick={handleLike}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                    isLiked 
-                      ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300' 
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                  }`}
-                >
-                  <Heart size={18} className={isLiked ? 'fill-current' : ''} />
-                  {likeCount} {likeCount === 1 ? 'Like' : 'Likes'}
-                </button>
-                <button
-                  onClick={handleBookmark}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                    isBookmarked 
-                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' 
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                  }`}
-                >
-                  <Bookmark size={18} className={isBookmarked ? 'fill-current' : ''} />
-                  {bookmarkCount} {bookmarkCount === 1 ? 'Bookmark' : 'Bookmarks'}
-                </button>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleCopy}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                >
-                  <Copy size={18} />
-                  Copy
-                </button>
-                <button
-                  onClick={handleShare}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                >
-                  <Share2 size={18} />
-                  Share
-                </button>
-              </div>
+          {/* Prompt Body */}
+          <div className="mb-6">
+            <div className="bg-card rounded-lg border border-border p-6">
+              <pre className="whitespace-pre-wrap text-card-foreground font-mono text-sm leading-relaxed">
+                {prompt.body}
+              </pre>
             </div>
           </div>
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-6">
+        <div className="order-2 lg:order-1 lg:col-span-1 space-y-6 sticky top-6">
+          {/* Actions */}
+          <div className="bg-card rounded-lg border border-border p-6">
+            <h3 className="text-xl font-semibold text-card-foreground mb-4">
+              Actions
+            </h3>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <Button
+                  onClick={handleLike}
+                  variant={isLiked ? 'default' : 'secondary'}
+                  size="sm"
+                  className="flex-1 gap-2"
+                >
+                  <Heart size={16} className={isLiked ? 'fill-current' : ''} />
+                  {likeCount} {likeCount === 1 ? 'Like' : 'Likes'}
+                </Button>
+                <Button
+                  onClick={handleBookmark}
+                  variant={isBookmarked ? 'default' : 'secondary'}
+                  size="sm"
+                  className="flex-1 gap-2"
+                >
+                  <Bookmark size={16} className={isBookmarked ? 'fill-current' : ''} />
+                  {bookmarkCount} {bookmarkCount === 1 ? 'Bookmark' : 'Bookmarks'}
+                </Button>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={handleCopy}
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 gap-2"
+                >
+                  <Copy size={16} />
+                  Copy
+                </Button>
+                <Button
+                  onClick={handleShare}
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 gap-2"
+                >
+                  <Share2 size={16} />
+                  Share
+                </Button>
+              </div>
+            </div>
+          </div>
+
           {/* Creator Profile */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          <div className="bg-card rounded-lg border border-border p-6">
+            <h3 className="text-xl font-semibold text-card-foreground mb-4">
               About the Creator
             </h3>
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-16 h-16 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
+              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
                 {prompt.creator.avatar_url ? (
-                  <img 
-                    src={prompt.creator.avatar_url} 
-                    alt={prompt.creator.name} 
+                  <img
+                    src={prompt.creator.avatar_url}
+                    alt={prompt.creator.name}
                     className="w-16 h-16 rounded-full"
                   />
                 ) : (
-                  <User size={32} className="text-gray-500" />
+                  <User size={32} className="text-muted-foreground" />
                 )}
               </div>
               <div>
-                <Link 
+                <Link
                   href={`/user/${prompt.creator.id}`}
-                  className="text-lg font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                  className="text-lg font-medium text-card-foreground hover:text-primary transition-colors"
                 >
                   {prompt.creator.name}
                 </Link>
@@ -291,7 +291,7 @@ export default function PromptDetails({ prompt }: PromptDetailsProps) {
                     href={prompt.creator.website_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                    className="flex items-center gap-1 text-sm text-primary hover:underline"
                   >
                     <ExternalLink size={14} />
                     Website
@@ -300,7 +300,7 @@ export default function PromptDetails({ prompt }: PromptDetailsProps) {
               </div>
             </div>
             {prompt.creator.bio && (
-              <p className="text-gray-700 dark:text-gray-300 text-sm">
+              <p className="text-muted-foreground text-sm">
                 {prompt.creator.bio}
               </p>
             )}
@@ -308,47 +308,49 @@ export default function PromptDetails({ prompt }: PromptDetailsProps) {
 
           {/* Owner Actions */}
           {isOwner && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            <div className="bg-card rounded-lg border border-border p-6">
+              <h3 className="text-xl font-semibold text-card-foreground mb-4">
                 Manage Prompt
               </h3>
               <div className="space-y-2">
                 <Link
                   href={`/prompt/${prompt.id}/edit`}
-                  className="w-full flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  className="w-full flex items-center gap-2 px-4 py-2 text-card-foreground hover:bg-secondary hover:text-secondary-foreground rounded-lg transition-colors"
                 >
                   <Edit size={18} />
                   Edit Prompt
                 </Link>
-                <button 
+                <Button
                   onClick={handleDelete}
                   disabled={isDeleting}
-                  className="w-full flex items-center gap-2 px-4 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 rounded-lg transition-colors disabled:opacity-50"
+                  variant="destructive"
+                  size="sm"
+                  className="w-full gap-2"
                 >
-                  <Trash2 size={18} />
+                  <Trash2 size={16} />
                   {isDeleting ? 'Deleting...' : 'Delete Prompt'}
-                </button>
+                </Button>
               </div>
             </div>
           )}
 
           {/* Stats */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          <div className="bg-card rounded-lg border border-border p-6">
+            <h3 className="text-xl font-semibold text-card-foreground mb-4">
               Statistics
             </h3>
             <div className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Likes</span>
-                <span className="font-medium text-gray-900 dark:text-white">{likeCount}</span>
+                <span className="text-muted-foreground">Likes</span>
+                <span className="font-medium text-card-foreground">{likeCount}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Bookmarks</span>
-                <span className="font-medium text-gray-900 dark:text-white">{bookmarkCount}</span>
+                <span className="text-muted-foreground">Bookmarks</span>
+                <span className="font-medium text-card-foreground">{bookmarkCount}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Created</span>
-                <span className="font-medium text-gray-900 dark:text-white">{formatDate(prompt.created_at)}</span>
+                <span className="text-muted-foreground">Created</span>
+                <span className="font-medium text-card-foreground">{formatDate(prompt.created_at)}</span>
               </div>
             </div>
           </div>
