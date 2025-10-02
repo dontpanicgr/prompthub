@@ -7,9 +7,10 @@ import { useAuth } from '@/components/auth-provider'
 
 interface UserPromptsGridProps {
   userId: string
+  maxColumns?: 3 | 4
 }
 
-export default function UserPromptsGrid({ userId }: UserPromptsGridProps) {
+export default function UserPromptsGrid({ userId, maxColumns = 4 }: UserPromptsGridProps) {
   const [prompts, setPrompts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const { user } = useAuth()
@@ -74,16 +75,20 @@ export default function UserPromptsGrid({ userId }: UserPromptsGridProps) {
   }
 
   if (loading) {
+    const gridClasses = maxColumns === 3 
+      ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+      : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+    
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className={gridClasses}>
         {[...Array(6)].map((_, i) => (
           <div key={i} className="bg-card text-card-foreground rounded-lg border border-border p-6 animate-pulse">
-            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
-            <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
-            <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
+            <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded mb-4"></div>
+            <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded mb-2"></div>
+            <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded mb-4"></div>
             <div className="flex justify-between items-center">
-              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
-              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
+              <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-16"></div>
+              <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-20"></div>
             </div>
           </div>
         ))}
@@ -109,8 +114,12 @@ export default function UserPromptsGrid({ userId }: UserPromptsGridProps) {
     )
   }
 
+  const gridClasses = maxColumns === 3 
+    ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+    : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    <div className={gridClasses}>
       {prompts.map((prompt) => (
         <PromptCard 
           key={prompt.id} 

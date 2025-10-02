@@ -38,6 +38,9 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-nav-active: var(--nav-active);
+  --color-nav-hover: var(--nav-hover);
+  --color-nav-foreground: var(--nav-foreground);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -62,8 +65,8 @@
   --accent: #ededf1;
   --accent-foreground: #1a1a1e;
   --destructive: #dc2626;
-  --border: #d4d4d8;
-  --input: #e5e5e8;
+  --border: #eaeaea;
+  --input: #eaeaea;
   --ring: #4f46e5;
   --chart-1: #4f46e5;
   --chart-2: #22c55e;
@@ -78,6 +81,9 @@
   --sidebar-accent-foreground: #1a1a1e;
   --sidebar-border: #d4d4d8;
   --sidebar-ring: #4f46e5;
+  --nav-active: #e6e6e9;
+  --nav-hover: #f8f8f9;
+  --nav-foreground: #1a1a1e;
 }
 
 /* Dark theme */
@@ -85,9 +91,9 @@
   color-scheme: dark;
   --background: #0d0d0f;
   --foreground: #e6e6e9;
-  --card: #1a1a1e;
+  --card: #111113;
   --card-foreground: #e6e6e9;
-  --popover: #1a1a1e;
+  --popover: #111113;
   --popover-foreground: #e6e6e9;
   --primary: #6366f1;
   --primary-foreground: #ffffff;
@@ -98,8 +104,8 @@
   --accent: #2f2f34;
   --accent-foreground: #e6e6e9;
   --destructive: #ef4444;
-  --border: #2f2f34;
-  --input: #1f1f23;
+  --border: #1c1c1c;
+  --input: #1c1c1c;
   --ring: #6366f1;
   --chart-1: #6366f1;
   --chart-2: #22c55e;
@@ -110,47 +116,53 @@
   --sidebar-foreground: #e6e6e9;
   --sidebar-primary: #6366f1;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #1a1a1e;
+  --sidebar-accent: #111113;
   --sidebar-accent-foreground: #e6e6e9;
-  --sidebar-border: #2f2f34;
+  --sidebar-border: #1c1c1c;
   --sidebar-ring: #6366f1;
+  --nav-active: #2a2a2f;
+  --nav-hover: #2a2a2f;
+  --nav-foreground: #e6e6e9;
 }
 
-/* Theme will be controlled by the theme provider */
-
+/* Default theme variables - will be overridden by theme classes */
 :root {
   --radius: 0.625rem;
-  --background: #0d0d0f;
-  --foreground: #e6e6e9;
-  --card: #1a1a1e;
-  --card-foreground: #e6e6e9;
-  --popover: #1a1a1e;
-  --popover-foreground: #e6e6e9;
-  --primary: #6366f1;
+  /* Use light theme as default to prevent flash of dark content */
+  --background: #f8f8f9;
+  --foreground: #1a1a1e;
+  --card: #ffffff;
+  --card-foreground: #1a1a1e;
+  --popover: #ffffff;
+  --popover-foreground: #1a1a1e;
+  --primary: #4f46e5;
   --primary-foreground: #ffffff;
-  --secondary: #2a2a2f;
-  --secondary-foreground: #e6e6e9;
-  --muted: #2a2a2f;
-  --muted-foreground: #a1a1aa;
-  --accent: #2f2f34;
-  --accent-foreground: #e6e6e9;
-  --destructive: #ef4444;
-  --border: #2f2f34;
-  --input: #1f1f23;
-  --ring: #6366f1;
-  --chart-1: #6366f1;
+  --secondary: #e6e6e9;
+  --secondary-foreground: #1a1a1e;
+  --muted: #e6e6e9;
+  --muted-foreground: #4b4b52;
+  --accent: #ededf1;
+  --accent-foreground: #1a1a1e;
+  --destructive: #dc2626;
+  --border: #eaeaea;
+  --input: #eaeaea;
+  --ring: #4f46e5;
+  --chart-1: #4f46e5;
   --chart-2: #22c55e;
   --chart-3: #eab308;
   --chart-4: #a855f7;
   --chart-5: #ec4899;
-  --sidebar: #0b0b0d;
-  --sidebar-foreground: #e6e6e9;
-  --sidebar-primary: #6366f1;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #1a1a1e;
+  --sidebar-primary: #4f46e5;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #1a1a1e;
-  --sidebar-accent-foreground: #e6e6e9;
-  --sidebar-border: #2f2f34;
-  --sidebar-ring: #6366f1;
+  --sidebar-accent: #f2f2f4;
+  --sidebar-accent-foreground: #1a1a1e;
+  --sidebar-border: #d4d4d8;
+  --sidebar-ring: #4f46e5;
+  --nav-active: #e6e6e9;
+  --nav-hover: #f8f8f9;
+  --nav-foreground: #1a1a1e;
 }
 
 @layer base {
@@ -187,5 +199,20 @@
     -webkit-line-clamp: 4;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+
+  .line-clamp-5 {
+    display: -webkit-box;
+    -webkit-line-clamp: 5;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Custom gray-800 override for dark mode skeletons */
+  html.dark .bg-gray-800,
+  html.dark .dark\:bg-gray-800,
+  [data-theme='dark'] .bg-gray-800,
+  [data-theme='dark'] .dark\:bg-gray-800 {
+    background-color: #161618 !important;
   }
 }

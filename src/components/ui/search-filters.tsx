@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Badge } from '@/components/ui/badge'
+import { ModelBadge } from '@/components/ui/model-badge'
 
 const MODELS = [
   'All Models',
@@ -64,14 +65,14 @@ export default function SearchFilters({
             placeholder={placeholder}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 h-10 bg-card dark:bg-input/30"
+            className="pl-10 h-10 bg-card border"
           />
         </div>
 
         {/* Icon-only 48x48 filter button with multi-select menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button type="button" variant="outline" className="h-12 w-12 p-0">
+            <Button type="button" variant="outline" className="h-10 w-10 p-0 bg-card border">
               <Filter className="h-5 w-5" />
             </Button>
           </DropdownMenuTrigger>
@@ -93,7 +94,7 @@ export default function SearchFilters({
       {(searchQuery || selectedModels.length > 0) && (
         <div className="mt-3 flex flex-wrap items-center gap-2">
           {searchQuery && (
-            <Badge className="pr-1 rounded-lg" variant="outline">
+            <div className="inline-flex items-center rounded-lg border p-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px] text-foreground bg-card h-8">
               <span className="mr-1">Search: "{searchQuery}"</span>
               <button
                 onClick={() => {
@@ -103,21 +104,20 @@ export default function SearchFilters({
                 aria-label="Clear search"
                 className="inline-flex items-center rounded-full hover:opacity-80"
               >
-                <X className="h-3.5 w-3.5" />
+                <X className="h-4 w-4" />
               </button>
-            </Badge>
+            </div>
           )}
           {selectedModels.map(model => (
-            <Badge key={model} className="pr-1 rounded-lg" variant="outline">
-              <span className="mr-1">{model}</span>
-              <button
-                onClick={() => toggleModel(model)}
-                aria-label={`Remove ${model}`}
-                className="inline-flex items-center rounded-full hover:opacity-80"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </Badge>
+            <ModelBadge 
+              key={model}
+              model={model as any} 
+              variant="outline" 
+              size="sm"
+              className="inline-flex items-center rounded-lg border p-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px] text-foreground bg-card"
+              showRemove={true}
+              onRemove={() => toggleModel(model)}
+            />
           ))}
 
           {/* Clear all in same row */}

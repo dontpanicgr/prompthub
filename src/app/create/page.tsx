@@ -20,7 +20,7 @@ export default function CreatePromptPage() {
     return (
       <MainLayout>
         <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-muted-foreground"></div>
         </div>
       </MainLayout>
     )
@@ -37,7 +37,7 @@ export default function CreatePromptPage() {
           <h1 className="mb-2">
             Create New Prompt
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-muted-foreground">
             Share your AI prompt with the community
           </p>
         </div>

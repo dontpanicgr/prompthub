@@ -51,7 +51,7 @@ export default function Navigation() {
     <>
       {/* Mobile menu button */}
       <button
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-card text-card-foreground shadow-md border border-border"
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-nav-active text-nav-foreground border border-border"
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
       >
         {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
@@ -84,8 +84,8 @@ export default function Navigation() {
                     className={`
                       flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
                       ${isActive 
-                        ? 'bg-blue-100 text-blue-700' 
-                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                        ? 'bg-nav-active text-nav-foreground' 
+                        : 'text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground'
                       }
                       ${item.highlight ? 'bg-blue-600 text-white hover:bg-blue-700' : ''}
                     `}
@@ -133,10 +133,10 @@ export default function Navigation() {
 
                   {/* User Dropdown Menu */}
                   {isUserMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-card text-card-foreground rounded-lg shadow-lg border border-border py-1">
+                    <div className="absolute right-0 mt-2 w-48 bg-nav-active text-nav-foreground rounded-lg border border-border py-1">
                       <Link
                         href="/settings"
-                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground"
                         onClick={() => setIsUserMenuOpen(false)}
                       >
                         <Settings size={16} />
@@ -144,7 +144,7 @@ export default function Navigation() {
                       </Link>
                       <button
                         onClick={handleSignOut}
-                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-muted"
+                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-nav-hover"
                       >
                         <LogOut size={16} />
                         Sign Out
@@ -167,7 +167,7 @@ export default function Navigation() {
 
         {/* Mobile Navigation */}
         {isMobileMenuOpen && (
-          <div className="lg:hidden border-t border-border bg-card text-card-foreground">
+          <div className="lg:hidden border-t border-border bg-nav-active text-nav-foreground">
             <div className="px-4 py-2 space-y-1">
               {navItems.map((item) => {
                 const Icon = item.icon
@@ -180,8 +180,8 @@ export default function Navigation() {
                     className={`
                       flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
                       ${isActive 
-                        ? 'bg-blue-100 text-blue-700' 
-                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                        ? 'bg-nav-active text-nav-foreground' 
+                        : 'text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground'
                       }
                       ${item.highlight ? 'bg-blue-600 text-white hover:bg-blue-700' : ''}
                     `}

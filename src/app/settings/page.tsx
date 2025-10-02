@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { PageMenu, PageMenuItem } from '@/components/ui/page-menu'
+import { Switch } from '@/components/ui/switch'
 
 export default function SettingsPage() {
   const { user, loading: authLoading } = useAuth()
@@ -92,6 +94,22 @@ export default function SettingsPage() {
     loadPreferences()
   }, [user, authLoading, loadUserData])
 
+  // Listen for sidebar state changes from other sources
+  useEffect(() => {
+    const handleSidebarStateChange = (event: CustomEvent) => {
+      setPreferences(prev => ({
+        ...prev,
+        sidebarCollapsed: event.detail.collapsed
+      }))
+    }
+
+    window.addEventListener('sidebar-state-change', handleSidebarStateChange as EventListener)
+
+    return () => {
+      window.removeEventListener('sidebar-state-change', handleSidebarStateChange as EventListener)
+    }
+  }, [])
+
   const loadPreferences = () => {
     // Load sidebar state from localStorage
     const sidebarCollapsed = localStorage.getItem('sidebar-collapsed')
@@ -101,13 +119,21 @@ export default function SettingsPage() {
     }))
   }
 
-  const savePreferences = () => {
-    // Save sidebar state to localStorage
-    localStorage.setItem('sidebar-collapsed', JSON.stringify(preferences.sidebarCollapsed))
-    // Trigger custom event to notify other components
-    window.dispatchEvent(new CustomEvent('sidebar-state-change', {
-      detail: { collapsed: preferences.sidebarCollapsed }
-    }))
+  const toggleSidebarCollapsed = () => {
+    const newState = !preferences.sidebarCollapsed
+    setPreferences(prev => ({ ...prev, sidebarCollapsed: newState }))
+    
+    // Use the same localStorage and event system as the sidebar
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('sidebar-collapsed', JSON.stringify(newState))
+        window.dispatchEvent(new CustomEvent('sidebar-state-change', {
+          detail: { collapsed: newState }
+        }))
+      } catch (error) {
+        console.warn('Failed to save sidebar state to localStorage:', error)
+      }
+    }
   }
 
 
@@ -149,7 +175,7 @@ export default function SettingsPage() {
     )
   }
 
-  const settingsSections = [
+  const settingsSections: PageMenuItem[] = [
     { id: 'details', label: 'Details', icon: User2 },
     { id: 'appearance', label: 'Appearance', icon: Palette },
     { id: 'settings', label: 'Settings', icon: SettingsIcon },
@@ -191,11 +217,13 @@ export default function SettingsPage() {
                 </div>
                 <div className="space-y-2">
                   <label htmlFor="bio" className="text-sm font-medium">Bio</label>
-                  <Input
+                  <textarea
                     id="bio"
                     value={formData.bio}
                     onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
                     placeholder="Tell us about yourself"
+                    rows={3}
+                    className="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input w-full min-w-0 rounded-md border bg-transparent px-3 py-2 text-base transition-[color,box-shadow] outline-none resize-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive"
                   />
                 </div>
                 <div className="space-y-2">
@@ -234,36 +262,53 @@ export default function SettingsPage() {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Theme</CardTitle>
-                <CardDescription>
-                  Choose your preferred theme for the application.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Theme Preference</label>
-                  <Select value={theme} onValueChange={setTheme}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="light">Light</SelectItem>
-                      <SelectItem value="dark">Dark</SelectItem>
-                      <SelectItem value="system">System</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Display</CardTitle>
+                <CardTitle>Appearance</CardTitle>
                 <CardDescription>
                   Customize how the interface appears.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <label className="text-sm font-medium">Theme</label>
+                    <p className="text-sm text-muted-foreground">
+                      Choose your preferred theme for the application.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+                    <button
+                      onClick={() => setTheme('light')}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                        theme === 'light'
+                          ? 'bg-background text-foreground shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      Light
+                    </button>
+                    <button
+                      onClick={() => setTheme('dark')}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                        theme === 'dark'
+                          ? 'bg-background text-foreground shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      Dark
+                    </button>
+                    <button
+                      onClick={() => setTheme('system')}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                        theme === 'system'
+                          ? 'bg-background text-foreground shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      System
+                    </button>
+                  </div>
+                </div>
+                
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <label className="text-sm font-medium">Compact Mode</label>
@@ -271,13 +316,11 @@ export default function SettingsPage() {
                       Use a more compact layout to fit more content.
                     </p>
                   </div>
-                  <input
-                    type="checkbox"
+                  <Switch
                     checked={preferences.compactMode}
-                    onChange={(e) =>
-                      setPreferences(prev => ({ ...prev, compactMode: e.target.checked }))
+                    onChange={(checked) =>
+                      setPreferences(prev => ({ ...prev, compactMode: checked }))
                     }
-                    className="rounded border-gray-300"
                   />
                 </div>
               </CardContent>
@@ -290,12 +333,12 @@ export default function SettingsPage() {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Navigation</CardTitle>
+                <CardTitle>Settings</CardTitle>
                 <CardDescription>
-                  Control the sidebar behavior and navigation preferences.
+                  Manage your application preferences and settings.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <label className="text-sm font-medium">Collapsed Sidebar</label>
@@ -303,27 +346,12 @@ export default function SettingsPage() {
                       Keep the sidebar collapsed by default.
                     </p>
                   </div>
-                  <input
-                    type="checkbox"
+                  <Switch
                     checked={preferences.sidebarCollapsed}
-                    onChange={(e) => {
-                      setPreferences(prev => ({ ...prev, sidebarCollapsed: e.target.checked }))
-                      savePreferences()
-                    }}
-                    className="rounded border-gray-300"
+                    onChange={toggleSidebarCollapsed}
                   />
                 </div>
-              </CardContent>
-            </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Notifications</CardTitle>
-                <CardDescription>
-                  Configure how you receive notifications.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <label className="text-sm font-medium">Email Notifications</label>
@@ -331,26 +359,14 @@ export default function SettingsPage() {
                       Receive email notifications about your account activity.
                     </p>
                   </div>
-                  <input
-                    type="checkbox"
+                  <Switch
                     checked={preferences.emailNotifications}
-                    onChange={(e) =>
-                      setPreferences(prev => ({ ...prev, emailNotifications: e.target.checked }))
+                    onChange={(checked) =>
+                      setPreferences(prev => ({ ...prev, emailNotifications: checked }))
                     }
-                    className="rounded border-gray-300"
                   />
                 </div>
-              </CardContent>
-            </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Privacy & Data</CardTitle>
-                <CardDescription>
-                  Manage your data and privacy settings.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <label className="text-sm font-medium">Auto-save</label>
@@ -358,13 +374,11 @@ export default function SettingsPage() {
                       Automatically save your work as you type.
                     </p>
                   </div>
-                  <input
-                    type="checkbox"
+                  <Switch
                     checked={preferences.autoSave}
-                    onChange={(e) =>
-                      setPreferences(prev => ({ ...prev, autoSave: e.target.checked }))
+                    onChange={(checked) =>
+                      setPreferences(prev => ({ ...prev, autoSave: checked }))
                     }
-                    className="rounded border-gray-300"
                   />
                 </div>
               </CardContent>
@@ -391,31 +405,11 @@ export default function SettingsPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Settings Navigation */}
-          <div className="lg:col-span-1">
-            <Card>
-              <CardContent className="p-4">
-                <nav className="space-y-1">
-                  {settingsSections.map((section) => {
-                    const Icon = section.icon
-                    return (
-                      <button
-                        key={section.id}
-                        onClick={() => setActiveSection(section.id)}
-                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors ${
-                          activeSection === section.id
-                            ? 'bg-primary text-primary-foreground'
-                            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                        }`}
-                      >
-                        <Icon className="w-4 h-4" />
-                        {section.label}
-                      </button>
-                    )
-                  })}
-                </nav>
-              </CardContent>
-            </Card>
-          </div>
+          <PageMenu
+            items={settingsSections}
+            activeItem={activeSection}
+            onItemClick={setActiveSection}
+          />
 
           {/* Settings Content */}
           <div className="lg:col-span-3">

@@ -17,6 +17,8 @@ import {
   EyeOff
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { ModelBadge } from '@/components/ui/model-badge'
+import { PrivateBadge } from '@/components/ui/private-badge'
 import { useAuth } from '@/components/auth-provider'
 import { toggleLike, toggleBookmark, deletePrompt } from '@/lib/database'
 import Snackbar from '@/components/ui/snackbar'
@@ -161,14 +163,14 @@ export default function PromptDetails({ prompt }: PromptDetailsProps) {
             </h1>
             <div className="flex items-center gap-2">
               {!prompt.is_public && (
-                <span className="px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-sm font-medium border border-border flex items-center gap-1">
-                  <EyeOff size={14} />
-                  Private
-                </span>
+                <PrivateBadge size="md" />
               )}
-              <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium border border-primary/20">
-                {prompt.model}
-              </span>
+              <ModelBadge 
+                model={prompt.model as any} 
+                variant="outline" 
+                size="md"
+                className="bg-primary/10 text-primary border-primary/20"
+              />
             </div>
           </div>
 

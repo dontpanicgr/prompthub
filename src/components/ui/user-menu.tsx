@@ -66,7 +66,7 @@ export default function UserMenu({ user, onSignOut, isCollapsed = false }: UserM
       
       {/* User Dropdown Menu - Floating above the button */}
       {isOpen && (
-        <div className={`absolute ${isCollapsed ? 'bottom-full left-0 right-0 mb-2' : 'bottom-full left-0 right-0 mb-2'} bg-card text-card-foreground rounded-lg shadow-lg border border-border py-1 z-[100]`}>
+        <div className={`absolute ${isCollapsed ? 'bottom-full left-0 right-0 mb-2' : 'bottom-full left-0 right-0 mb-2'} bg-card text-card-foreground rounded-lg border border-border py-1 z-[100]`}>
           <button
             onClick={toggleTheme}
             className="flex items-center gap-3 w-full px-4 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"

@@ -3,8 +3,8 @@ import { AlertCircle, ArrowLeft } from 'lucide-react'
 
 export default function AuthCodeErrorPage() {
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-background flex items-center justify-center px-4">
-      <div className="max-w-md w-full bg-card text-card-foreground rounded-lg shadow-lg p-8 text-center border border-border">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4">
+      <div className="max-w-md w-full bg-card text-card-foreground rounded-lg p-8 text-center border border-border">
         <div className="mb-6">
           <div className="mx-auto w-16 h-16 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mb-4">
             <AlertCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
@@ -12,12 +12,12 @@ export default function AuthCodeErrorPage() {
           <h1 className="mb-2">
             Authentication Error
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-muted-foreground">
             There was an error signing you in. This could be due to:
           </p>
         </div>
 
-        <div className="text-left mb-8 space-y-2 text-sm text-gray-600 dark:text-gray-400">
+        <div className="text-left mb-8 space-y-2 text-sm text-muted-foreground">
           <p>• The authentication process was cancelled</p>
           <p>• Your session expired</p>
           <p>• There was a network error</p>
@@ -33,7 +33,7 @@ export default function AuthCodeErrorPage() {
             Back to Home
           </Link>
           
-          <div className="text-sm text-gray-500 dark:text-gray-400">
+          <div className="text-sm text-muted-foreground">
             <p>Try signing in again, or contact support if the problem persists.</p>
           </div>
         </div>

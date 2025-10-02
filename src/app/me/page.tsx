@@ -87,25 +87,6 @@ export default function MyPromptsPage() {
     setFilteredPrompts(filtered)
   }, [searchQuery, selectedModels, prompts])
 
-  // Show loading while auth is loading
-  if (authLoading) {
-    return (
-      <MainLayout>
-        <div className="p-6">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-700 rounded w-32 mb-6"></div>
-            <div className="h-4 bg-gray-700 rounded w-64 mb-8"></div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="h-24 bg-gray-700 rounded"></div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </MainLayout>
-    )
-  }
-
   // Redirect if not authenticated
   useEffect(() => {
     if (!user && !authLoading) {
@@ -113,6 +94,25 @@ export default function MyPromptsPage() {
       router.push(`/login?redirect=${encodeURIComponent('/me')}`)
     }
   }, [user, authLoading, router])
+
+  // Show loading while auth is loading
+  if (authLoading) {
+    return (
+      <MainLayout>
+        <div className="p-6">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 dark:bg-gray-800 rounded w-32 mb-6"></div>
+            <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-64 mb-8"></div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="h-24 bg-gray-200 dark:bg-gray-800 rounded"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </MainLayout>
+    )
+  }
 
   if (!user) {
     return null
@@ -351,15 +351,15 @@ export default function MyPromptsPage() {
 
             {/* Prompt Grid */}
             {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[...Array(8)].map((_, i) => (
                   <div key={i} className="bg-card text-card-foreground rounded-lg border border-border p-6 animate-pulse">
-                    <div className="h-4 bg-gray-700 rounded mb-4"></div>
-                    <div className="h-3 bg-gray-700 rounded mb-2"></div>
-                    <div className="h-3 bg-gray-700 rounded mb-4"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded mb-4"></div>
+                    <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded mb-2"></div>
+                    <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded mb-4"></div>
                     <div className="flex justify-between items-center">
-                      <div className="h-3 bg-gray-700 rounded w-16"></div>
-                      <div className="h-3 bg-gray-700 rounded w-20"></div>
+                      <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-16"></div>
+                      <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-20"></div>
                     </div>
                   </div>
                 ))}
@@ -368,7 +368,7 @@ export default function MyPromptsPage() {
               <div className="text-center py-12">
                 <div className="text-gray-400 mb-4">
                   {searchQuery || selectedModels.length > 0 ? (
-                    <div className="w-16 h-16 mx-auto bg-gray-700 rounded-full flex items-center justify-center">
+                    <div className="w-16 h-16 mx-auto bg-gray-200 dark:bg-gray-800 rounded-full flex items-center justify-center">
                       <span className="text-2xl">🔍</span>
                     </div>
                   ) : (
@@ -395,7 +395,7 @@ export default function MyPromptsPage() {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredPrompts.map((prompt) => (
                   <PromptCard
                     key={prompt.id}

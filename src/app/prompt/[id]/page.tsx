@@ -83,7 +83,7 @@ export default function PromptPage({ params }: PromptPageProps) {
     return (
       <MainLayout>
         <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-muted-foreground"></div>
         </div>
       </MainLayout>
     )

@@ -4,6 +4,8 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Heart, Bookmark, Copy } from 'lucide-react'
+import { ModelBadge } from '@/components/ui/model-badge'
+import { PrivateBadge } from '@/components/ui/private-badge'
 
 interface Prompt {
   id: string
@@ -73,28 +75,18 @@ export default function PromptCard({ prompt, onLike, onBookmark }: PromptCardPro
         {/* Header */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <span className="px-2 py-1 bg-secondary text-secondary-foreground rounded-md text-xs font-medium border border-border flex items-center gap-1">
-              {prompt.model === 'ChatGPT' && (
-                <svg width="12" height="12" viewBox="0 0 512 509.639" className="text-white">
-                  <path fill="currentColor" d="M115.612 0h280.775C459.974 0 512 52.026 512 115.612v278.415c0 63.587-52.026 115.613-115.613 115.613H115.612C52.026 509.64 0 457.614 0 394.027V115.612C0 52.026 52.026 0 115.612 0z" />
-                </svg>
-              )}
-              {prompt.model === 'Perplexity' && (
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M4 0h16c2.21 0 4 1.79 4 4v16c0 2.21-1.79 4-4 4H4c-2.21 0-4-1.79-4-4V4c0-2.21 1.79-4 4-4z" />
-                </svg>
-              )}
-              {prompt.model}
-            </span>
+            <ModelBadge 
+              model={prompt.model as any} 
+              variant="secondary" 
+              size="sm"
+            />
             {prompt.is_public === false && (
-              <span className="px-2 py-1 bg-destructive/10 text-destructive rounded-sm text-xs font-medium border border-destructive/30">
-                Private
-              </span>
+              <PrivateBadge size="sm" />
             )}
           </div>
           <button
             onClick={handleCopy}
-            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-secondary rounded-sm"
+            className="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-secondary rounded-sm"
             title="Copy prompt"
           >
             <Copy size={16} className="text-muted-foreground" />
@@ -125,7 +117,7 @@ export default function PromptCard({ prompt, onLike, onBookmark }: PromptCardPro
         </div>
 
         {/* Content Preview */}
-        <p className="text-sm text-muted-foreground mb-2 line-clamp-5 flex-1" style={{ lineHeight: 'var(--text-sm--line-height)' }}>
+        <p className="text-sm text-muted-foreground mb-2 line-clamp-5 flex-1">
           {prompt.body}
         </p>
 
@@ -133,7 +125,7 @@ export default function PromptCard({ prompt, onLike, onBookmark }: PromptCardPro
         <div className="flex items-center justify-start gap-3 mt-auto">
           <button
             onClick={handleLike}
-            className={`flex items-center gap-1 text-sm transition-all duration-200 text-card-foreground font-semibold rounded-md px-1 py-0.5 hover:bg-secondary hover:text-muted-foreground ${
+            className={`flex items-center gap-1 text-md transition-all duration-200 text-card-foreground font-semibold rounded-md px-2 py-1 hover:bg-secondary hover:text-muted-foreground ${
               isLiked ? 'text-primary' : ''
             }`}
           >
@@ -143,7 +135,7 @@ export default function PromptCard({ prompt, onLike, onBookmark }: PromptCardPro
           
           <button
             onClick={handleBookmark}
-            className={`flex items-center gap-1 text-sm transition-all duration-200 text-card-foreground font-semibold rounded-md px-1 py-0.5 hover:bg-secondary hover:text-muted-foreground ${
+            className={`flex items-center gap-1 text-md transition-all duration-200 text-card-foreground font-semibold rounded-md px-2 py-1 hover:bg-secondary hover:text-muted-foreground ${
               isBookmarked ? 'text-primary' : ''
             }`}
           >
