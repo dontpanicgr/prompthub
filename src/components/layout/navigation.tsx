@@ -33,7 +33,7 @@ export default function Navigation() {
   const navItems = [
     { href: '/create', label: 'Create', icon: Plus, highlight: true },
     { href: '/', label: 'Discover', icon: Compass },
-    { href: '/popular', label: 'Popular', icon: TrendingUp },
+    { href: '/popular', label: 'Trending', icon: TrendingUp },
     { href: '/latest', label: 'Latest', icon: Clock },
     { href: '/me', label: 'My Prompts', icon: User },
   ]

@@ -48,6 +48,11 @@ export default function SearchFilters({
     onSearch(searchQuery, next)
   }
 
+  const clearSearchQuery = () => {
+    setSearchQuery('')
+    onSearch('', selectedModels)
+  }
+
   const clearFilters = () => {
     setSearchQuery('')
     setSelectedModels([])
@@ -65,8 +70,18 @@ export default function SearchFilters({
             placeholder={placeholder}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 h-10 bg-card border"
+            className="pl-10 pr-10 h-10 bg-card border"
           />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={clearSearchQuery}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Clear search"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
 
         {/* Icon-only 48x48 filter button with multi-select menu */}
@@ -91,23 +106,8 @@ export default function SearchFilters({
       </form>
 
       {/* Chips row with Clear */}
-      {(searchQuery || selectedModels.length > 0) && (
+      {selectedModels.length > 0 && (
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          {searchQuery && (
-            <div className="inline-flex items-center rounded-lg border p-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px] text-foreground bg-card h-8">
-              <span className="mr-1">Search: "{searchQuery}"</span>
-              <button
-                onClick={() => {
-                  setSearchQuery('')
-                  onSearch('', selectedModels)
-                }}
-                aria-label="Clear search"
-                className="inline-flex items-center rounded-full hover:opacity-80"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          )}
           {selectedModels.map(model => (
             <ModelBadge 
               key={model}

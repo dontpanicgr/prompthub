@@ -23,7 +23,20 @@ export default function BrowsePage() {
         
         switch (sortBy) {
           case 'popular':
-            fetchedPrompts = await getPopularPrompts(user?.id)
+            fetchedPrompts = await getPublicPrompts(user?.id)
+            // Apply popularity ranking algorithm: likes * 3 + bookmarks * 5 + reduced time bonus
+            fetchedPrompts = fetchedPrompts.sort((a, b) => {
+              const getPopularityScore = (prompt: any) => {
+                const likes = prompt.like_count || 0
+                const bookmarks = prompt.bookmark_count || 0
+                const daysSinceCreated = (Date.now() - new Date(prompt.created_at).getTime()) / (1000 * 60 * 60 * 24)
+                const timeBonus = Math.max(0, 10 - daysSinceCreated) * 0.5 // Reduced time bonus
+                
+                return (likes * 3) + (bookmarks * 5) + timeBonus
+              }
+              
+              return getPopularityScore(b) - getPopularityScore(a)
+            })
             break
           case 'bookmarked':
             const allPrompts = await getPublicPrompts(user?.id)

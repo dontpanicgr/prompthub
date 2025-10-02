@@ -36,19 +36,17 @@ export default function PopularPage() {
     // Search is handled by filtering the prompts
   }
 
-  // Apply popularity ranking algorithm
+  // Apply trending ranking algorithm - pure engagement based
   const rankedPrompts = prompts.sort((a, b) => {
-    // Calculate popularity score: likes * 2 + bookmarks * 3 + time bonus
-    const getPopularityScore = (prompt: any) => {
+    // Calculate trending score: likes * 4 + bookmarks * 6 (no time bonus)
+    const getTrendingScore = (prompt: any) => {
       const likes = prompt.like_count || 0
       const bookmarks = prompt.bookmark_count || 0
-      const daysSinceCreated = (Date.now() - new Date(prompt.created_at).getTime()) / (1000 * 60 * 60 * 24)
-      const timeBonus = Math.max(0, 10 - daysSinceCreated) // Bonus for recent posts
       
-      return (likes * 2) + (bookmarks * 3) + timeBonus
+      return (likes * 4) + (bookmarks * 6)
     }
     
-    return getPopularityScore(b) - getPopularityScore(a)
+    return getTrendingScore(b) - getTrendingScore(a)
   })
 
   const filteredPrompts = rankedPrompts.filter(prompt => {
@@ -67,7 +65,7 @@ export default function PopularPage() {
       <div className="w-full">
         <div className="mb-8">
           <h1 className="mb-2">
-            Popular Prompts
+            Trending Prompts
           </h1>
           <p className="text-gray-400 mb-6">
             Discover the most liked and bookmarked prompts from the community
