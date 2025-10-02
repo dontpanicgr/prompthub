@@ -33,7 +33,7 @@ export default function CreatePromptPage() {
   return (
     <MainLayout>
       <div className="w-full">
-        <div className="mb-8">
+        <div className="max-w-4xl mx-auto mb-8">
           <h1 className="mb-2">
             Create New Prompt
           </h1>
