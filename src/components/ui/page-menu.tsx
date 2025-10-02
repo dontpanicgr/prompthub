@@ -29,8 +29,8 @@ export function PageMenu({ items, activeItem, onItemClick }: PageMenuProps) {
                   onClick={() => onItemClick(item.id)}
                   className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                     isActive
-                      ? 'bg-card text-active-foreground'
-                      : 'text-muted-foreground hover:bg-card hover:text-foreground'
+                      ? 'bg-nav-active text-nav-foreground'
+                      : 'text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground'
                   }`}
                 >
                   <Icon className="w-4 h-4" aria-hidden="true" />

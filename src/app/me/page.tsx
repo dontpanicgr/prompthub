@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import MainLayout from '@/components/layout/main-layout'
 import PromptCard from '@/components/prompts/prompt-card'
 import SearchFilters from '@/components/ui/search-filters'
+import UserBioCard from '@/components/ui/user-bio-card'
 import { Plus, Heart, Bookmark, User } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import { getUserPrompts, getLikedPrompts, getBookmarkedPrompts, toggleLike, toggleBookmark, getUserById } from '@/lib/database'
@@ -236,59 +237,16 @@ export default function MyPromptsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Sidebar - Profile Card */}
           <div className="lg:col-span-1">
-            <div className="bg-card rounded-lg border border-border p-6 sticky top-6">
-              <div className="flex flex-col items-start">
-                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-                  {(profile?.avatar_url || user.user_metadata?.avatar_url) ? (
-                    <img
-                      src={(profile?.avatar_url || user.user_metadata?.avatar_url) as string}
-                      alt={profile?.name || user.user_metadata?.name || 'User'}
-                      className="w-16 h-16 rounded-full"
-                    />
-                  ) : (
-                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-                      <span className="text-2xl font-bold text-muted-foreground">
-                        {(profile?.name?.charAt(0) || user.user_metadata?.name?.charAt(0) || user.email?.charAt(0) || 'U') as string}
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <div className="w-full">
-                  <h2 className="text-xl font-bold text-card-foreground mb-4 truncate">
-                    {profile?.name || user.user_metadata?.name || user.email?.split('@')[0] || 'User'}
-                  </h2>
-                  {profile?.bio && (
-                    <p className="text-sm text-muted-foreground mb-4">
-                      {profile.bio}
-                    </p>
-                  )}
-                  {profile?.website_url && (
-                    <a
-                      href={profile.website_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-primary hover:underline mb-6 block"
-                    >
-                      {profile.website_url}
-                    </a>
-                  )}
-                  <div className="grid grid-cols-3 gap-4 w-full">
-                    <div className="text-left">
-                      <p className="text-sm font-medium text-muted-foreground">Prompts</p>
-                      <p className="text-xl font-bold text-card-foreground">{userStats.prompts_created}</p>
-                    </div>
-                    <div className="text-left">
-                      <p className="text-sm font-medium text-muted-foreground">Likes</p>
-                      <p className="text-xl font-bold text-card-foreground">{userStats.prompts_liked}</p>
-                    </div>
-                    <div className="text-left">
-                      <p className="text-sm font-medium text-muted-foreground">Bookmarks</p>
-                      <p className="text-xl font-bold text-card-foreground">{userStats.prompts_bookmarked}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <UserBioCard
+              user={{
+                id: user.id,
+                name: profile?.name || user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+                avatar_url: profile?.avatar_url || user.user_metadata?.avatar_url,
+                bio: profile?.bio,
+                website_url: profile?.website_url
+              }}
+              stats={userStats}
+            />
           </div>
 
           {/* Main Content */}
@@ -305,8 +263,8 @@ export default function MyPromptsPage() {
                   onClick={() => handleTabChange('created')}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     activeTab === 'created'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
+                      ? 'bg-nav-active text-nav-foreground'
+                      : 'text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground'
                   }`}
                 >
                   <User size={16} />
@@ -316,8 +274,8 @@ export default function MyPromptsPage() {
                   onClick={() => handleTabChange('liked')}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     activeTab === 'liked'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
+                      ? 'bg-nav-active text-nav-foreground'
+                      : 'text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground'
                   }`}
                 >
                   <Heart size={16} />
@@ -327,8 +285,8 @@ export default function MyPromptsPage() {
                   onClick={() => handleTabChange('bookmarked')}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     activeTab === 'bookmarked'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
+                      ? 'bg-nav-active text-nav-foreground'
+                      : 'text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground'
                   }`}
                 >
                   <Bookmark size={16} />

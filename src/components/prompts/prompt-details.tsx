@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { 
@@ -14,14 +14,25 @@ import {
   ArrowLeft,
   Edit,
   Trash2,
-  EyeOff
+  EyeOff,
+  MoreHorizontal,
+  Flag
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ModelBadge } from '@/components/ui/model-badge'
 import { PrivateBadge } from '@/components/ui/private-badge'
+import UserBioCard from '@/components/ui/user-bio-card'
 import { useAuth } from '@/components/auth-provider'
 import { toggleLike, toggleBookmark, deletePrompt } from '@/lib/database'
+import { supabase } from '@/lib/supabase'
 import Snackbar from '@/components/ui/snackbar'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 interface Prompt {
   id: string
@@ -58,6 +69,47 @@ export default function PromptDetails({ prompt }: PromptDetailsProps) {
   const [bookmarkCount, setBookmarkCount] = useState(prompt.bookmark_count || 0)
   const [snackbar, setSnackbar] = useState({ isVisible: false, message: '', type: 'success' as 'success' | 'error' | 'info' })
   const [isDeleting, setIsDeleting] = useState(false)
+  const [creatorStats, setCreatorStats] = useState({
+    prompts_created: 0,
+    prompts_liked: 0,
+    prompts_bookmarked: 0
+  })
+
+  // Fetch creator stats
+  useEffect(() => {
+    async function fetchCreatorStats() {
+      try {
+        // Get creator's public prompts count
+        const { data: prompts } = await supabase
+          .from('prompts')
+          .select('id')
+          .eq('creator_id', prompt.creator.id)
+          .eq('is_public', true)
+
+        // Get creator's likes count
+        const { data: likes } = await supabase
+          .from('likes')
+          .select('id')
+          .eq('user_id', prompt.creator.id)
+
+        // Get creator's bookmarks count
+        const { data: bookmarks } = await supabase
+          .from('bookmarks')
+          .select('id')
+          .eq('user_id', prompt.creator.id)
+
+        setCreatorStats({
+          prompts_created: prompts?.length || 0,
+          prompts_liked: likes?.length || 0,
+          prompts_bookmarked: bookmarks?.length || 0
+        })
+      } catch (error) {
+        console.error('Error fetching creator stats:', error)
+      }
+    }
+
+    fetchCreatorStats()
+  }, [prompt.creator.id])
 
   const handleLike = async () => {
     if (!user) {
@@ -156,185 +208,120 @@ export default function PromptDetails({ prompt }: PromptDetailsProps) {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Main Content */}
         <div className="order-1 lg:order-2 lg:col-span-3">
-          {/* Title and Models */}
+          {/* Prompt Header - 2 columns */}
           <div className="mb-6">
-            <h1 className="mb-2">
-              {prompt.title}
-            </h1>
-            <div className="flex items-center gap-2">
-              {!prompt.is_public && (
-                <PrivateBadge size="md" />
-              )}
-              <ModelBadge 
-                model={prompt.model as any} 
-                variant="outline" 
-                size="md"
-                className="bg-primary/10 text-primary border-primary/20"
-              />
-            </div>
-          </div>
-
-          {/* User Info */}
-          <div className="bg-card rounded-lg border border-border p-6 mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-                {prompt.creator.avatar_url ? (
-                  <img
-                    src={prompt.creator.avatar_url}
-                    alt={prompt.creator.name}
-                    className="w-12 h-12 rounded-full"
+            <div className="flex items-start justify-between gap-4">
+              {/* Column 1: Title and Model Badge */}
+              <div className="flex-1">
+                <h1 className="text-2xl font-bold text-card-foreground mb-3">
+                  {prompt.title}
+                </h1>
+                <div className="flex items-center gap-2">
+                  {!prompt.is_public && (
+                    <PrivateBadge size="md" />
+                  )}
+                  <ModelBadge 
+                    model={prompt.model as any} 
+                    variant="secondary" 
+                    size="md"
+                    className="bg-muted text-muted-foreground"
                   />
-                ) : (
-                  <User size={24} className="text-muted-foreground" />
-                )}
+                </div>
               </div>
-              <div>
-                <Link
-                  href={`/user/${prompt.creator.id}`}
-                  className="text-lg font-medium text-card-foreground hover:text-primary transition-colors"
+              
+              {/* Column 2: Like, Bookmark and Menu buttons */}
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={handleLike}
+                  variant={isLiked ? 'default' : 'outline'}
+                  className="h-8 gap-2 border"
                 >
-                  {prompt.creator.name}
-                </Link>
-                <p className="text-sm text-muted-foreground flex items-center gap-1">
-                  <Calendar size={14} />
-                  {formatDate(prompt.created_at)}
-                </p>
+                  <Heart size={16} className={isLiked ? 'fill-current' : ''} />
+                  {likeCount}
+                </Button>
+                
+                <Button
+                  onClick={handleBookmark}
+                  variant={isBookmarked ? 'default' : 'outline'}
+                  className="h-8 gap-2 border"
+                >
+                  <Bookmark size={16} className={isBookmarked ? 'fill-current' : ''} />
+                  {bookmarkCount}
+                </Button>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="h-8 border">
+                      <MoreHorizontal size={16} />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={handleShare}>
+                      <Share2 size={16} className="mr-2" />
+                      Share
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <Flag size={16} className="mr-2" />
+                      Report
+                    </DropdownMenuItem>
+                    {isOwner && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                          <Link href={`/prompt/${prompt.id}/edit`}>
+                            <Edit size={16} className="mr-2" />
+                            Edit
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={handleDelete}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash2 size={16} className="mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
           </div>
 
-          {/* Prompt Body */}
+          {/* Prompt Content */}
           <div className="mb-6">
             <div className="bg-card rounded-lg border border-border p-6">
-              <pre className="whitespace-pre-wrap text-card-foreground font-mono text-sm leading-relaxed">
+              <pre className="whitespace-pre-wrap text-card-foreground font-mono text-sm leading-relaxed mb-4">
                 {prompt.body}
               </pre>
+              <Button
+                onClick={handleCopy}
+                variant="outline"
+                className="h-8 gap-2"
+              >
+                <Copy size={16} />
+                Copy
+              </Button>
             </div>
           </div>
+
         </div>
 
         {/* Sidebar */}
-        <div className="order-2 lg:order-1 lg:col-span-1 space-y-6 sticky top-6">
-          {/* Actions */}
-          <div className="bg-card rounded-lg border border-border p-6">
-            <h3 className="text-xl font-semibold text-card-foreground mb-4">
-              Actions
-            </h3>
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <Button
-                  onClick={handleLike}
-                  variant={isLiked ? 'default' : 'secondary'}
-                  size="sm"
-                  className="flex-1 gap-2"
-                >
-                  <Heart size={16} className={isLiked ? 'fill-current' : ''} />
-                  {likeCount} {likeCount === 1 ? 'Like' : 'Likes'}
-                </Button>
-                <Button
-                  onClick={handleBookmark}
-                  variant={isBookmarked ? 'default' : 'secondary'}
-                  size="sm"
-                  className="flex-1 gap-2"
-                >
-                  <Bookmark size={16} className={isBookmarked ? 'fill-current' : ''} />
-                  {bookmarkCount} {bookmarkCount === 1 ? 'Bookmark' : 'Bookmarks'}
-                </Button>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  onClick={handleCopy}
-                  variant="outline"
-                  size="sm"
-                  className="flex-1 gap-2"
-                >
-                  <Copy size={16} />
-                  Copy
-                </Button>
-                <Button
-                  onClick={handleShare}
-                  variant="outline"
-                  size="sm"
-                  className="flex-1 gap-2"
-                >
-                  <Share2 size={16} />
-                  Share
-                </Button>
-              </div>
-            </div>
-          </div>
+        <div className="order-2 lg:order-1 lg:col-span-1 space-y-6">
 
           {/* Creator Profile */}
-          <div className="bg-card rounded-lg border border-border p-6">
-            <h3 className="text-xl font-semibold text-card-foreground mb-4">
-              About the Creator
-            </h3>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-                {prompt.creator.avatar_url ? (
-                  <img
-                    src={prompt.creator.avatar_url}
-                    alt={prompt.creator.name}
-                    className="w-16 h-16 rounded-full"
-                  />
-                ) : (
-                  <User size={32} className="text-muted-foreground" />
-                )}
-              </div>
-              <div>
-                <Link
-                  href={`/user/${prompt.creator.id}`}
-                  className="text-lg font-medium text-card-foreground hover:text-primary transition-colors"
-                >
-                  {prompt.creator.name}
-                </Link>
-                {prompt.creator.website_url && (
-                  <a
-                    href={prompt.creator.website_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-sm text-primary hover:underline"
-                  >
-                    <ExternalLink size={14} />
-                    Website
-                  </a>
-                )}
-              </div>
-            </div>
-            {prompt.creator.bio && (
-              <p className="text-muted-foreground text-sm">
-                {prompt.creator.bio}
-              </p>
-            )}
-          </div>
+          <UserBioCard
+            user={{
+              id: prompt.creator.id,
+              name: prompt.creator.name,
+              avatar_url: prompt.creator.avatar_url,
+              bio: prompt.creator.bio,
+              website_url: prompt.creator.website_url
+            }}
+            stats={creatorStats}
+          />
 
-          {/* Owner Actions */}
-          {isOwner && (
-            <div className="bg-card rounded-lg border border-border p-6">
-              <h3 className="text-xl font-semibold text-card-foreground mb-4">
-                Manage Prompt
-              </h3>
-              <div className="space-y-2">
-                <Link
-                  href={`/prompt/${prompt.id}/edit`}
-                  className="w-full flex items-center gap-2 px-4 py-2 text-card-foreground hover:bg-secondary hover:text-secondary-foreground rounded-lg transition-colors"
-                >
-                  <Edit size={18} />
-                  Edit Prompt
-                </Link>
-                <Button
-                  onClick={handleDelete}
-                  disabled={isDeleting}
-                  variant="destructive"
-                  size="sm"
-                  className="w-full gap-2"
-                >
-                  <Trash2 size={16} />
-                  {isDeleting ? 'Deleting...' : 'Delete Prompt'}
-                </Button>
-              </div>
-            </div>
-          )}
 
           {/* Stats */}
           <div className="bg-card rounded-lg border border-border p-6">

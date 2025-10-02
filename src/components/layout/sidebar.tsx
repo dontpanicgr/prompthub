@@ -31,33 +31,32 @@ interface SidebarProps {
   onSignOut?: () => void
 }
 
+// Helper function to get initial collapsed state from localStorage
+const getInitialCollapsedState = (): boolean => {
+  if (typeof window === 'undefined') return false
+  
+  try {
+    const saved = localStorage.getItem('sidebar-collapsed')
+    if (saved) {
+      const parsed = JSON.parse(saved)
+      return parsed === true
+    }
+  } catch (error) {
+    console.warn('Failed to parse sidebar state from localStorage, clearing corrupted data:', error)
+    localStorage.removeItem('sidebar-collapsed')
+  }
+  
+  return false
+}
+
 export default function Sidebar({ user, onSignOut }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
-  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [isCollapsed, setIsCollapsed] = useState(getInitialCollapsedState)
   const [userButtonRect, setUserButtonRect] = useState<DOMRect | null>(null)
   const pathname = usePathname()
   const { signIn } = useAuth()
   const { theme, setTheme } = useTheme()
-
-  // Initialize sidebar state from localStorage
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('sidebar-collapsed')
-        if (saved) {
-          const parsed = JSON.parse(saved)
-          setIsCollapsed(parsed === true)
-        } else {
-          setIsCollapsed(false)
-        }
-      } catch (error) {
-        console.warn('Failed to parse sidebar state from localStorage, clearing corrupted data:', error)
-        localStorage.removeItem('sidebar-collapsed')
-        setIsCollapsed(false)
-      }
-    }
-  }, [])
 
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark'
