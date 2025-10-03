@@ -77,7 +77,7 @@ function VerifyEmailContent() {
           {/* Back Button */}
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-8 transition-colors"
+            className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-6 transition-colors"
           >
             <ArrowLeft size={20} />
             Back to Home
@@ -86,7 +86,7 @@ function VerifyEmailContent() {
           {/* Verification Form */}
           <div className="bg-card text-card-foreground rounded-2xl p-8 border border-border">
             {/* Header */}
-            <div className="text-center mb-8">
+            <div className="text-center mb-6">
               <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <Mail className="w-8 h-8 text-white" />
               </div>

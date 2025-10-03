@@ -6,6 +6,7 @@ import MainLayout from '@/components/layout/main-layout'
 import UserPromptsGrid from '@/components/prompts/user-prompts-grid'
 import SearchFilters from '@/components/ui/search-filters'
 import UserBioCard from '@/components/ui/user-bio-card'
+import { getUserEngagementStats } from '@/lib/database'
 import { supabase } from '@/lib/supabase'
 
 interface UserPageProps {
@@ -18,8 +19,8 @@ export default function UserPage({ params }: UserPageProps) {
   const [user, setUser] = useState<any>(null)
   const [stats, setStats] = useState({
     prompts_created: 0,
-    prompts_liked: 0,
-    prompts_bookmarked: 0
+    likes_received: 0,
+    bookmarks_received: 0
   })
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -40,28 +41,8 @@ export default function UserPage({ params }: UserPageProps) {
           notFound()
         }
 
-        // Get user's stats
-        const { data: prompts } = await supabase
-          .from('prompts')
-          .select('id')
-          .eq('creator_id', id)
-          .eq('is_public', true)
-
-        const { data: likes } = await supabase
-          .from('likes')
-          .select('id')
-          .eq('user_id', id)
-
-        const { data: bookmarks } = await supabase
-          .from('bookmarks')
-          .select('id')
-          .eq('user_id', id)
-
-        const userStats = {
-          prompts_created: prompts?.length || 0,
-          prompts_liked: likes?.length || 0,
-          prompts_bookmarked: bookmarks?.length || 0
-        }
+        // Get user's engagement stats (likes and bookmarks received)
+        const userStats = await getUserEngagementStats(id)
 
         setUser(userData)
         setStats(userStats)
@@ -77,7 +58,9 @@ export default function UserPage({ params }: UserPageProps) {
 
   const handleSearch = (query: string, models: string[]) => {
     console.log('Search query:', query, 'Models:', models)
-    // Search is handled by filtering the prompts
+    setSearchQuery(query)
+    setSelectedModels(models)
+    // Search is handled by the UserPromptsGrid component
   }
 
   if (loading) {
@@ -86,7 +69,7 @@ export default function UserPage({ params }: UserPageProps) {
         <div className="w-full p-6">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 dark:bg-gray-800 rounded w-32 mb-6"></div>
-            <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-64 mb-8"></div>
+            <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-64 mb-6"></div>
           </div>
         </div>
       </MainLayout>
@@ -100,7 +83,7 @@ export default function UserPage({ params }: UserPageProps) {
   return (
     <MainLayout>
       <div className="w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* User Profile Card - Sidebar */}
           <div className="lg:col-span-1">
             <UserBioCard
@@ -117,14 +100,14 @@ export default function UserPage({ params }: UserPageProps) {
 
           {/* Prompts Section */}
           <div className="lg:col-span-3">
-            <div className="mb-8">
+            <div className="mb-6">
               <h1 className="mb-2">
                 {user.name}&apos;s Prompts
               </h1>
             </div>
 
             {/* Search and Filters */}
-            <div className="mb-8">
+            <div className="mb-6">
               <SearchFilters
                 searchQuery={searchQuery}
                 setSearchQuery={setSearchQuery}
@@ -137,7 +120,12 @@ export default function UserPage({ params }: UserPageProps) {
 
             {/* Prompts Grid */}
             <div>
-              <UserPromptsGrid userId={user.id} maxColumns={3} />
+              <UserPromptsGrid 
+                userId={user.id} 
+                maxColumns={3} 
+                searchQuery={searchQuery}
+                selectedModels={selectedModels}
+              />
             </div>
           </div>
         </div>

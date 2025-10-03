@@ -17,7 +17,8 @@ import {
   ChevronDown,
   Compass,
   Clock,
-  LogIn
+  LogIn,
+  Wrench
 } from 'lucide-react'
 import { useTheme } from '@/components/theme-provider'
 import { useAuth } from '@/components/auth-provider'
@@ -31,11 +32,15 @@ export default function Navigation() {
   const { user, signOut } = useAuth()
 
   const navItems = [
-    { href: '/create', label: 'Create', icon: Plus, highlight: true },
-    { href: '/', label: 'Discover', icon: Compass },
+    { href: '/create', label: 'New Prompt', icon: Plus, highlight: true },
+    { href: '/', label: 'Browse', icon: Compass },
     { href: '/popular', label: 'Trending', icon: TrendingUp },
     { href: '/latest', label: 'Latest', icon: Clock },
     { href: '/me', label: 'My Prompts', icon: User },
+  ]
+
+  const adminItems = [
+    { href: '/admin', label: 'Admin', icon: Wrench },
   ]
 
   const handleSignOut = async () => {
@@ -95,6 +100,29 @@ export default function Navigation() {
                   </Link>
                 )
               })}
+              
+              {/* Admin Link - Only show for authenticated users */}
+              {user && adminItems.map((item) => {
+                const Icon = item.icon
+                const isActive = pathname === item.href
+                
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`
+                      flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
+                      ${isActive 
+                        ? 'bg-nav-active text-nav-foreground' 
+                        : 'text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground'
+                      }
+                    `}
+                  >
+                    <Icon size={18} />
+                    {item.label}
+                  </Link>
+                )
+              })}
             </div>
 
             {/* Right side - Theme switch and User menu or Sign in */}
@@ -103,7 +131,7 @@ export default function Navigation() {
               <button
                 onClick={toggleTheme}
                 className="p-2 rounded-lg hover:bg-muted transition-colors"
-                title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                title={theme === 'dark' ? 'Turn lights on' : 'Turn lights off'}
               >
                 {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
               </button>
@@ -154,7 +182,7 @@ export default function Navigation() {
                 </div>
               ) : (
                 <Link
-                  href="/login"
+                  href="/login?redirect=/"
                   className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-lg transition-colors"
                 >
                   <LogIn size={18} />
@@ -193,6 +221,30 @@ export default function Navigation() {
                 )
               })}
               
+              {/* Admin Link - Only show for authenticated users */}
+              {user && adminItems.map((item) => {
+                const Icon = item.icon
+                const isActive = pathname === item.href
+                
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`
+                      flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                      ${isActive 
+                        ? 'bg-nav-active text-nav-foreground' 
+                        : 'text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground'
+                      }
+                    `}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Icon size={18} />
+                    {item.label}
+                  </Link>
+                )
+              })}
+              
               {/* Mobile theme switch and auth */}
               <div className="border-t border-border pt-2 mt-2">
                 <div className="flex items-center justify-between">
@@ -201,12 +253,12 @@ export default function Navigation() {
                     className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
                   >
                     {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-                    {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                    {theme === 'dark' ? 'Lights on' : 'Lights off'}
                   </button>
                   
                   {!user && (
                     <Link
-                      href="/login"
+                      href="/login?redirect=/"
                       className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-lg transition-colors"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >

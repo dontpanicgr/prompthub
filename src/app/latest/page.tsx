@@ -37,6 +37,8 @@ export default function LatestPage() {
 
   const handleSearch = (query: string, models: string[]) => {
     console.log('Search query:', query, 'Models:', models)
+    setSearchQuery(query)
+    setSelectedModels(models)
     // Search is handled by filtering the prompts
   }
 
@@ -54,7 +56,7 @@ export default function LatestPage() {
   return (
     <MainLayout>
       <div className="w-full">
-        <div className="mb-8">
+        <div className="mb-6">
           <h1 className="mb-2">
             Latest Prompts
           </h1>

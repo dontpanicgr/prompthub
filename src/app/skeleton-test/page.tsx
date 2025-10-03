@@ -52,7 +52,7 @@ export default function SkeletonTestPage() {
               {/* Header skeleton */}
               <div className="animate-pulse">
                 <div className="h-8 bg-gray-200 dark:bg-gray-800 rounded w-32 mb-6"></div>
-                <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-64 mb-8"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-64 mb-6"></div>
               </div>
 
               {/* Avatar skeleton */}

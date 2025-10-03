@@ -24,7 +24,7 @@ INSERT INTO public.prompts (id, title, body, model, creator_id, is_public, creat
 5. Help develop plot twists that feel organic to the story
 
 Always maintain the author''s voice and style while offering constructive feedback that will elevate the writing.',
-  'ChatGPT',
+  'GPT',
   (SELECT id FROM auth.users ORDER BY created_at LIMIT 1),
   true,
   NOW() - INTERVAL '2 days'
@@ -51,7 +51,7 @@ Always maintain the author''s voice and style while offering constructive feedba
   gen_random_uuid(),
   'Marketing Copywriter',
   'You are an expert marketing copywriter. Help me create compelling marketing copy that: 1) Captures attention with strong headlines, 2) Addresses customer pain points, 3) Highlights unique value propositions, 4) Includes clear calls-to-action, 5) Maintains brand voice and tone. Focus on conversion optimization and emotional connection.',
-  'ChatGPT',
+  'GPT',
   (SELECT id FROM auth.users ORDER BY created_at LIMIT 1),
   true,
   NOW() - INTERVAL '6 hours'

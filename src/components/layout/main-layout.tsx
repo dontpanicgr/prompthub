@@ -3,6 +3,9 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/components/auth-provider'
 import Sidebar from './sidebar'
+import MobileTopHeader from './mobile-top-header'
+import MobileBottomNav from './mobile-bottom-nav'
+import MobileDrawer from './mobile-drawer'
 import EmailVerificationBanner from '@/components/ui/email-verification-banner'
 
 interface MainLayoutProps {
@@ -12,9 +15,18 @@ interface MainLayoutProps {
 export default function MainLayout({ children }: MainLayoutProps) {
   const { user, loading, signOut } = useAuth()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false)
 
   const handleSignOut = async () => {
     await signOut()
+  }
+
+  const handleMobileMenuClick = () => {
+    setIsMobileDrawerOpen(true)
+  }
+
+  const handleMobileDrawerClose = () => {
+    setIsMobileDrawerOpen(false)
   }
 
   useEffect(() => {
@@ -47,8 +59,22 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Desktop Sidebar */}
       <Sidebar user={sidebarUser} onSignOut={handleSignOut} />
-      <main className={`bg-background min-h-screen lg:pt-0 pt-16 pb-16 transition-all duration-150 ease-out ${sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}>
+      
+      {/* Mobile Top Header */}
+      <MobileTopHeader onMenuClick={handleMobileMenuClick} />
+      
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav />
+      
+      {/* Mobile Drawer */}
+      <MobileDrawer 
+        isOpen={isMobileDrawerOpen} 
+        onClose={handleMobileDrawerClose} 
+      />
+      
+      <main className={`bg-background min-h-screen lg:pt-0 pt-16 pb-20 lg:pb-0 transition-all duration-150 ease-out ${sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}>
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
           {/* Email Verification Banner */}
           {user && !user.email_confirmed_at && (

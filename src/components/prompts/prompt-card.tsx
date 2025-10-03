@@ -94,7 +94,7 @@ export default function PromptCard({ prompt, onLike, onBookmark }: PromptCardPro
         </div>
 
         {/* Title */}
-        <h3 className="text-md font-semibold text-card-foreground mb-1 line-clamp-2 leading-tight">
+        <h3 className="text-lg font-semibold text-card-foreground mb-1 line-clamp-2 leading-tight">
           {prompt.title}
         </h3>
 

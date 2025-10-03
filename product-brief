@@ -25,7 +25,7 @@ fast prompt discovery and personal collections, backed by easy sign-in with Goog
     - Creator
     - Date posted
     - Body (**actual prompt text**)
-    - Model (e.g. ChatGPT, Grok, Gemini)
+    - Model (e.g. GPT, Grok, Gemini)
     - **Visibility**: Public or Private (toggleable by creator)
 
 - **Prompt Discovery**
@@ -160,7 +160,7 @@ Additional profile fields:
 ## PromptHub — UI Layout Notes
 
 ### Overall Layout
-Use a **two-pane structure** similar to ChatGPT, Copilot, Grok, and Perplexity:
+Use a **two-pane structure** similar to GPT, Copilot, Grok, and Perplexity:
 
 * **Sidebar (fixed left, ~240 px wide on desktop)**
 * **Main content area** (flex-1, scrollable)

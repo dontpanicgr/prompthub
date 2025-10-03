@@ -10,6 +10,30 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { ModelBadge } from '@/components/ui/model-badge'
+
+const MODELS = [
+  'GPT',
+  'Claude',
+  'Gemini',
+  'Gemma',
+  'Grok',
+  'Perplexity',
+  'GitHub',
+  'Copilot',
+  'Mistral',
+  'Llama',
+  'Pi',
+  'Cohere',
+  'Jasper',
+  'Qwen',
+  'DeepSeek',
+  'Moonshot',
+  'Black Forest Labs',
+  'Alpaca',
+  'Falcon',
+  'Other'
+]
 
 interface EditPromptPageProps {
   params: Promise<{
@@ -115,7 +139,7 @@ export default function EditPromptPage({ params }: EditPromptPageProps) {
         <div className="p-6">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 dark:bg-gray-800 rounded w-32 mb-6"></div>
-            <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-64 mb-8"></div>
+            <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-64 mb-6"></div>
             <div className="space-y-6">
               <div className="h-12 bg-gray-200 dark:bg-gray-800 rounded"></div>
               <div className="h-32 bg-gray-200 dark:bg-gray-800 rounded"></div>
@@ -147,7 +171,7 @@ export default function EditPromptPage({ params }: EditPromptPageProps) {
   return (
     <MainLayout>
       <div className="w-full">
-        <div className="max-w-4xl mx-auto mb-8">
+        <div className="max-w-4xl mx-auto mb-6">
           <h1 className="mb-2">
             Edit Prompt
           </h1>
@@ -181,16 +205,17 @@ export default function EditPromptPage({ params }: EditPromptPageProps) {
                     AI Model *
                   </label>
                   <Select value={formData.model} onValueChange={(value) => setFormData({ ...formData, model: value })}>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select a model" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ChatGPT">ChatGPT</SelectItem>
-                      <SelectItem value="Claude">Claude</SelectItem>
-                      <SelectItem value="Gemini">Gemini</SelectItem>
-                      <SelectItem value="Grok">Grok</SelectItem>
-                      <SelectItem value="Perplexity">Perplexity</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
+                    <SelectContent className="w-full">
+                      {MODELS.map(model => (
+                        <SelectItem key={model} value={model} className="w-full">
+                          <div className="flex items-center gap-2 w-full">
+                            <ModelBadge model={model} size="sm" showIcon variant="transparent" />
+                          </div>
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -291,7 +316,7 @@ export default function EditPromptPage({ params }: EditPromptPageProps) {
                     variant="destructive"
                     onClick={handleDelete}
                     disabled={deleting}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 h-10"
                   >
                     <Trash2 size={16} />
                     {deleting ? 'Deleting...' : 'Delete Prompt'}
@@ -299,21 +324,21 @@ export default function EditPromptPage({ params }: EditPromptPageProps) {
 
                   <div className="flex items-center gap-4">
                     <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => router.back()}
-                      className="flex items-center gap-2"
-                    >
-                      <X size={18} />
-                      Cancel
-                    </Button>
-                    <Button
                       type="submit"
                       disabled={saving}
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-2 h-10"
                     >
                       <Save size={18} />
                       {saving ? 'Saving...' : 'Save Changes'}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => router.back()}
+                      className="flex items-center gap-2 h-10"
+                    >
+                      <X size={18} />
+                      Cancel
                     </Button>
                   </div>
                 </div>

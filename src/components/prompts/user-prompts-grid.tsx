@@ -8,10 +8,13 @@ import { useAuth } from '@/components/auth-provider'
 interface UserPromptsGridProps {
   userId: string
   maxColumns?: 3 | 4
+  searchQuery?: string
+  selectedModels?: string[]
 }
 
-export default function UserPromptsGrid({ userId, maxColumns = 4 }: UserPromptsGridProps) {
+export default function UserPromptsGrid({ userId, maxColumns = 4, searchQuery = '', selectedModels = [] }: UserPromptsGridProps) {
   const [prompts, setPrompts] = useState<any[]>([])
+  const [filteredPrompts, setFilteredPrompts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const { user } = useAuth()
 
@@ -22,6 +25,7 @@ export default function UserPromptsGrid({ userId, maxColumns = 4 }: UserPromptsG
         // Filter prompts by the specific user
         const userPrompts = allPrompts.filter(prompt => prompt.creator_id === userId)
         setPrompts(userPrompts)
+        setFilteredPrompts(userPrompts)
       } catch (error) {
         console.error('Error fetching user prompts:', error)
       } finally {
@@ -32,6 +36,22 @@ export default function UserPromptsGrid({ userId, maxColumns = 4 }: UserPromptsG
     fetchUserPrompts()
   }, [userId])
 
+  // Filter prompts when search query or models change
+  useEffect(() => {
+    const filtered = prompts.filter(prompt => {
+      const matchesSearch = !searchQuery || 
+        prompt.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        prompt.body.toLowerCase().includes(searchQuery.toLowerCase())
+      
+      const matchesModel = selectedModels.length === 0 || 
+        selectedModels.includes(prompt.model)
+      
+      return matchesSearch && matchesModel
+    })
+    
+    setFilteredPrompts(filtered)
+  }, [searchQuery, selectedModels, prompts])
+
   const handleLike = async (promptId: string) => {
     if (!user) return
 
@@ -39,6 +59,15 @@ export default function UserPromptsGrid({ userId, maxColumns = 4 }: UserPromptsG
       const success = await toggleLike(promptId, user.id)
       if (success) {
         setPrompts(prev => prev.map(prompt => 
+          prompt.id === promptId 
+            ? { 
+                ...prompt, 
+                is_liked: !prompt.is_liked,
+                like_count: prompt.is_liked ? prompt.like_count - 1 : prompt.like_count + 1
+              }
+            : prompt
+        ))
+        setFilteredPrompts(prev => prev.map(prompt => 
           prompt.id === promptId 
             ? { 
                 ...prompt, 
@@ -60,6 +89,15 @@ export default function UserPromptsGrid({ userId, maxColumns = 4 }: UserPromptsG
       const success = await toggleBookmark(promptId, user.id)
       if (success) {
         setPrompts(prev => prev.map(prompt => 
+          prompt.id === promptId 
+            ? { 
+                ...prompt, 
+                is_bookmarked: !prompt.is_bookmarked,
+                bookmark_count: prompt.is_bookmarked ? prompt.bookmark_count - 1 : prompt.bookmark_count + 1
+              }
+            : prompt
+        ))
+        setFilteredPrompts(prev => prev.map(prompt => 
           prompt.id === promptId 
             ? { 
                 ...prompt, 
@@ -96,7 +134,7 @@ export default function UserPromptsGrid({ userId, maxColumns = 4 }: UserPromptsG
     )
   }
 
-  if (prompts.length === 0) {
+  if (filteredPrompts.length === 0) {
     return (
       <div className="text-center py-12">
         <div className="text-gray-400 dark:text-gray-500 mb-4">
@@ -105,10 +143,12 @@ export default function UserPromptsGrid({ userId, maxColumns = 4 }: UserPromptsG
           </svg>
         </div>
         <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-          No prompts yet
+          {searchQuery || selectedModels.length > 0 ? 'No prompts found' : 'No prompts yet'}
         </h3>
         <p className="text-gray-500 dark:text-gray-400">
-          This user hasn&apos;t created any public prompts yet.
+          {searchQuery || selectedModels.length > 0 
+            ? 'Try adjusting your search or filter criteria.'
+            : "This user hasn't created any public prompts yet."}
         </p>
       </div>
     )
@@ -120,7 +160,7 @@ export default function UserPromptsGrid({ userId, maxColumns = 4 }: UserPromptsG
 
   return (
     <div className={gridClasses}>
-      {prompts.map((prompt) => (
+      {filteredPrompts.map((prompt) => (
         <PromptCard 
           key={prompt.id} 
           prompt={prompt} 

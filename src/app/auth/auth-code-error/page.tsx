@@ -17,7 +17,7 @@ export default function AuthCodeErrorPage() {
           </p>
         </div>
 
-        <div className="text-left mb-8 space-y-2 text-sm text-muted-foreground">
+        <div className="text-left mb-6 space-y-2 text-sm text-muted-foreground">
           <p>• The authentication process was cancelled</p>
           <p>• Your session expired</p>
           <p>• There was a network error</p>

@@ -205,7 +205,7 @@ export default function PromptDetails({ prompt }: PromptDetailsProps) {
 
   return (
     <div className="w-full">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Main Content */}
         <div className="order-1 lg:order-2 lg:col-span-3">
           {/* Prompt Header - 2 columns */}
@@ -234,7 +234,7 @@ export default function PromptDetails({ prompt }: PromptDetailsProps) {
                 <Button
                   onClick={handleLike}
                   variant={isLiked ? 'default' : 'outline'}
-                  className="h-8 gap-2 border"
+                  className="h-10 gap-2 border"
                 >
                   <Heart size={16} className={isLiked ? 'fill-current' : ''} />
                   {likeCount}
@@ -243,7 +243,7 @@ export default function PromptDetails({ prompt }: PromptDetailsProps) {
                 <Button
                   onClick={handleBookmark}
                   variant={isBookmarked ? 'default' : 'outline'}
-                  className="h-8 gap-2 border"
+                  className="h-10 gap-2 border"
                 >
                   <Bookmark size={16} className={isBookmarked ? 'fill-current' : ''} />
                   {bookmarkCount}
@@ -251,7 +251,7 @@ export default function PromptDetails({ prompt }: PromptDetailsProps) {
                 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="h-8 border">
+                    <Button variant="outline" className="h-10 border">
                       <MoreHorizontal size={16} />
                     </Button>
                   </DropdownMenuTrigger>
@@ -297,7 +297,7 @@ export default function PromptDetails({ prompt }: PromptDetailsProps) {
               <Button
                 onClick={handleCopy}
                 variant="outline"
-                className="h-8 gap-2"
+                className="h-10 gap-2"
               >
                 <Copy size={16} />
                 Copy

@@ -55,7 +55,7 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(getInitialCollapsedState)
   const [userButtonRect, setUserButtonRect] = useState<DOMRect | null>(null)
   const pathname = usePathname()
-  const { signIn } = useAuth()
+  useAuth()
   const { theme, setTheme } = useTheme()
 
   const toggleTheme = () => {
@@ -63,8 +63,8 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
     setTheme(newTheme)
   }
 
-  const handleSignIn = async () => {
-    await signIn()
+  const handleSignIn = () => {
+    window.location.href = '/login?redirect=/'
   }
 
   const handleToggleCollapsed = () => {
@@ -80,27 +80,44 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
     }
   }
 
+  // Listen for external sidebar state changes (e.g., from settings page)
+  useEffect(() => {
+    const handleExternalSidebarChange = (event: CustomEvent) => {
+      setIsCollapsed(event.detail.collapsed)
+    }
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('sidebar-state-change', handleExternalSidebarChange as EventListener)
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('sidebar-state-change', handleExternalSidebarChange as EventListener)
+      }
+    }
+  }, [])
+
   const navItems = [
-    { href: '/create', label: 'Create Prompt', icon: Plus },
-    { href: '/', label: 'Browse Prompts', icon: Compass },
-    { href: '/popular', label: 'Popular', icon: TrendingUp },
+    { href: '/create', label: 'New Prompt', icon: Plus },
+    { href: '/', label: 'Browse', icon: Compass },
+    { href: '/popular', label: 'Trending', icon: TrendingUp },
     { href: '/latest', label: 'Latest', icon: Calendar },
     { href: '/me', label: 'My Prompts', icon: User },
   ]
 
   return (
     <>
-      {/* Mobile menu button */}
-      <button
+      {/* Mobile menu button - Hidden since we use mobile top header now */}
+      {/* <button
         className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-nav-active text-nav-foreground border border-border"
         onClick={() => setIsOpen(!isOpen)}
       >
         {isOpen ? <X size={20} /> : <PanelLeft size={20} />}
-      </button>
+      </button> */}
 
-      {/* Sidebar - collapsible */}
+      {/* Sidebar - collapsible - Hidden on mobile */}
       <aside className={`
-        fixed inset-y-0 left-0 z-40 bg-background text-foreground border-r border-border
+        hidden lg:block fixed inset-y-0 left-0 z-40 bg-background text-foreground border-r border-border
         transform transition-all duration-150 ease-out h-screen overflow-hidden
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         ${isCollapsed ? 'w-16 cursor-pointer' : 'w-64'}
@@ -214,11 +231,11 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
                   toggleTheme()
                 }}
                 className={`w-full flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-3 px-3'} h-10 text-sm font-medium text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground rounded-lg transition-colors group relative`}
-                title={isCollapsed ? (theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode') : undefined}
+                title={isCollapsed ? (theme === 'dark' ? 'Turn lights on' : 'Turn lights off') : undefined}
               >
                 {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
                 {!isCollapsed && (
-                  <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
+                  <span>{theme === 'dark' ? 'Lights on' : 'Lights off'}</span>
                 )}
                 {isCollapsed && (
                   <div className="absolute left-full ml-3 px-3 py-1.5 bg-gray-900 text-white text-sm rounded-md  opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 dark:bg-gray-700">
@@ -285,13 +302,13 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
         </div>
       </aside>
 
-      {/* Mobile overlay */}
-      {isOpen && (
+      {/* Mobile overlay - Hidden since we use mobile drawer now */}
+      {/* {isOpen && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
           onClick={() => setIsOpen(false)}
         />
-      )}
+      )} */}
 
       {/* Click outside to close user menu */}
       {isUserMenuOpen && (

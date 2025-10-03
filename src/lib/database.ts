@@ -580,3 +580,67 @@ export async function getBookmarkedPrompts(userId: string): Promise<Prompt[]> {
     is_bookmarked: true // User has bookmarked this prompt
   })) || []
 }
+
+// Get user engagement stats (likes and bookmarks received on their prompts)
+export async function getUserEngagementStats(userId: string, includePrivate: boolean = false): Promise<{
+  prompts_created: number
+  likes_received: number
+  bookmarks_received: number
+}> {
+  try {
+    // Get user's created prompts (public only by default, include private if specified)
+    let query = supabase
+      .from('prompts')
+      .select('id')
+      .eq('creator_id', userId)
+    
+    if (!includePrivate) {
+      query = query.eq('is_public', true)
+    }
+
+    const { data: prompts, error: promptsError } = await query
+
+    if (promptsError) {
+      console.error('Error fetching user prompts:', promptsError)
+      return { prompts_created: 0, likes_received: 0, bookmarks_received: 0 }
+    }
+
+    const promptIds = prompts?.map(p => p.id) || []
+    const promptsCreated = promptIds.length
+
+    if (promptIds.length === 0) {
+      return { prompts_created: 0, likes_received: 0, bookmarks_received: 0 }
+    }
+
+    // Get total likes received on user's prompts
+    const { data: likes, error: likesError } = await supabase
+      .from('likes')
+      .select('id')
+      .in('prompt_id', promptIds)
+
+    if (likesError) {
+      console.error('Error fetching likes received:', likesError)
+      return { prompts_created: promptsCreated, likes_received: 0, bookmarks_received: 0 }
+    }
+
+    // Get total bookmarks received on user's prompts
+    const { data: bookmarks, error: bookmarksError } = await supabase
+      .from('bookmarks')
+      .select('id')
+      .in('prompt_id', promptIds)
+
+    if (bookmarksError) {
+      console.error('Error fetching bookmarks received:', bookmarksError)
+      return { prompts_created: promptsCreated, likes_received: likes?.length || 0, bookmarks_received: 0 }
+    }
+
+    return {
+      prompts_created: promptsCreated,
+      likes_received: likes?.length || 0,
+      bookmarks_received: bookmarks?.length || 0
+    }
+  } catch (error) {
+    console.error('Error calculating user engagement stats:', error)
+    return { prompts_created: 0, likes_received: 0, bookmarks_received: 0 }
+  }
+}

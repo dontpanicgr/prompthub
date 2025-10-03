@@ -5,17 +5,33 @@ import { useRouter } from 'next/navigation'
 import { Save, X, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import { createPrompt } from '@/lib/database'
+import { analytics } from '@/lib/analytics'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { ModelBadge } from '@/components/ui/model-badge'
 
 const MODELS = [
-  'ChatGPT',
+  'GPT',
   'Claude',
   'Gemini',
+  'Gemma',
   'Grok',
   'Perplexity',
+  'GitHub',
+  'Copilot',
+  'Mistral',
+  'Llama',
+  'Pi',
+  'Cohere',
+  'Jasper',
+  'Qwen',
+  'DeepSeek',
+  'Moonshot',
+  'Black Forest Labs',
+  'Alpaca',
+  'Falcon',
   'Other'
 ]
 
@@ -26,7 +42,7 @@ export default function CreatePromptForm() {
   const [formData, setFormData] = useState({
     title: '',
     body: '',
-    model: 'ChatGPT',
+    model: 'GPT',
     is_public: true
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -108,6 +124,16 @@ export default function CreatePromptForm() {
       console.log('Created prompt result:', newPrompt)
 
       if (newPrompt) {
+        // Track successful form submission
+        analytics.trackFormSubmission('Create Prompt', true)
+        analytics.trackCustomEvent('Prompt Created', {
+          promptId: newPrompt.id,
+          model: formData.model,
+          isPublic: formData.is_public,
+          titleLength: formData.title.length,
+          bodyLength: formData.body.length
+        })
+        
         // Redirect to the new prompt
         console.log('Redirecting to:', `/prompt/${newPrompt.id}`)
         router.push(`/prompt/${newPrompt.id}`)
@@ -117,6 +143,11 @@ export default function CreatePromptForm() {
       }
     } catch (error) {
       console.error('Error creating prompt:', error)
+      
+      // Track failed form submission
+      analytics.trackFormSubmission('Create Prompt', false)
+      analytics.trackError(error as Error, 'create-prompt-form')
+      
       // TODO: Show error message to user
     } finally {
       setIsSubmitting(false)
@@ -124,6 +155,7 @@ export default function CreatePromptForm() {
   }
 
   const handleCancel = () => {
+    analytics.trackButtonClick('Cancel Create Prompt', 'create-prompt-form')
     router.back()
   }
 
@@ -151,24 +183,35 @@ export default function CreatePromptForm() {
               )}
             </div>
 
-            {/* Model */}
+
+            {/* Model Selection Badges */}
             <div>
-              <label htmlFor="model" className="block text-sm font-medium mb-2">
+              <label className="block text-sm font-medium mb-2">
                 AI Model *
               </label>
-              <Select value={formData.model} onValueChange={(value) => setFormData(prev => ({ ...prev, model: value }))}>
-                <SelectTrigger className={errors.model ? 'border-destructive' : ''}>
-                  <SelectValue placeholder="Select a model" />
-                </SelectTrigger>
-                <SelectContent>
-                  {MODELS.map(model => (
-                    <SelectItem key={model} value={model}>{model}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className={`flex flex-wrap gap-2 p-3 border rounded-md ${errors.model ? 'border-destructive' : ''}`}>
+                {MODELS.map((model) => (
+                  <ModelBadge
+                    key={model}
+                    model={model}
+                    showIcon={true}
+                    size="md"
+                    variant="outline"
+                    onClick={() => setFormData(prev => ({ ...prev, model }))}
+                    className={`cursor-pointer transition-all ${
+                      formData.model === model 
+                        ? 'bg-primary text-primary-foreground border-primary' 
+                        : 'hover:bg-muted'
+                    }`}
+                  />
+                ))}
+              </div>
               {errors.model && (
                 <p className="mt-1 text-sm text-destructive">{errors.model}</p>
               )}
+              <p className="mt-1 text-xs text-muted-foreground">
+                Click a model to select it. Only one model can be selected at a time.
+              </p>
             </div>
 
             {/* Prompt Body */}
@@ -264,23 +307,23 @@ export default function CreatePromptForm() {
             </div>
 
             {/* Actions */}
-            <div className="flex items-center justify-end gap-4 pt-6 border-t">
+            <div className="flex items-center justify-start gap-4 pt-6 border-t">
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex items-center gap-2 h-10"
+              >
+                <Save size={18} />
+                {isSubmitting ? 'Creating...' : 'Create Prompt'}
+              </Button>
               <Button
                 type="button"
                 variant="outline"
                 onClick={handleCancel}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 h-10"
               >
                 <X size={18} />
                 Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="flex items-center gap-2"
-              >
-                <Save size={18} />
-                {isSubmitting ? 'Creating...' : 'Create Prompt'}
               </Button>
             </div>
           </form>

@@ -41,7 +41,7 @@ export default function SearchBar() {
           All Models
         </Button>
         <Button variant="outline" size="sm" className="rounded-full">
-          ChatGPT
+          GPT
         </Button>
         <Button variant="outline" size="sm" className="rounded-full">
           Claude

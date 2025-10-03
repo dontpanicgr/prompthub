@@ -10,9 +10,22 @@ interface EventData {
   custom?: Record<string, any>
 }
 
+// Declare global types for analytics
+declare global {
+  interface Window {
+    gtag: (...args: any[]) => void
+    mixpanel: any
+    dataLayer: any[]
+  }
+}
+
 class Analytics {
   private isEnabled = process.env.NODE_ENV === 'production'
   private events: Array<{ type: EventType; data: EventData; timestamp: number }> = []
+  private googleAnalyticsId = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID
+  private mixpanelToken = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN
+  private mixpanelRetryCount = 0
+  private maxMixpanelRetries = 10
 
   // Track page views
   trackPageView(page: string, additionalData?: Record<string, any>) {
@@ -40,11 +53,89 @@ class Analytics {
       console.log('Analytics Event:', event)
     }
 
-    // In production, you would send this to your analytics service
-    if (this.isEnabled && typeof window !== 'undefined') {
-      // Example: Send to Google Analytics, Mixpanel, etc.
-      // gtag('event', type, data)
+    // Send to analytics services
+    if (typeof window !== 'undefined') {
+      this.sendToGoogleAnalytics(type, data)
+      this.sendToMixpanel(type, data)
     }
+  }
+
+  // Send event to Google Analytics
+  private sendToGoogleAnalytics(type: EventType, data: EventData) {
+    if (!this.googleAnalyticsId || !window.gtag) return
+
+    try {
+      if (type === 'page_view') {
+        window.gtag('config', this.googleAnalyticsId, {
+          page_title: document.title,
+          page_location: window.location.href,
+          page_path: data.page,
+        })
+      } else {
+        window.gtag('event', type, {
+          event_category: data.category || 'general',
+          event_label: data.label,
+          value: data.value,
+          custom_parameters: data.custom,
+        })
+      }
+    } catch (error) {
+      console.error('Google Analytics error:', error)
+    }
+  }
+
+  // Send event to Mixpanel
+  private sendToMixpanel(type: EventType, data: EventData) {
+    if (!this.mixpanelToken) return
+
+    // Check if Mixpanel is available and initialized
+    if (!window.mixpanel || typeof window.mixpanel.track !== 'function') {
+      if (this.mixpanelRetryCount < this.maxMixpanelRetries) {
+        this.mixpanelRetryCount++
+        if (process.env.NODE_ENV === 'development') {
+          console.warn(`Mixpanel not ready, retrying in 1000ms (attempt ${this.mixpanelRetryCount}/${this.maxMixpanelRetries})`)
+        }
+        setTimeout(() => this.sendToMixpanel(type, data), 1000)
+      } else if (process.env.NODE_ENV === 'development') {
+        console.warn('Mixpanel not ready after max retries, skipping event:', type)
+      }
+      return
+    }
+
+    // Reset retry count on successful connection
+    this.mixpanelRetryCount = 0
+
+    try {
+      const eventName = this.formatEventName(type, data)
+      const properties = {
+        ...data.custom,
+        category: data.category,
+        label: data.label,
+        value: data.value,
+        page: data.page,
+        url: window.location.href,
+        timestamp: new Date().toISOString(),
+      }
+
+      window.mixpanel.track(eventName, properties)
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Mixpanel event sent:', eventName, properties)
+      }
+    } catch (error) {
+      console.error('Mixpanel error:', error)
+    }
+  }
+
+  // Format event name for Mixpanel
+  private formatEventName(type: EventType, data: EventData): string {
+    if (type === 'page_view') {
+      return 'Page View'
+    }
+    if (type === 'user_action' && data.action) {
+      return data.action.replace(/\s+/g, ' ').trim()
+    }
+    return type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
   }
 
   // Track errors
@@ -67,6 +158,73 @@ class Analytics {
       label: metric,
       value,
       custom: { unit }
+    })
+  }
+
+  // Track user identification (for Mixpanel)
+  identify(userId: string, userProperties?: Record<string, any>) {
+    if (typeof window !== 'undefined' && window.mixpanel && typeof window.mixpanel.identify === 'function') {
+      try {
+        window.mixpanel.identify(userId)
+        if (userProperties && window.mixpanel.people && typeof window.mixpanel.people.set === 'function') {
+          window.mixpanel.people.set(userProperties)
+        }
+      } catch (error) {
+        console.error('Mixpanel identify error:', error)
+      }
+    } else if (process.env.NODE_ENV === 'development') {
+      console.warn('Mixpanel not ready for user identification')
+    }
+  }
+
+  // Track user properties (for Mixpanel)
+  setUserProperties(properties: Record<string, any>) {
+    if (typeof window !== 'undefined' && window.mixpanel && window.mixpanel.people && typeof window.mixpanel.people.set === 'function') {
+      try {
+        window.mixpanel.people.set(properties)
+      } catch (error) {
+        console.error('Mixpanel set properties error:', error)
+      }
+    } else if (process.env.NODE_ENV === 'development') {
+      console.warn('Mixpanel not ready for setting user properties')
+    }
+  }
+
+  // Track custom events with better naming
+  trackCustomEvent(eventName: string, properties?: Record<string, any>) {
+    this.trackEvent('user_action', {
+      action: eventName,
+      custom: properties,
+    })
+  }
+
+  // Track button clicks
+  trackButtonClick(buttonName: string, location?: string) {
+    this.trackEvent('user_action', {
+      action: 'Button Click',
+      category: 'engagement',
+      label: buttonName,
+      custom: { location },
+    })
+  }
+
+  // Track form submissions
+  trackFormSubmission(formName: string, success: boolean = true) {
+    this.trackEvent('user_action', {
+      action: 'Form Submission',
+      category: 'engagement',
+      label: formName,
+      custom: { success },
+    })
+  }
+
+  // Track search queries
+  trackSearch(query: string, resultsCount?: number) {
+    this.trackEvent('user_action', {
+      action: 'Search',
+      category: 'engagement',
+      label: query,
+      custom: { resultsCount },
     })
   }
 

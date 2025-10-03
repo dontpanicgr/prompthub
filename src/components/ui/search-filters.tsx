@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Search, Filter, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -10,11 +10,25 @@ import { ModelBadge } from '@/components/ui/model-badge'
 
 const MODELS = [
   'All Models',
-  'ChatGPT',
+  'GPT',
   'Claude',
   'Gemini',
+  'Gemma',
   'Grok',
   'Perplexity',
+  'GitHub',
+  'Copilot',
+  'Mistral',
+  'Llama',
+  'Pi',
+  'Cohere',
+  'Jasper',
+  'Qwen',
+  'DeepSeek',
+  'Moonshot',
+  'Black Forest Labs',
+  'Alpaca',
+  'Falcon',
   'Other'
 ]
 
@@ -58,6 +72,11 @@ export default function SearchFilters({
     setSelectedModels([])
     onSearch('', [])
   }
+
+  // Trigger search when search query changes
+  useEffect(() => {
+    onSearch(searchQuery, selectedModels)
+  }, [searchQuery, selectedModels, onSearch])
 
   return (
     <div className="mb-6">
@@ -123,7 +142,7 @@ export default function SearchFilters({
           {/* Clear all in same row */}
           <Button type="button" variant="ghost" size="sm" onClick={clearFilters}>
             <X className="h-4 w-4 mr-1" />
-            Clear
+            Clear all
           </Button>
         </div>
       )}

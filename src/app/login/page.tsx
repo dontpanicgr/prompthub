@@ -6,6 +6,8 @@ import Link from 'next/link'
 import MainLayout from '@/components/layout/main-layout'
 import { Eye, EyeOff, Mail, Lock, ArrowLeft } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 
 function LoginContent() {
   const router = useRouter()
@@ -78,7 +80,7 @@ function LoginContent() {
         {/* Back Button */}
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-8 transition-colors"
+          className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-6 transition-colors"
         >
           <ArrowLeft size={20} />
           Back to Home
@@ -87,7 +89,7 @@ function LoginContent() {
         {/* Login Form */}
         <div className="bg-card text-card-foreground rounded-2xl p-8 border border-border">
           {/* Header */}
-          <div className="text-center mb-8">
+          <div className="text-center mb-6">
             <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <span className="text-2xl font-bold text-white">P</span>
             </div>
@@ -109,19 +111,19 @@ function LoginContent() {
           {/* Email/Password Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium mb-2">
                 Email address
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail size={20} className="text-gray-400" />
+                  <Mail size={20} className="text-muted-foreground" />
                 </div>
-                <input
+                <Input
                   type="email"
                   id="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  className="pl-10"
                   placeholder="Enter your email"
                   required
                 />
@@ -129,19 +131,19 @@ function LoginContent() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium mb-2">
                 Password
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock size={20} className="text-gray-400" />
+                  <Lock size={20} className="text-muted-foreground" />
                 </div>
-                <input
+                <Input
                   type={showPassword ? 'text' : 'password'}
                   id="password"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  className="pl-10 pr-12"
                   placeholder="Enter your password"
                   required
                 />
@@ -151,9 +153,9 @@ function LoginContent() {
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                 >
                   {showPassword ? (
-                    <EyeOff size={20} className="text-gray-400 hover:text-gray-600" />
+                    <EyeOff size={20} className="text-muted-foreground hover:text-foreground" />
                   ) : (
-                    <Eye size={20} className="text-gray-400 hover:text-gray-600" />
+                    <Eye size={20} className="text-muted-foreground hover:text-foreground" />
                   )}
                 </button>
               </div>
@@ -162,19 +164,19 @@ function LoginContent() {
             <div className="flex items-center justify-between">
               <Link
                 href="/forgot-password"
-                className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                className="text-sm text-primary hover:underline"
               >
                 Forgot password?
               </Link>
             </div>
 
-            <button
+            <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+              className="w-full h-10"
             >
               {loading ? 'Signing in...' : 'Continue'}
-            </button>
+            </Button>
           </form>
 
           {/* Divider */}
@@ -190,10 +192,11 @@ function LoginContent() {
           </div>
 
           {/* Google Sign In */}
-          <button
+          <Button
             onClick={handleGoogleSignIn}
             disabled={loading}
-            className="w-full bg-card text-card-foreground py-3 px-4 rounded-lg border border-border hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-3"
+            variant="outline"
+            className="w-full flex items-center justify-center gap-3 h-10"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
@@ -214,15 +217,15 @@ function LoginContent() {
               />
             </svg>
             Continue with Google
-          </button>
+          </Button>
 
           {/* Sign Up Link */}
           <div className="mt-6 text-center">
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-muted-foreground">
               Don't have an account?{' '}
               <Link
                 href="/signup"
-                className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                className="text-primary hover:underline font-medium"
               >
                 Sign up
               </Link>
@@ -231,13 +234,13 @@ function LoginContent() {
         </div>
 
         {/* Footer */}
-        <div className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
+        <div className="mt-8 text-center text-sm text-muted-foreground">
           <div className="flex items-center justify-center gap-4">
-            <Link href="/privacy" className="hover:text-gray-700 dark:hover:text-gray-300">
+            <Link href="/privacy" className="hover:text-foreground">
               Privacy policy
             </Link>
             <span>•</span>
-            <Link href="/terms" className="hover:text-gray-700 dark:hover:text-gray-300">
+            <Link href="/terms" className="hover:text-foreground">
               Terms of service
             </Link>
           </div>

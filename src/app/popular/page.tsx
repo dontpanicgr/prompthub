@@ -33,6 +33,8 @@ export default function PopularPage() {
 
   const handleSearch = (query: string, models: string[]) => {
     console.log('Search query:', query, 'Models:', models)
+    setSearchQuery(query)
+    setSelectedModels(models)
     // Search is handled by filtering the prompts
   }
 
@@ -63,7 +65,7 @@ export default function PopularPage() {
   return (
     <MainLayout>
       <div className="w-full">
-        <div className="mb-8">
+        <div className="mb-6">
           <h1 className="mb-2">
             Trending Prompts
           </h1>

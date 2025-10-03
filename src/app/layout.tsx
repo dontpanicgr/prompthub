@@ -5,6 +5,8 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/components/auth-provider";
 import { Toaster } from "@/components/ui/sonner";
 import ErrorBoundary from "@/components/ui/error-boundary";
+import { Analytics } from '@vercel/analytics/next';
+import { AnalyticsProvider, GoogleAnalytics, MixpanelAnalytics } from '@/components/analytics-provider';
 import '@/lib/analytics' // Import analytics to enable tracking
 
 const geistSans = Geist({
@@ -115,11 +117,16 @@ export default function RootLayout({
         >
           <ErrorBoundary>
             <AuthProvider>
-              {children}
+              <AnalyticsProvider>
+                {children}
+              </AnalyticsProvider>
             </AuthProvider>
           </ErrorBoundary>
           <Toaster />
         </ThemeProvider>
+        <GoogleAnalytics />
+        <MixpanelAnalytics />
+        <Analytics />
       </body>
     </html>
   );

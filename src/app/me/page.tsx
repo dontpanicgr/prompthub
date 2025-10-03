@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import MainLayout from '@/components/layout/main-layout'
 import PromptCard from '@/components/prompts/prompt-card'
@@ -8,7 +8,7 @@ import SearchFilters from '@/components/ui/search-filters'
 import UserBioCard from '@/components/ui/user-bio-card'
 import { Plus, Heart, Bookmark, User } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
-import { getUserPrompts, getLikedPrompts, getBookmarkedPrompts, toggleLike, toggleBookmark, getUserById } from '@/lib/database'
+import { getUserPrompts, getLikedPrompts, getBookmarkedPrompts, toggleLike, toggleBookmark, getUserById, getUserEngagementStats } from '@/lib/database'
 import type { Prompt, User as ProfileUser } from '@/lib/database'
 
 export default function MyPromptsPage() {
@@ -23,6 +23,8 @@ export default function MyPromptsPage() {
   const [selectedModels, setSelectedModels] = useState<string[]>([])
   const [userStats, setUserStats] = useState({
     prompts_created: 0,
+    likes_received: 0,
+    bookmarks_received: 0,
     prompts_liked: 0,
     prompts_bookmarked: 0
   })
@@ -50,18 +52,21 @@ export default function MyPromptsPage() {
         const createdPrompts = await getUserPrompts(user.id, user.id)
         console.log('Created prompts:', createdPrompts)
         
-        // Get liked and bookmarked prompts for stats
+        // Get engagement stats (likes and bookmarks received) - include private prompts for own profile
+        const stats = await getUserEngagementStats(user.id, true)
+        
+        // Get counts of prompts the user has liked and bookmarked
         const likedPrompts = await getLikedPrompts(user.id)
         const bookmarkedPrompts = await getBookmarkedPrompts(user.id)
         
-        const stats = {
-          prompts_created: createdPrompts.length,
+        const updatedStats = {
+          ...stats,
           prompts_liked: likedPrompts.length,
           prompts_bookmarked: bookmarkedPrompts.length
         }
         
-        console.log('User stats:', stats)
-        setUserStats(stats)
+        console.log('User stats:', updatedStats)
+        setUserStats(updatedStats)
         
         // Set initial prompts (created)
         setPrompts(createdPrompts)
@@ -103,8 +108,8 @@ export default function MyPromptsPage() {
         <div className="p-6">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 dark:bg-gray-800 rounded w-32 mb-6"></div>
-            <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-64 mb-8"></div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-64 mb-6"></div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
               {[...Array(3)].map((_, i) => (
                 <div key={i} className="h-24 bg-gray-200 dark:bg-gray-800 rounded"></div>
               ))}
@@ -214,7 +219,7 @@ export default function MyPromptsPage() {
     }
   }
 
-  const handleSearch = (query: string, models: string[]) => {
+  const handleSearch = useCallback((query: string, models: string[]) => {
     console.log('Search triggered:', { query, models, totalPrompts: prompts.length })
     setSearchQuery(query)
     setSelectedModels(models)
@@ -229,12 +234,12 @@ export default function MyPromptsPage() {
     
     console.log('Filtered results:', filtered.length)
     setFilteredPrompts(filtered)
-  }
+  }, [prompts])
 
   return (
     <MainLayout>
       <div className="w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Sidebar - Profile Card */}
           <div className="lg:col-span-1">
             <UserBioCard
@@ -251,13 +256,13 @@ export default function MyPromptsPage() {
 
           {/* Main Content */}
           <div className="lg:col-span-3">
-            <div className="mb-8">
+            <div className="mb-6">
               <h1 className="mb-2">My Prompts</h1>
               <p className="text-sm text-muted-foreground">Manage your created, liked, and bookmarked prompts</p>
             </div>
 
             {/* Tabs */}
-            <div className="mb-8">
+            <div className="mb-6">
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => handleTabChange('created')}
