@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Heart, Bookmark, Copy } from 'lucide-react'
+import { toast } from 'sonner'
 import { ModelBadge } from '@/components/ui/model-badge'
 import { PrivateBadge } from '@/components/ui/private-badge'
 
@@ -41,24 +42,40 @@ export default function PromptCard({ prompt, onLike, onBookmark }: PromptCardPro
   const handleLike = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    setIsLiked(!isLiked)
-    setLikeCount(prev => isLiked ? prev - 1 : prev + 1)
+    const newLikedState = !isLiked
+    setIsLiked(newLikedState)
+    setLikeCount(prev => newLikedState ? prev + 1 : prev - 1)
     onLike(prompt.id)
+    
+    // Show toast notification
+    if (newLikedState) {
+      toast.success('Prompt liked!')
+    } else {
+      toast.info('Prompt unliked')
+    }
   }
 
   const handleBookmark = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    setIsBookmarked(!isBookmarked)
-    setBookmarkCount(prev => isBookmarked ? prev - 1 : prev + 1)
+    const newBookmarkedState = !isBookmarked
+    setIsBookmarked(newBookmarkedState)
+    setBookmarkCount(prev => newBookmarkedState ? prev + 1 : prev - 1)
     onBookmark(prompt.id)
+    
+    // Show toast notification
+    if (newBookmarkedState) {
+      toast.success('Prompt bookmarked!')
+    } else {
+      toast.info('Prompt removed from bookmarks')
+    }
   }
 
   const handleCopy = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
     navigator.clipboard.writeText(prompt.body)
-    // TODO: Show toast notification
+    toast.success('Prompt copied to clipboard!')
   }
 
   const formatDate = (dateString: string) => {

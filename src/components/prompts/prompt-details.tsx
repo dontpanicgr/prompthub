@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { toast } from 'sonner'
 import { 
   Heart, 
   Bookmark, 
@@ -124,11 +125,19 @@ export default function PromptDetails({ prompt }: PromptDetailsProps) {
     
     try {
       await toggleLike(prompt.id, user.id)
+      
+      // Show toast notification
+      if (newLikedState) {
+        toast.success('Prompt liked!')
+      } else {
+        toast.info('Prompt unliked')
+      }
     } catch (error) {
       // Revert on error
       setIsLiked(!newLikedState)
       setLikeCount(prev => newLikedState ? prev - 1 : prev + 1)
       console.error('Error toggling like:', error)
+      toast.error('Failed to update like status')
     }
   }
 
@@ -145,11 +154,19 @@ export default function PromptDetails({ prompt }: PromptDetailsProps) {
     
     try {
       await toggleBookmark(prompt.id, user.id)
+      
+      // Show toast notification
+      if (newBookmarkedState) {
+        toast.success('Prompt bookmarked!')
+      } else {
+        toast.info('Prompt removed from bookmarks')
+      }
     } catch (error) {
       // Revert on error
       setIsBookmarked(!newBookmarkedState)
       setBookmarkCount(prev => newBookmarkedState ? prev - 1 : prev + 1)
       console.error('Error toggling bookmark:', error)
+      toast.error('Failed to update bookmark status')
     }
   }
 

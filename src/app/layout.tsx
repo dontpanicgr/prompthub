@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/sonner";
 import ErrorBoundary from "@/components/ui/error-boundary";
 import { Analytics } from '@vercel/analytics/next';
 import { AnalyticsProvider, GoogleAnalytics, MixpanelAnalytics } from '@/components/analytics-provider';
+import { Suspense } from 'react';
 import '@/lib/analytics' // Import analytics to enable tracking
 
 const geistSans = Geist({
@@ -117,9 +118,11 @@ export default function RootLayout({
         >
           <ErrorBoundary>
             <AuthProvider>
-              <AnalyticsProvider>
-                {children}
-              </AnalyticsProvider>
+              <Suspense fallback={<div />}>
+                <AnalyticsProvider>
+                  {children}
+                </AnalyticsProvider>
+              </Suspense>
             </AuthProvider>
           </ErrorBoundary>
           <Toaster />
