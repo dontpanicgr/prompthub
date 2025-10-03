@@ -1,7 +1,14 @@
+'use client'
+
 import Link from 'next/link'
 import { AlertCircle, ArrowLeft } from 'lucide-react'
+import { useSearchParams } from 'next/navigation'
 
 export default function AuthCodeErrorPage() {
+  const searchParams = useSearchParams()
+  const error = searchParams.get('error')
+  const description = searchParams.get('description')
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="max-w-md w-full bg-card text-card-foreground rounded-lg p-8 text-center border border-border">
@@ -16,6 +23,16 @@ export default function AuthCodeErrorPage() {
             There was an error signing you in. This could be due to:
           </p>
         </div>
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg text-left">
+            <p className="text-sm font-medium text-red-800 dark:text-red-200">Error Details:</p>
+            <p className="text-xs text-red-600 dark:text-red-300 mt-1">{error}</p>
+            {description && (
+              <p className="text-xs text-red-500 dark:text-red-400 mt-1">{description}</p>
+            )}
+          </div>
+        )}
 
         <div className="text-left mb-6 space-y-2 text-sm text-muted-foreground">
           <p>• The authentication process was cancelled</p>

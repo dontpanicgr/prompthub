@@ -195,7 +195,7 @@ export default function CreatePromptForm() {
                     key={model}
                     model={model}
                     showIcon={true}
-                    size="md"
+                    size="sm"
                     variant="outline"
                     onClick={() => setFormData(prev => ({ ...prev, model }))}
                     className={`cursor-pointer transition-all ${
@@ -226,12 +226,17 @@ export default function CreatePromptForm() {
                 onChange={handleInputChange}
                 rows={12}
                 placeholder="Enter your AI prompt here. Be specific and detailed to get the best results..."
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-vertical bg-card text-foreground placeholder:text-muted-foreground ${
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-vertical bg-card text-foreground placeholder:text-muted-foreground font-sans ${
                   errors.body ? 'border-destructive' : 'border-input'
                 }`}
               />
               <div className="mt-1 flex justify-between text-sm text-muted-foreground">
-                <span>{errors.body || ''}</span>
+                <span className="flex items-center gap-2">
+                  {errors.body || ''}
+                  <span className="text-sm">
+                    💡 <strong>Markdown supported!</strong> Use **bold**, *italic*, `code`, # headers, - lists, and more.
+                  </span>
+                </span>
                 <span>{formData.body.length}/5000</span>
               </div>
             </div>

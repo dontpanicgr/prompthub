@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import PromptCard from './prompt-card'
 import { getPublicPrompts, toggleLike, toggleBookmark } from '@/lib/database'
 import { useAuth } from '@/components/auth-provider'
+import { toast } from 'sonner'
+import { useRouter } from 'next/navigation'
 import type { Prompt } from '@/lib/database'
 
 interface PromptGridProps {
@@ -24,6 +26,7 @@ export default function PromptGrid({
   const [prompts, setPrompts] = useState<Prompt[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const { user } = useAuth()
+  const router = useRouter()
 
   // Use external props if provided, otherwise fetch data
   const displayPrompts = externalPrompts || prompts
@@ -48,7 +51,15 @@ export default function PromptGrid({
   }, [user?.id, externalPrompts])
 
   const handleLike = async (promptId: string) => {
-    if (!user) return
+    if (!user) {
+      toast.error('Please sign in to like prompts', {
+        action: {
+          label: 'Sign In',
+          onClick: () => router.push('/login')
+        }
+      })
+      return
+    }
 
     // Use external handler if provided
     if (externalOnLike) {
@@ -76,7 +87,15 @@ export default function PromptGrid({
   }
 
   const handleBookmark = async (promptId: string) => {
-    if (!user) return
+    if (!user) {
+      toast.error('Please sign in to bookmark prompts', {
+        action: {
+          label: 'Sign In',
+          onClick: () => router.push('/login')
+        }
+      })
+      return
+    }
 
     // Use external handler if provided
     if (externalBookmark) {

@@ -1,5 +1,72 @@
 import { supabase } from './supabase'
 
+// Test database connection and table existence
+export async function testDatabaseConnection() {
+  try {
+    console.log('Testing database connection...')
+    console.log('Supabase client:', supabase)
+    console.log('Supabase URL:', supabase.supabaseUrl)
+    console.log('Supabase Key (first 20 chars):', supabase.supabaseKey?.substring(0, 20) + '...')
+    
+    // Test 1: Basic Supabase health check
+    console.log('Test 1: Basic health check...')
+    const { data: healthData, error: healthError } = await supabase
+      .from('_supabase_migrations')
+      .select('*')
+      .limit(1)
+    
+    console.log('Health check result:', { data: healthData, error: healthError })
+    
+    // Test 2: Try to access profiles table
+    console.log('Test 2: Accessing profiles table...')
+    const { data: profilesData, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id')
+      .limit(1)
+    
+    console.log('Profiles table result:', { data: profilesData, error: profilesError })
+    
+    if (profilesError) {
+      console.error('Profiles table error:', profilesError)
+      console.error('Error code:', profilesError.code)
+      console.error('Error message:', profilesError.message)
+      console.error('Error details:', profilesError.details)
+      console.error('Error hint:', profilesError.hint)
+    } else {
+      console.log('Profiles table accessible')
+    }
+    
+    // Test 3: Try to access prompts table
+    console.log('Test 3: Accessing prompts table...')
+    const { data: promptsData, error: promptsError } = await supabase
+      .from('prompts')
+      .select('id')
+      .limit(1)
+    
+    console.log('Prompts table result:', { data: promptsData, error: promptsError })
+    
+    if (promptsError) {
+      console.error('Prompts table error:', promptsError)
+      console.error('Error code:', promptsError.code)
+      console.error('Error message:', promptsError.message)
+      console.error('Error details:', promptsError.details)
+      console.error('Error hint:', promptsError.hint)
+    } else {
+      console.log('Prompts table accessible')
+    }
+    
+    // If we can access at least one table, consider it a success
+    const hasAccess = !profilesError || !promptsError
+    console.log('Database connection test result:', hasAccess)
+    return hasAccess
+    
+  } catch (error) {
+    console.error('Database test exception:', error)
+    console.error('Exception details:', JSON.stringify(error, null, 2))
+    return false
+  }
+}
+
 export interface Prompt {
   id: string
   title: string
@@ -33,48 +100,126 @@ export interface User {
 
 // Get all public prompts
 export async function getPublicPrompts(userId?: string): Promise<Prompt[]> {
-  const { data, error } = await supabase
-    .from('prompts')
-    .select(`
-      *,
-      creator:profiles!prompts_creator_id_fkey(id, name, avatar_url),
-      like_count:likes(count),
-      bookmark_count:bookmarks(count)
-    `)
-    .eq('is_public', true)
-    .order('created_at', { ascending: false })
+  try {
+    console.log('Fetching public prompts...')
+    
+    // First, try a simple query to get basic prompts
+    const { data: basicData, error: basicError } = await supabase
+      .from('prompts')
+      .select('*')
+      .eq('is_public', true)
+      .order('created_at', { ascending: false })
 
-  if (error) {
-    console.error('Error fetching prompts:', error)
-    return []
-  }
+    if (basicError) {
+      console.error('Error fetching basic prompts:', basicError)
+      return []
+    }
 
-  // Get user's likes and bookmarks if userId provided
-  let userLikes: string[] = []
-  let userBookmarks: string[] = []
+    console.log('Basic prompts fetched successfully:', basicData?.length || 0)
 
-  if (userId) {
-    const { data: likes } = await supabase
+    // If no basic data, return empty array
+    if (!basicData || basicData.length === 0) {
+      console.log('No prompts found in database')
+      return []
+    }
+
+    // Now try to get creator information
+    const { data: promptsWithCreator, error: creatorError } = await supabase
+      .from('prompts')
+      .select(`
+        *,
+        creator:profiles!prompts_creator_id_fkey(id, name, avatar_url)
+      `)
+      .eq('is_public', true)
+      .order('created_at', { ascending: false })
+
+    if (creatorError) {
+      console.error('Error fetching prompts with creator:', creatorError)
+      // Fallback to basic data without creator info
+      return basicData.map(prompt => ({
+        ...prompt,
+        creator: { id: prompt.creator_id, name: 'Unknown', avatar_url: null },
+        like_count: 0,
+        bookmark_count: 0,
+        is_liked: false,
+        is_bookmarked: false
+      }))
+    }
+
+    // Try to get like counts using aggregation
+    const { data: likeCounts, error: likeError } = await supabase
       .from('likes')
       .select('prompt_id')
-      .eq('user_id', userId)
-    
-    const { data: bookmarks } = await supabase
+      .in('prompt_id', promptsWithCreator.map(p => p.id))
+
+    if (likeError) {
+      console.error('Error fetching like counts:', likeError)
+    }
+
+    // Try to get bookmark counts using aggregation
+    const { data: bookmarkCounts, error: bookmarkError } = await supabase
       .from('bookmarks')
       .select('prompt_id')
-      .eq('user_id', userId)
+      .in('prompt_id', promptsWithCreator.map(p => p.id))
 
-    userLikes = likes?.map(l => l.prompt_id) || []
-    userBookmarks = bookmarks?.map(b => b.prompt_id) || []
+    if (bookmarkError) {
+      console.error('Error fetching bookmark counts:', bookmarkError)
+    }
+
+    // Get user's likes and bookmarks if userId provided
+    let userLikes: string[] = []
+    let userBookmarks: string[] = []
+
+    if (userId) {
+      const { data: likes } = await supabase
+        .from('likes')
+        .select('prompt_id')
+        .eq('user_id', userId)
+      
+      const { data: bookmarks } = await supabase
+        .from('bookmarks')
+        .select('prompt_id')
+        .eq('user_id', userId)
+
+      userLikes = likes?.map(l => l.prompt_id) || []
+      userBookmarks = bookmarks?.map(b => b.prompt_id) || []
+    }
+
+    // Create like and bookmark count maps
+    const likeCountMap = new Map()
+    const bookmarkCountMap = new Map()
+
+    if (likeCounts) {
+      // Count likes per prompt
+      likeCounts.forEach(like => {
+        const currentCount = likeCountMap.get(like.prompt_id) || 0
+        likeCountMap.set(like.prompt_id, currentCount + 1)
+      })
+    }
+
+    if (bookmarkCounts) {
+      // Count bookmarks per prompt
+      bookmarkCounts.forEach(bookmark => {
+        const currentCount = bookmarkCountMap.get(bookmark.prompt_id) || 0
+        bookmarkCountMap.set(bookmark.prompt_id, currentCount + 1)
+      })
+    }
+
+    const result = promptsWithCreator.map(prompt => ({
+      ...prompt,
+      like_count: likeCountMap.get(prompt.id) || 0,
+      bookmark_count: bookmarkCountMap.get(prompt.id) || 0,
+      is_liked: userLikes.includes(prompt.id),
+      is_bookmarked: userBookmarks.includes(prompt.id)
+    }))
+
+    console.log('Successfully processed prompts:', result.length)
+    return result
+
+  } catch (err) {
+    console.error('Exception in getPublicPrompts:', err)
+    return []
   }
-
-  return data?.map(prompt => ({
-    ...prompt,
-    like_count: prompt.like_count?.[0]?.count || 0,
-    bookmark_count: prompt.bookmark_count?.[0]?.count || 0,
-    is_liked: userLikes.includes(prompt.id),
-    is_bookmarked: userBookmarks.includes(prompt.id)
-  })) || []
 }
 
 // Get a single prompt by ID

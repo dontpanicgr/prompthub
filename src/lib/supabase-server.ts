@@ -15,6 +15,9 @@ export async function createClient() {
     supabaseUrl,
     supabaseAnonKey,
     {
+      auth: {
+        flowType: 'pkce'
+      },
       cookies: {
         getAll() {
           return cookieStore.getAll()

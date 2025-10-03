@@ -231,10 +231,13 @@ export default function EditPromptPage({ params }: EditPromptPageProps) {
                     onChange={(e) => setFormData({ ...formData, body: e.target.value })}
                     rows={12}
                     placeholder="Enter your AI prompt here. Be specific and detailed to get the best results..."
-                    className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-vertical bg-card text-foreground placeholder:text-muted-foreground"
+                    className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-vertical bg-card text-foreground placeholder:text-muted-foreground font-sans"
                     required
                   />
-                  <div className="mt-1 flex justify-end text-sm text-muted-foreground">
+                  <div className="mt-1 flex justify-between text-sm text-muted-foreground">
+                    <span className="text-sm">
+                      💡 <strong>Markdown supported!</strong> Use **bold**, *italic*, `code`, # headers, - lists, and more.
+                    </span>
                     <span>{formData.body.length}/5000</span>
                   </div>
                 </div>

@@ -7,6 +7,7 @@ import { Heart, Bookmark, Copy } from 'lucide-react'
 import { toast } from 'sonner'
 import { ModelBadge } from '@/components/ui/model-badge'
 import { PrivateBadge } from '@/components/ui/private-badge'
+import { useAuth } from '@/components/auth-provider'
 
 interface Prompt {
   id: string
@@ -34,6 +35,7 @@ interface PromptCardProps {
 
 export default function PromptCard({ prompt, onLike, onBookmark }: PromptCardProps) {
   const router = useRouter()
+  const { user } = useAuth()
   const [isLiked, setIsLiked] = useState(prompt.is_liked || false)
   const [isBookmarked, setIsBookmarked] = useState(prompt.is_bookmarked || false)
   const [likeCount, setLikeCount] = useState(prompt.like_count)
@@ -42,6 +44,17 @@ export default function PromptCard({ prompt, onLike, onBookmark }: PromptCardPro
   const handleLike = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
+    
+    if (!user) {
+      toast.error('Please sign in to like prompts', {
+        action: {
+          label: 'Sign In',
+          onClick: () => router.push('/login')
+        }
+      })
+      return
+    }
+    
     const newLikedState = !isLiked
     setIsLiked(newLikedState)
     setLikeCount(prev => newLikedState ? prev + 1 : prev - 1)
@@ -58,6 +71,17 @@ export default function PromptCard({ prompt, onLike, onBookmark }: PromptCardPro
   const handleBookmark = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
+    
+    if (!user) {
+      toast.error('Please sign in to bookmark prompts', {
+        action: {
+          label: 'Sign In',
+          onClick: () => router.push('/login')
+        }
+      })
+      return
+    }
+    
     const newBookmarkedState = !isBookmarked
     setIsBookmarked(newBookmarkedState)
     setBookmarkCount(prev => newBookmarkedState ? prev + 1 : prev - 1)
@@ -134,9 +158,11 @@ export default function PromptCard({ prompt, onLike, onBookmark }: PromptCardPro
         </div>
 
         {/* Content Preview */}
-        <p className="text-sm text-muted-foreground mb-2 line-clamp-5 flex-1">
-          {prompt.body}
-        </p>
+        <div className="text-sm text-muted-foreground mb-2 line-clamp-5 flex-1 prose prose-sm max-w-none dark:prose-invert">
+          <div className="whitespace-pre-wrap">
+            {prompt.body}
+          </div>
+        </div>
 
         {/* Actions */}
         <div className="flex items-center justify-start gap-3 mt-auto">

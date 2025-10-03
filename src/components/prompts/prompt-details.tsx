@@ -27,6 +27,7 @@ import { useAuth } from '@/components/auth-provider'
 import { toggleLike, toggleBookmark, deletePrompt } from '@/lib/database'
 import { supabase } from '@/lib/supabase'
 import Snackbar from '@/components/ui/snackbar'
+import MarkdownRenderer from '@/components/ui/markdown-renderer'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -114,8 +115,12 @@ export default function PromptDetails({ prompt }: PromptDetailsProps) {
 
   const handleLike = async () => {
     if (!user) {
-      // Redirect to sign in
-      router.push('/')
+      toast.error('Please sign in to like prompts', {
+        action: {
+          label: 'Sign In',
+          onClick: () => router.push('/login')
+        }
+      })
       return
     }
 
@@ -143,8 +148,12 @@ export default function PromptDetails({ prompt }: PromptDetailsProps) {
 
   const handleBookmark = async () => {
     if (!user) {
-      // Redirect to sign in
-      router.push('/')
+      toast.error('Please sign in to bookmark prompts', {
+        action: {
+          label: 'Sign In',
+          onClick: () => router.push('/login')
+        }
+      })
       return
     }
 
@@ -308,9 +317,10 @@ export default function PromptDetails({ prompt }: PromptDetailsProps) {
           {/* Prompt Content */}
           <div className="mb-6">
             <div className="bg-card rounded-lg border border-border p-6">
-              <pre className="whitespace-pre-wrap text-card-foreground font-mono text-sm leading-relaxed mb-4">
-                {prompt.body}
-              </pre>
+              <MarkdownRenderer 
+                content={prompt.body}
+                className="text-card-foreground mb-6"
+              />
               <Button
                 onClick={handleCopy}
                 variant="outline"
