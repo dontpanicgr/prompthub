@@ -34,7 +34,7 @@ export default function MobileTopHeader({ onMenuClick }: MobileTopHeaderProps) {
             <span className="text-white font-bold text-sm">P</span>
           </div>
           <span className="text-xl font-bold text-foreground">
-            PromptHub
+            Lexee
           </span>
         </Link>
 
@@ -59,7 +59,7 @@ export default function MobileTopHeader({ onMenuClick }: MobileTopHeaderProps) {
         ) : (
           <Link
             href="/login?redirect=/"
-            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-lg transition-colors"
+            className="flex items-center gap-2 px-2 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-lg transition-colors"
           >
             <LogIn size={18} />
             <span className="hidden sm:inline">Sign In</span>

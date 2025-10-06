@@ -1,6 +1,6 @@
 # Analytics Setup Guide
 
-This guide explains how to use the analytics system in your PromptHub application.
+This guide explains how to use the analytics system in your Lexee application.
 
 ## Environment Variables
 

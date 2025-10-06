@@ -8,14 +8,14 @@ export async function testDatabaseConnection() {
     console.log('Supabase URL:', supabase.supabaseUrl)
     console.log('Supabase Key (first 20 chars):', supabase.supabaseKey?.substring(0, 20) + '...')
     
-    // Test 1: Basic Supabase health check
-    console.log('Test 1: Basic health check...')
+    // Test 1: Basic Supabase health check using a public table
+    console.log('Test 1: Basic health check (profiles)...')
     const { data: healthData, error: healthError } = await supabase
-      .from('_supabase_migrations')
-      .select('*')
+      .from('profiles')
+      .select('id')
       .limit(1)
     
-    console.log('Health check result:', { data: healthData, error: healthError })
+    console.log('Health check result (profiles):', { data: healthData, error: healthError })
     
     // Test 2: Try to access profiles table
     console.log('Test 2: Accessing profiles table...')
@@ -96,6 +96,23 @@ export interface User {
   website_url?: string
   created_at: string
   updated_at: string
+}
+
+export interface Comment {
+  id: string
+  prompt_id: string
+  user_id: string
+  content: string
+  parent_id?: string
+  created_at: string
+  updated_at: string
+  is_deleted: boolean
+  user: {
+    id: string
+    name: string
+    avatar_url?: string
+  }
+  replies?: Comment[]
 }
 
 // Get all public prompts
@@ -788,4 +805,125 @@ export async function getUserEngagementStats(userId: string, includePrivate: boo
     console.error('Error calculating user engagement stats:', error)
     return { prompts_created: 0, likes_received: 0, bookmarks_received: 0 }
   }
+}
+
+// Get comments for a prompt (with nested replies)
+export async function getCommentsForPrompt(promptId: string): Promise<Comment[]> {
+  const { data, error } = await supabase
+    .from('comments')
+    .select(`
+      *,
+      user:profiles!comments_user_id_fkey(id, name, avatar_url)
+    `)
+    .eq('prompt_id', promptId)
+    .eq('is_deleted', false)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching comments:', error)
+    return []
+  }
+
+  // Build nested structure
+  const commentsMap = new Map<string, Comment>()
+  const rootComments: Comment[] = []
+
+  data?.forEach(comment => {
+    const commentWithReplies: Comment = {
+      ...comment,
+      replies: []
+    }
+    commentsMap.set(comment.id, commentWithReplies)
+
+    if (comment.parent_id) {
+      const parent = commentsMap.get(comment.parent_id)
+      if (parent) {
+        parent.replies = parent.replies || []
+        parent.replies.push(commentWithReplies)
+      }
+    } else {
+      rootComments.push(commentWithReplies)
+    }
+  })
+
+  return rootComments
+}
+
+// Create a new comment
+export async function createComment(comment: {
+  prompt_id: string
+  user_id: string
+  content: string
+  parent_id?: string
+}): Promise<Comment | null> {
+  console.log('createComment called with:', comment)
+  
+  const { data, error } = await supabase
+    .from('comments')
+    .insert([comment])
+    .select(`
+      *,
+      user:profiles!comments_user_id_fkey(id, name, avatar_url)
+    `)
+    .single()
+
+  console.log('Supabase response:', { data, error })
+
+  if (error) {
+    console.error('Error creating comment:', error)
+    return null
+  }
+
+  return data
+}
+
+// Update a comment
+export async function updateComment(commentId: string, content: string): Promise<Comment | null> {
+  const { data, error } = await supabase
+    .from('comments')
+    .update({ content })
+    .eq('id', commentId)
+    .select(`
+      *,
+      user:profiles!comments_user_id_fkey(id, name, avatar_url)
+    `)
+    .single()
+
+  if (error) {
+    console.error('Error updating comment:', error)
+    return null
+  }
+
+  return data
+}
+
+// Delete a comment (soft delete)
+export async function deleteComment(commentId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('comments')
+    .update({ is_deleted: true })
+    .eq('id', commentId)
+
+  if (error) {
+    console.error('Error deleting comment:', error)
+    return false
+  }
+
+  return true
+}
+
+// Get comment count for a prompt
+export async function getCommentCountForPrompt(promptId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('comments')
+    .select('*', { count: 'exact', head: true })
+    .eq('prompt_id', promptId)
+    .eq('is_deleted', false)
+
+  if (error) {
+    console.error('Error fetching comment count:', error)
+    return 0
+  }
+
+  return count || 0
 }

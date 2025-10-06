@@ -190,7 +190,7 @@ export default function PrivacyPage() {
                 If you have any questions about this Privacy Policy or our privacy practices, please contact us at:
               </p>
               <div className="bg-muted p-4 rounded-lg">
-                <p>Email: privacy@prompthub.com</p>
+                <p>Email: privacy@lexee.com</p>
                 <p>Address: [Your Company Address]</p>
                 <p>Phone: [Your Phone Number]</p>
               </div>

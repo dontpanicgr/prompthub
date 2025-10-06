@@ -17,16 +17,13 @@ const ALL_MODELS = [
   'GitHub',
   'Copilot',
   'Mistral',
-  'Llama',
-  'Pi',
+  'Meta',
+  'Ollama',
   'Cohere',
-  'Jasper',
   'Qwen',
   'DeepSeek',
   'Moonshot',
   'Black Forest Labs',
-  'Alpaca',
-  'Falcon',
   'Other'
 ] as const
 

@@ -1,7 +1,7 @@
-# PromptHub — Weekend MVP
+# Lexee — Weekend MVP
 
 ## Product Brief
-PromptHub is a **prompt discovery and sharing platform** where users can:
+Lexee is a **prompt discovery and sharing platform** where users can:
 
 * **Browse** prompts created by others  
 * **Create and manage** their own prompts  
@@ -157,7 +157,7 @@ Additional profile fields:
 
 ---
 
-## PromptHub — UI Layout Notes
+## Lexee — UI Layout Notes
 
 ### Overall Layout
 Use a **two-pane structure** similar to GPT, Copilot, Grok, and Perplexity:
@@ -169,7 +169,7 @@ Use a **two-pane structure** similar to GPT, Copilot, Grok, and Perplexity:
 Top → Bottom:
 
 1. **Brand / Logo**
-   - Small PromptHub wordmark or icon.
+   - Small Lexee wordmark or icon.
 
 2. **Primary Navigation**
    - **Create Prompt** (highlighted button or plus icon).

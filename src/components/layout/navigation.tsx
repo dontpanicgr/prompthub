@@ -72,7 +72,7 @@ export default function Navigation() {
                 <span className="text-white font-bold text-sm">P</span>
               </div>
               <span className="text-xl font-bold text-foreground">
-                PromptHub
+                Lexee
               </span>
             </Link>
 

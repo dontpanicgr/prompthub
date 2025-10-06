@@ -12,82 +12,68 @@ interface MarkdownRendererProps {
 
 export default function MarkdownRenderer({ content, className = '' }: MarkdownRendererProps) {
   return (
-    <div className={`prose prose-sm max-w-none dark:prose-invert prose-p:mb-3 prose-headings:mb-2 prose-headings:mt-4 first:prose-headings:mt-0 ${className}`}>
+    <div className={`prose max-w-none ${className}`}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeHighlight]}
         components={{
-          // Customize code blocks
-          code: ({ node, inline, className, children, ...props }) => {
-            if (inline) {
+          // Customize link behavior for mentions
+          a: ({ href, children, ...props }) => {
+            // Check if it's a mention link
+            if (href?.startsWith('@')) {
+              const username = href.substring(1)
               return (
-                <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono" {...props}>
+                <a
+                  href={`/user/${username}`}
+                  className="text-blue-600 hover:text-blue-800 underline"
+                  {...props}
+                >
                   {children}
-                </code>
+                </a>
               )
             }
+            // Regular links
             return (
+              <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800 underline"
+                {...props}
+              >
+                {children}
+              </a>
+            )
+          },
+          // Style code blocks
+          code: ({ className, children, ...props }) => {
+            const match = /language-(\w+)/.exec(className || '')
+            return match ? (
               <code className={className} {...props}>
+                {children}
+              </code>
+            ) : (
+              <code className="bg-gray-100 px-1 py-0.5 rounded text-sm" {...props}>
                 {children}
               </code>
             )
           },
-          // Customize pre blocks
-          pre: ({ children, ...props }) => (
-            <pre className="bg-muted p-4 rounded-lg overflow-x-auto" {...props}>
-              {children}
-            </pre>
-          ),
-          // Customize blockquotes
+          // Style blockquotes
           blockquote: ({ children, ...props }) => (
-            <blockquote className="border-l-4 border-primary pl-4 italic text-muted-foreground" {...props}>
+            <blockquote className="border-l-4 border-gray-300 pl-4 italic text-gray-600" {...props}>
               {children}
             </blockquote>
           ),
-          // Customize headings
-          h1: ({ children, ...props }) => (
-            <h1 className="text-2xl font-bold text-foreground mb-4" {...props}>
-              {children}
-            </h1>
-          ),
-          h2: ({ children, ...props }) => (
-            <h2 className="text-xl font-semibold text-foreground mb-3" {...props}>
-              {children}
-            </h2>
-          ),
-          h3: ({ children, ...props }) => (
-            <h3 className="text-lg font-medium text-foreground mb-2" {...props}>
-              {children}
-            </h3>
-          ),
-          // Customize lists
+          // Style lists
           ul: ({ children, ...props }) => (
-            <ul className="list-disc list-inside space-y-1 mb-4" {...props}>
+            <ul className="list-disc list-inside space-y-1" {...props}>
               {children}
             </ul>
           ),
           ol: ({ children, ...props }) => (
-            <ol className="list-decimal list-inside space-y-1 mb-4" {...props}>
+            <ol className="list-decimal list-inside space-y-1" {...props}>
               {children}
             </ol>
-          ),
-          // Customize links
-          a: ({ children, href, ...props }) => (
-            <a 
-              href={href} 
-              className="text-primary hover:text-primary/80 underline" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              {...props}
-            >
-              {children}
-            </a>
-          ),
-          // Customize paragraphs
-          p: ({ children, ...props }) => (
-            <p className="mb-3 last:mb-0" {...props}>
-              {children}
-            </p>
           ),
         }}
       >

@@ -165,12 +165,12 @@ export default function PromptCard({ prompt, onLike, onBookmark }: PromptCardPro
         </div>
 
         {/* Actions */}
-        <div className="flex items-center justify-start gap-3 mt-auto">
+        <div className="flex items-center justify-start gap-0 mt-auto">
           <button
             onClick={handleLike}
-            className={`flex items-center gap-1 text-md transition-all duration-200 text-card-foreground font-semibold rounded-md px-2 py-1 hover:bg-secondary hover:text-muted-foreground ${
-              isLiked ? 'text-primary' : ''
-            }`}
+            className={
+              `flex items-center gap-1 text-md transition-all duration-200 text-card-foreground font-semibold rounded-md px-2 py-1 hover:bg-secondary`
+            }
           >
             <Heart size={16} className={`${isLiked ? 'fill-primary text-primary' : ''}`} />
             {likeCount}
@@ -178,11 +178,11 @@ export default function PromptCard({ prompt, onLike, onBookmark }: PromptCardPro
           
           <button
             onClick={handleBookmark}
-            className={`flex items-center gap-1 text-md transition-all duration-200 text-card-foreground font-semibold rounded-md px-2 py-1 hover:bg-secondary hover:text-muted-foreground ${
-              isBookmarked ? 'text-primary' : ''
-            }`}
+            className={
+              `flex items-center gap-1 text-md transition-all duration-200 text-card-foreground font-semibold rounded-md px-2 py-1 hover:bg-secondary`
+            }
           >
-            <Bookmark size={16} className={`${isBookmarked ? 'fill-current' : ''}`} />
+            <Bookmark size={16} className={`${isBookmarked ? 'fill-primary text-primary' : ''}`} />
             {bookmarkCount}
           </button>
         </div>

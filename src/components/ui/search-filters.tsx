@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Search, Filter, X } from 'lucide-react'
+import { Search, Filter, X, Settings2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -19,16 +19,13 @@ const MODELS = [
   'GitHub',
   'Copilot',
   'Mistral',
-  'Llama',
-  'Pi',
+  'Meta',
+  'Ollama',
   'Cohere',
-  'Jasper',
   'Qwen',
   'DeepSeek',
   'Moonshot',
   'Black Forest Labs',
-  'Alpaca',
-  'Falcon',
   'Other'
 ]
 
@@ -49,6 +46,7 @@ export default function SearchFilters({
   onSearch,
   placeholder = "Search prompts..."
 }: SearchFiltersProps) {
+  const [showModelBadges, setShowModelBadges] = useState(false)
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     onSearch(searchQuery, selectedModels)
@@ -79,8 +77,8 @@ export default function SearchFilters({
   }, [searchQuery, selectedModels, onSearch])
 
   return (
-    <div className="mb-6">
-      <form onSubmit={handleSearch} className="flex items-center gap-3">
+    <div>
+      <form onSubmit={handleSearch} className="flex items-center gap-2">
         {/* Full-width Search */}
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={20} />
@@ -103,8 +101,8 @@ export default function SearchFilters({
           )}
         </div>
 
-        {/* Icon-only 48x48 filter button with multi-select menu */}
-        <DropdownMenu>
+        {/* Icon-only 48x48 filter button with multi-select menu - HIDDEN FOR TESTING */}
+        {/* <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button type="button" variant="outline" className="h-10 w-10 p-0 bg-card border">
               <Filter className="h-5 w-5" />
@@ -121,10 +119,54 @@ export default function SearchFilters({
               </DropdownMenuCheckboxItem>
             ))}
           </DropdownMenuContent>
-        </DropdownMenu>
+        </DropdownMenu> */}
+
+        {/* Settings button to toggle model badges visibility */}
+        <Button 
+          type="button" 
+          variant="outline" 
+          className="h-10 w-10 p-0 bg-card border relative"
+          onClick={() => setShowModelBadges(!showModelBadges)}
+        >
+          <Settings2 className="h-5 w-5" />
+          {/* Filter indicator dot - only show when filters are active and badges are hidden */}
+          {selectedModels.length > 0 && !showModelBadges && (
+            <div className="absolute -top-1 -right-1 h-3 w-3 bg-primary rounded-full border-2 border-background" />
+          )}
+        </Button>
       </form>
 
-      {/* Chips row with Clear */}
+      {/* Model Badges Filters */}
+      {showModelBadges && (
+        <div className="mt-3">
+          <div className="flex flex-wrap items-center gap-2">
+            {MODELS.filter(m => m !== 'All Models').map((model) => (
+              <ModelBadge
+                key={model}
+                model={model as any}
+                variant="outline"
+                size="sm"
+                className={`cursor-pointer inline-flex items-center rounded-lg p-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px] hover:opacity-80 ${
+                  selectedModels.includes(model) 
+                    ? "bg-primary text-primary-foreground" 
+                    : "border text-foreground bg-card"
+                }`}
+                onClick={() => toggleModel(model)}
+              />
+            ))}
+
+            {/* Reset all button - only show when models are selected */}
+            {selectedModels.length > 0 && (
+              <Button type="button" variant="ghost" size="sm" onClick={clearFilters}>
+                <X className="h-4 w-4 mr-1" />
+                Reset all
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Chips row with Clear - HIDDEN FOR TESTING
       {selectedModels.length > 0 && (
         <div className="mt-3 flex flex-wrap items-center gap-2">
           {selectedModels.map(model => (
@@ -139,13 +181,13 @@ export default function SearchFilters({
             />
           ))}
 
-          {/* Clear all in same row */}
           <Button type="button" variant="ghost" size="sm" onClick={clearFilters}>
             <X className="h-4 w-4 mr-1" />
             Clear all
           </Button>
         </div>
       )}
+      */}
     </div>
   )
 }

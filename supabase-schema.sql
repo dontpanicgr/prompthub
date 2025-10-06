@@ -1,4 +1,4 @@
--- PromptHub Database Schema
+-- Lexee Database Schema
 -- Run this in your Supabase SQL Editor
 
 -- Note: auth.users is managed by Supabase Auth and doesn't need RLS enabled
@@ -45,11 +45,24 @@ CREATE TABLE IF NOT EXISTS public.bookmarks (
   UNIQUE(prompt_id, user_id)
 );
 
+-- Create comments table
+CREATE TABLE IF NOT EXISTS public.comments (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  prompt_id UUID REFERENCES public.prompts(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  content TEXT NOT NULL,
+  parent_id UUID REFERENCES public.comments(id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  is_deleted BOOLEAN DEFAULT false
+);
+
 -- Enable RLS on all tables
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.prompts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.likes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.bookmarks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.comments ENABLE ROW LEVEL SECURITY;
 
 -- Profiles policies
 CREATE POLICY "Public profiles are viewable by everyone" ON public.profiles
@@ -94,6 +107,19 @@ CREATE POLICY "Users can insert their own bookmarks" ON public.bookmarks
 CREATE POLICY "Users can delete their own bookmarks" ON public.bookmarks
   FOR DELETE USING (auth.uid() = user_id);
 
+-- Comments policies
+CREATE POLICY "Comments are viewable by everyone" ON public.comments
+  FOR SELECT USING (is_deleted = false);
+
+CREATE POLICY "Users can insert their own comments" ON public.comments
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own comments" ON public.comments
+  FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own comments" ON public.comments
+  FOR DELETE USING (auth.uid() = user_id);
+
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS prompts_creator_id_idx ON public.prompts(creator_id);
 CREATE INDEX IF NOT EXISTS prompts_is_public_idx ON public.prompts(is_public);
@@ -102,6 +128,10 @@ CREATE INDEX IF NOT EXISTS likes_prompt_id_idx ON public.likes(prompt_id);
 CREATE INDEX IF NOT EXISTS likes_user_id_idx ON public.likes(user_id);
 CREATE INDEX IF NOT EXISTS bookmarks_prompt_id_idx ON public.bookmarks(prompt_id);
 CREATE INDEX IF NOT EXISTS bookmarks_user_id_idx ON public.bookmarks(user_id);
+CREATE INDEX IF NOT EXISTS comments_prompt_id_idx ON public.comments(prompt_id);
+CREATE INDEX IF NOT EXISTS comments_user_id_idx ON public.comments(user_id);
+CREATE INDEX IF NOT EXISTS comments_parent_id_idx ON public.comments(parent_id);
+CREATE INDEX IF NOT EXISTS comments_created_at_idx ON public.comments(created_at ASC);
 
 -- Function to handle new user signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -135,4 +165,8 @@ CREATE TRIGGER update_profiles_updated_at
 
 CREATE TRIGGER update_prompts_updated_at
   BEFORE UPDATE ON public.prompts
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+CREATE TRIGGER update_comments_updated_at
+  BEFORE UPDATE ON public.comments
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();

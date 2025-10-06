@@ -29,14 +29,14 @@ export default function TermsPage() {
             <section className="mb-8">
               <h2 className="text-2xl font-semibold mb-4">1. Acceptance of Terms</h2>
               <p className="mb-4">
-                By accessing and using PromptHub ("the Service"), you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to abide by the above, please do not use this service.
+                By accessing and using Lexee ("the Service"), you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to abide by the above, please do not use this service.
               </p>
             </section>
 
             <section className="mb-8">
               <h2 className="text-2xl font-semibold mb-4">2. Description of Service</h2>
               <p className="mb-4">
-                PromptHub is a platform that allows users to discover, share, and manage AI prompts. The Service enables users to:
+                Lexee is a platform that allows users to discover, share, and manage AI prompts. The Service enables users to:
               </p>
               <ul className="list-disc pl-6 mb-4">
                 <li>Create and share AI prompts</li>
@@ -79,10 +79,10 @@ export default function TermsPage() {
             <section className="mb-8">
               <h2 className="text-2xl font-semibold mb-4">5. Intellectual Property Rights</h2>
               <p className="mb-4">
-                The Service and its original content, features, and functionality are owned by PromptHub and are protected by international copyright, trademark, patent, trade secret, and other intellectual property or proprietary rights laws.
+                The Service and its original content, features, and functionality are owned by Lexee and are protected by international copyright, trademark, patent, trade secret, and other intellectual property or proprietary rights laws.
               </p>
               <p className="mb-4">
-                You retain ownership of the content you create and share through the Service. By posting content, you grant PromptHub a non-exclusive, royalty-free, worldwide license to use, display, and distribute your content in connection with the Service.
+                You retain ownership of the content you create and share through the Service. By posting content, you grant Lexee a non-exclusive, royalty-free, worldwide license to use, display, and distribute your content in connection with the Service.
               </p>
             </section>
 
@@ -125,14 +125,14 @@ export default function TermsPage() {
             <section className="mb-8">
               <h2 className="text-2xl font-semibold mb-4">10. Disclaimer of Warranties</h2>
               <p className="mb-4">
-                The Service is provided on an "AS IS" and "AS AVAILABLE" basis. PromptHub and its suppliers and licensors hereby disclaim all warranties of any kind, whether express or implied, statutory, or otherwise, including but not limited to any warranties of merchantability, non-infringement, and fitness for a particular purpose.
+                The Service is provided on an "AS IS" and "AS AVAILABLE" basis. Lexee and its suppliers and licensors hereby disclaim all warranties of any kind, whether express or implied, statutory, or otherwise, including but not limited to any warranties of merchantability, non-infringement, and fitness for a particular purpose.
               </p>
             </section>
 
             <section className="mb-8">
               <h2 className="text-2xl font-semibold mb-4">11. Limitation of Liability</h2>
               <p className="mb-4">
-                In no event shall PromptHub, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential, or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from your use of the Service.
+                In no event shall Lexee, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential, or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from your use of the Service.
               </p>
             </section>
 
@@ -156,7 +156,7 @@ export default function TermsPage() {
                 If you have any questions about these Terms of Service, please contact us at:
               </p>
               <div className="bg-muted p-4 rounded-lg">
-                <p>Email: legal@prompthub.com</p>
+                <p>Email: legal@lexee.com</p>
                 <p>Address: [Your Company Address]</p>
               </div>
             </section>

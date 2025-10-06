@@ -102,7 +102,7 @@ function SignupContent() {
 
   return (
     <MainLayout>
-      <div className="p-6 flex items-center justify-center min-h-screen">
+      <div className="p-6 flex items-top justify-center min-h-screen">
         <div className="max-w-md w-full">
         {/* Back Button */}
         <Link
@@ -124,7 +124,7 @@ function SignupContent() {
               Create your account
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
-              Join PromptHub and start sharing amazing prompts
+              Join Lexee and start sharing amazing prompts
             </p>
           </div>
 
@@ -171,6 +171,7 @@ function SignupContent() {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   className="pl-10"
+                  autoComplete="email"
                   placeholder="Enter your email"
                   required
                 />
@@ -191,6 +192,7 @@ function SignupContent() {
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   className="pl-10 pr-12"
+                  autoComplete="new-password"
                   placeholder="Create a password"
                   required
                 />
@@ -222,6 +224,7 @@ function SignupContent() {
                   value={formData.confirmPassword}
                   onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                   className="pl-10 pr-12"
+                  autoComplete="new-password"
                   placeholder="Confirm your password"
                   required
                 />

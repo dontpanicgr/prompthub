@@ -93,6 +93,7 @@ export function MixpanelAnalytics() {
         mixpanel.default.init(MIXPANEL_TOKEN, {
           debug: process.env.NODE_ENV === 'development',
           track_pageview: false, // We'll handle this manually
+          ignore_dnt: true,
         })
 
         // Make it available globally for the analytics library

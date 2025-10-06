@@ -7,6 +7,7 @@ import { useAuth } from '@/components/auth-provider'
 import { createPrompt } from '@/lib/database'
 import { analytics } from '@/lib/analytics'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -22,16 +23,13 @@ const MODELS = [
   'GitHub',
   'Copilot',
   'Mistral',
-  'Llama',
-  'Pi',
+  'Meta',
+  'Ollama',
   'Cohere',
-  'Jasper',
   'Qwen',
   'DeepSeek',
   'Moonshot',
   'Black Forest Labs',
-  'Alpaca',
-  'Falcon',
   'Other'
 ]
 
@@ -162,11 +160,11 @@ export default function CreatePromptForm() {
   return (
     <div className="max-w-4xl mx-auto">
       <Card className="py-0">
-        <CardContent className="px-8 py-6">
+        <CardContent className="px-6 py-6">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Title */}
             <div>
-              <label htmlFor="title" className="block text-sm font-medium mb-2">
+              <label htmlFor="title" className="block text-md font-medium mb-2">
                 Title *
               </label>
               <Input
@@ -183,13 +181,37 @@ export default function CreatePromptForm() {
               )}
             </div>
 
+            {/* Prompt Body */}
+            <div>
+              <label htmlFor="body" className="block text-md font-medium mb-1">
+                Prompt *
+              </label>
+              <span className="flex items-center gap-2 mb-3">
+                <span className="text-sm">Markdown supported! Use **bold**, *italic*, `code`, # headers, - lists, and more.</span>
+              </span>
+              <Textarea
+                id="body"
+                name="body"
+                value={formData.body}
+                onChange={handleInputChange}
+                placeholder="Enter your AI prompt here. Be specific and detailed to get the best results..."
+                className={`min-h-[120px] ${errors.body ? 'border-destructive' : ''}`}
+              />
+              <div className="mt-1 flex justify-between text-sm text-muted-foreground">
+                <span>{formData.body.length}/5000</span>
+              </div>
+              {errors.body && (
+                <p className="mt-1 text-sm text-destructive">{errors.body}</p>
+              )}
+            </div>
 
             {/* Model Selection Badges */}
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label className="block text-md font-medium mb-1">
                 AI Model *
               </label>
-              <div className={`flex flex-wrap gap-2 p-3 border rounded-md ${errors.model ? 'border-destructive' : ''}`}>
+              <p className="mb-3 text-sm text-muted-foreground">Click a model to select it. Only one model can be selected at a time.</p>
+              <div className="flex flex-wrap gap-2 p-0 rounded-md">
                 {MODELS.map((model) => (
                   <ModelBadge
                     key={model}
@@ -209,41 +231,11 @@ export default function CreatePromptForm() {
               {errors.model && (
                 <p className="mt-1 text-sm text-destructive">{errors.model}</p>
               )}
-              <p className="mt-1 text-xs text-muted-foreground">
-                Click a model to select it. Only one model can be selected at a time.
-              </p>
-            </div>
-
-            {/* Prompt Body */}
-            <div>
-              <label htmlFor="body" className="block text-sm font-medium mb-2">
-                Prompt *
-              </label>
-              <textarea
-                id="body"
-                name="body"
-                value={formData.body}
-                onChange={handleInputChange}
-                rows={12}
-                placeholder="Enter your AI prompt here. Be specific and detailed to get the best results..."
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-vertical bg-card text-foreground placeholder:text-muted-foreground font-sans ${
-                  errors.body ? 'border-destructive' : 'border-input'
-                }`}
-              />
-              <div className="mt-1 flex justify-between text-sm text-muted-foreground">
-                <span className="flex items-center gap-2">
-                  {errors.body || ''}
-                  <span className="text-sm">
-                    💡 <strong>Markdown supported!</strong> Use **bold**, *italic*, `code`, # headers, - lists, and more.
-                  </span>
-                </span>
-                <span>{formData.body.length}/5000</span>
-              </div>
             </div>
 
             {/* Visibility */}
             <div>
-              <label className="block text-sm font-medium mb-3">
+              <label className="block text-md font-medium mb-3">
                 Visibility
               </label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -24,9 +24,10 @@ import { ModelBadge } from '@/components/ui/model-badge'
 import { PrivateBadge } from '@/components/ui/private-badge'
 import UserBioCard from '@/components/ui/user-bio-card'
 import { useAuth } from '@/components/auth-provider'
-import { toggleLike, toggleBookmark, deletePrompt } from '@/lib/database'
+import { toggleLike, toggleBookmark, deletePrompt, getCommentCountForPrompt, getUserEngagementStats } from '@/lib/database'
 import { supabase } from '@/lib/supabase'
 import Snackbar from '@/components/ui/snackbar'
+import CommentList from '@/components/comments/comment-list'
 import MarkdownRenderer from '@/components/ui/markdown-renderer'
 import {
   DropdownMenu,
@@ -35,6 +36,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
 
 interface Prompt {
   id: string
@@ -71,47 +73,37 @@ export default function PromptDetails({ prompt }: PromptDetailsProps) {
   const [bookmarkCount, setBookmarkCount] = useState(prompt.bookmark_count || 0)
   const [snackbar, setSnackbar] = useState({ isVisible: false, message: '', type: 'success' as 'success' | 'error' | 'info' })
   const [isDeleting, setIsDeleting] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [creatorStats, setCreatorStats] = useState({
     prompts_created: 0,
-    prompts_liked: 0,
-    prompts_bookmarked: 0
+    likes_received: 0,
+    bookmarks_received: 0
   })
+  const [commentCount, setCommentCount] = useState(0)
 
-  // Fetch creator stats
+  // Fetch creator stats and comment count
   useEffect(() => {
     async function fetchCreatorStats() {
       try {
-        // Get creator's public prompts count
-        const { data: prompts } = await supabase
-          .from('prompts')
-          .select('id')
-          .eq('creator_id', prompt.creator.id)
-          .eq('is_public', true)
-
-        // Get creator's likes count
-        const { data: likes } = await supabase
-          .from('likes')
-          .select('id')
-          .eq('user_id', prompt.creator.id)
-
-        // Get creator's bookmarks count
-        const { data: bookmarks } = await supabase
-          .from('bookmarks')
-          .select('id')
-          .eq('user_id', prompt.creator.id)
-
-        setCreatorStats({
-          prompts_created: prompts?.length || 0,
-          prompts_liked: likes?.length || 0,
-          prompts_bookmarked: bookmarks?.length || 0
-        })
+        const stats = await getUserEngagementStats(prompt.creator.id, false) // false = only public prompts
+        setCreatorStats(stats)
       } catch (error) {
         console.error('Error fetching creator stats:', error)
       }
     }
 
+    async function fetchCommentCount() {
+      try {
+        const count = await getCommentCountForPrompt(prompt.id)
+        setCommentCount(count)
+      } catch (error) {
+        console.error('Error fetching comment count:', error)
+      }
+    }
+
     fetchCreatorStats()
-  }, [prompt.creator.id])
+    fetchCommentCount()
+  }, [prompt.creator.id, prompt.id])
 
   const handleLike = async () => {
     if (!user) {
@@ -182,10 +174,6 @@ export default function PromptDetails({ prompt }: PromptDetailsProps) {
   const handleDelete = async () => {
     if (!user || prompt.creator_id !== user.id) return
     
-    if (!confirm('Are you sure you want to delete this prompt? This action cannot be undone.')) {
-      return
-    }
-
     setIsDeleting(true)
     try {
       const success = await deletePrompt(prompt.id)
@@ -227,146 +215,299 @@ export default function PromptDetails({ prompt }: PromptDetailsProps) {
     })
   }
 
+  const formatDateShort = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    })
+  }
+
   const isOwner = user && prompt.creator_id === user.id
 
   return (
     <div className="w-full">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Main Content */}
-        <div className="order-1 lg:order-2 lg:col-span-3">
-          {/* Prompt Header - 2 columns */}
-          <div className="mb-6">
-            <div className="flex items-start justify-between gap-4">
-              {/* Column 1: Title and Model Badge */}
-              <div className="flex-1">
-                <h1 className="text-2xl font-bold text-card-foreground mb-3">
-                  {prompt.title}
-                </h1>
-                <div className="flex items-center gap-2">
-                  {!prompt.is_public && (
-                    <PrivateBadge size="md" />
-                  )}
-                  <ModelBadge 
-                    model={prompt.model as any} 
-                    variant="secondary" 
-                    size="md"
-                    className="bg-muted text-muted-foreground"
-                  />
-                </div>
-              </div>
-              
-              {/* Column 2: Like, Bookmark and Menu buttons */}
-              <div className="flex items-center gap-2">
-                <Button
-                  onClick={handleLike}
-                  variant={isLiked ? 'default' : 'outline'}
-                  className="h-10 gap-2 border"
-                >
-                  <Heart size={16} className={isLiked ? 'fill-current' : ''} />
-                  {likeCount}
-                </Button>
-                
-                <Button
-                  onClick={handleBookmark}
-                  variant={isBookmarked ? 'default' : 'outline'}
-                  className="h-10 gap-2 border"
-                >
-                  <Bookmark size={16} className={isBookmarked ? 'fill-current' : ''} />
-                  {bookmarkCount}
-                </Button>
-                
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="h-10 border">
-                      <MoreHorizontal size={16} />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={handleShare}>
-                      <Share2 size={16} className="mr-2" />
-                      Share
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Flag size={16} className="mr-2" />
-                      Report
-                    </DropdownMenuItem>
-                    {isOwner && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild>
-                          <Link href={`/prompt/${prompt.id}/edit`}>
-                            <Edit size={16} className="mr-2" />
-                            Edit
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          onClick={handleDelete}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <Trash2 size={16} className="mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
+      {/* Mobile Layout */}
+      <div className="lg:hidden">
+        {/* HEAD Section */}
+        <div className="mb-6">
+          {/* Title */}
+          <h1 className="text-2xl font-bold text-card-foreground mb-4">
+            {prompt.title}
+          </h1>
+          
+          {/* Model • Private • Date • Username */}
+          <div className="flex items-center gap-2 mb-4">
+            <ModelBadge 
+              model={prompt.model as any} 
+              variant="secondary" 
+              size="sm"
+              className="bg-muted text-muted-foreground"
+            />
+            {!prompt.is_public && (
+              <>
+                <PrivateBadge size="sm" />
+                <span className="text-muted-foreground">•</span>
+              </>
+            )}
+            <span className="text-sm text-muted-foreground">{formatDateShort(prompt.created_at)}</span>
+            <span className="text-muted-foreground">•</span>
+            <Link 
+              href={`/user/${prompt.creator.id}`}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {prompt.creator.name}
+            </Link>
+            {!prompt.is_public && (
+              <>
+                <span className="text-muted-foreground">•</span>
+                <PrivateBadge size="sm" />
+              </>
+            )}
           </div>
-
-          {/* Prompt Content */}
-          <div className="mb-6">
-            <div className="bg-card rounded-lg border border-border p-6">
-              <MarkdownRenderer 
-                content={prompt.body}
-                className="text-card-foreground mb-6"
-              />
-              <Button
-                onClick={handleCopy}
-                variant="outline"
-                className="h-10 gap-2"
-              >
-                <Copy size={16} />
-                Copy
-              </Button>
-            </div>
+          
+          {/* Actions */}
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={handleLike}
+              variant="outline"
+              size="lg"
+              className="h-10 gap-2 border"
+            >
+              <Heart size={16} className={isLiked ? 'fill-primary text-primary' : ''} />
+              {likeCount}
+            </Button>
+            
+            <Button
+              onClick={handleBookmark}
+              variant="outline"
+              size="lg"
+              className="h-10 gap-2 border"
+            >
+              <Bookmark size={16} className={isBookmarked ? 'fill-primary text-primary' : ''} />
+              {bookmarkCount}
+            </Button>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="h-10 border">
+                  <MoreHorizontal size={16} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleShare}>
+                  <Share2 size={16} className="mr-2" />
+                  Share
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Flag size={16} className="mr-2" />
+                  Report
+                </DropdownMenuItem>
+                {isOwner && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href={`/prompt/${prompt.id}/edit`}>
+                        <Edit size={16} className="mr-2" />
+                        Edit
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => setShowDeleteDialog(true)}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 size={16} className="mr-2" />
+                      Delete
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-
         </div>
 
-        {/* Sidebar */}
-        <div className="order-2 lg:order-1 lg:col-span-1 space-y-6">
+        {/* MAIN Section */}
+        <div className="space-y-6">
+          {/* Prompt Content */}
+          <div className="bg-card rounded-lg border border-border p-4">
+            <MarkdownRenderer 
+              content={prompt.body}
+              className="text-card-foreground mb-6"
+            />
+            <Button
+              onClick={handleCopy}
+              variant="outline"
+              className="h-10 gap-2"
+            >
+              <Copy size={16} />
+              Copy
+            </Button>
+          </div>
 
-          {/* Creator Profile */}
-          <UserBioCard
-            user={{
-              id: prompt.creator.id,
-              name: prompt.creator.name,
-              avatar_url: prompt.creator.avatar_url,
-              bio: prompt.creator.bio,
-              website_url: prompt.creator.website_url
-            }}
-            stats={creatorStats}
-          />
+          {/* Comments Section */}
+          <div>
+            <CommentList 
+              promptId={prompt.id} 
+              currentUserId={user?.id} 
+            />
+          </div>
+        </div>
+      </div>
 
-
-          {/* Stats */}
-          <div className="bg-card rounded-lg border border-border p-6">
-            <h3 className="text-xl font-semibold text-card-foreground mb-4">
-              Statistics
-            </h3>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Likes</span>
-                <span className="font-medium text-card-foreground">{likeCount}</span>
+      {/* Desktop Layout */}
+      <div className="hidden lg:block">
+        <div className="grid grid-cols-4 gap-6">
+          {/* Main Content */}
+          <div className="col-span-3">
+            {/* Prompt Header - 2 columns on desktop, stacked on mobile */}
+            <div className="mb-6">
+              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                {/* Column 1: Title and Model Badge */}
+                <div className="flex-1">
+                  <h1 className="text-2xl font-bold text-card-foreground mb-3">
+                    {prompt.title}
+                  </h1>
+                  <div className="flex items-center gap-2 mb-4 lg:mb-0">
+                    <ModelBadge 
+                      model={prompt.model as any} 
+                      variant="secondary" 
+                      size="sm"
+                      className="bg-muted text-muted-foreground"
+                    />
+                    {!prompt.is_public && (
+                      <PrivateBadge size="sm" />
+                    )}
+                    <span className="text-muted-foreground text-sm">·</span>
+                    <span className="text-muted-foreground text-sm">
+                      {formatDate(prompt.created_at)}
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Column 2: Like, Bookmark and Menu buttons */}
+                <div className="flex items-center gap-2 lg:flex-shrink-0">
+                  <Button
+                    onClick={handleLike}
+                    variant="outline"
+                    size="lg"
+                    className="h-10 gap-2 border"
+                  >
+                    <Heart size={16} className={isLiked ? 'fill-primary text-primary' : ''} />
+                    {likeCount}
+                  </Button>
+                  
+                  <Button
+                    onClick={handleBookmark}
+                    variant="outline"
+                    size="lg"
+                    className="h-10 gap-2 border"
+                  >
+                    <Bookmark size={16} className={isBookmarked ? 'fill-primary text-primary' : ''} />
+                    {bookmarkCount}
+                  </Button>
+                  
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="h-10 border">
+                        <MoreHorizontal size={16} />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={handleShare}>
+                        <Share2 size={16} className="mr-2" />
+                        Share
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Flag size={16} className="mr-2" />
+                        Report
+                      </DropdownMenuItem>
+                      {isOwner && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem asChild>
+                            <Link href={`/prompt/${prompt.id}/edit`}>
+                              <Edit size={16} className="mr-2" />
+                              Edit
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => setShowDeleteDialog(true)}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 size={16} className="mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Bookmarks</span>
-                <span className="font-medium text-card-foreground">{bookmarkCount}</span>
+            </div>
+
+            {/* Prompt Content */}
+            <div className="mb-6">
+              <div className="bg-card rounded-lg border border-border p-4">
+                <MarkdownRenderer 
+                  content={prompt.body}
+                  className="text-card-foreground mb-4"
+                />
+                <Button
+                  onClick={handleCopy}
+                  variant="outline"
+                  className="h-10 gap-2"
+                >
+                  <Copy size={16} />
+                  Copy
+                </Button>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Created</span>
-                <span className="font-medium text-card-foreground">{formatDate(prompt.created_at)}</span>
+            </div>
+
+            {/* Comments Section */}
+            <div className="mb-6">
+              <CommentList 
+                promptId={prompt.id} 
+                currentUserId={user?.id} 
+              />
+            </div>
+          </div>
+
+          {/* Sidebar */}
+          <div className="col-span-1 space-y-6">
+            {/* Creator Profile */}
+            <UserBioCard
+              user={{
+                id: prompt.creator.id,
+                name: prompt.creator.name,
+                avatar_url: prompt.creator.avatar_url,
+                bio: prompt.creator.bio,
+                website_url: prompt.creator.website_url
+              }}
+              stats={creatorStats}
+            />
+
+            {/* Stats */}
+            <div className="bg-card rounded-lg border border-border p-6">
+              <h3 className="text-xl font-semibold text-card-foreground mb-4">
+                Statistics
+              </h3>
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Likes</span>
+                  <span className="font-medium text-card-foreground">{likeCount}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Bookmarks</span>
+                  <span className="font-medium text-card-foreground">{bookmarkCount}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Comments</span>
+                  <span className="font-medium text-card-foreground">{commentCount}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Created</span>
+                  <span className="font-medium text-card-foreground">{formatDate(prompt.created_at)}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -379,6 +520,19 @@ export default function PromptDetails({ prompt }: PromptDetailsProps) {
         isVisible={snackbar.isVisible}
         onClose={() => setSnackbar({ ...snackbar, isVisible: false })}
         type={snackbar.type}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        title="Delete Prompt"
+        description="Are you sure you want to delete this prompt? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="destructive"
+        onConfirm={handleDelete}
+        isLoading={isDeleting}
       />
     </div>
   )

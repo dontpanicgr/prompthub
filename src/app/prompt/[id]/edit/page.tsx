@@ -7,10 +7,12 @@ import { useAuth } from '@/components/auth-provider'
 import { getPromptById, updatePrompt, deletePrompt } from '@/lib/database'
 import { ArrowLeft, Trash2, Save, X, Eye, EyeOff } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { ModelBadge } from '@/components/ui/model-badge'
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
 
 const MODELS = [
   'GPT',
@@ -22,16 +24,13 @@ const MODELS = [
   'GitHub',
   'Copilot',
   'Mistral',
-  'Llama',
-  'Pi',
+  'Meta',
+  'Ollama',
   'Cohere',
-  'Jasper',
   'Qwen',
   'DeepSeek',
   'Moonshot',
   'Black Forest Labs',
-  'Alpaca',
-  'Falcon',
   'Other'
 ]
 
@@ -48,6 +47,7 @@ export default function EditPromptPage({ params }: EditPromptPageProps) {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [formData, setFormData] = useState({
     title: '',
     body: '',
@@ -116,10 +116,6 @@ export default function EditPromptPage({ params }: EditPromptPageProps) {
   const handleDelete = async () => {
     if (!prompt || !user) return
     
-    if (!confirm('Are you sure you want to delete this prompt? This action cannot be undone.')) {
-      return
-    }
-
     setDeleting(true)
     try {
       const success = await deletePrompt(prompt.id)
@@ -182,11 +178,11 @@ export default function EditPromptPage({ params }: EditPromptPageProps) {
 
         <div className="max-w-4xl mx-auto">
           <Card className="py-0">
-            <CardContent className="px-8 py-6">
+            <CardContent className="px-6 py-6">
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Title */}
                 <div>
-                  <label htmlFor="title" className="block text-sm font-medium mb-2">
+                  <label htmlFor="title" className="block text-md font-medium mb-2">
                     Title *
                   </label>
                   <Input
@@ -199,52 +195,55 @@ export default function EditPromptPage({ params }: EditPromptPageProps) {
                   />
                 </div>
 
-                {/* AI Model */}
-                <div>
-                  <label htmlFor="model" className="block text-sm font-medium mb-2">
-                    AI Model *
-                  </label>
-                  <Select value={formData.model} onValueChange={(value) => setFormData({ ...formData, model: value })}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a model" />
-                    </SelectTrigger>
-                    <SelectContent className="w-full">
-                      {MODELS.map(model => (
-                        <SelectItem key={model} value={model} className="w-full">
-                          <div className="flex items-center gap-2 w-full">
-                            <ModelBadge model={model} size="sm" showIcon variant="transparent" />
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
                 {/* Prompt Body */}
                 <div>
-                  <label htmlFor="body" className="block text-sm font-medium mb-2">
+                  <label htmlFor="body" className="block text-md font-medium mb-1">
                     Prompt *
                   </label>
-                  <textarea
+                  <span className="flex items-center gap-2 mb-3">
+                    <span className="text-sm">Markdown supported! Use **bold**, *italic*, `code`, # headers, - lists, and more.</span>
+                  </span>
+                  <Textarea
                     id="body"
                     value={formData.body}
                     onChange={(e) => setFormData({ ...formData, body: e.target.value })}
-                    rows={12}
                     placeholder="Enter your AI prompt here. Be specific and detailed to get the best results..."
-                    className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-vertical bg-card text-foreground placeholder:text-muted-foreground font-sans"
+                    className="min-h-[120px]"
                     required
                   />
                   <div className="mt-1 flex justify-between text-sm text-muted-foreground">
-                    <span className="text-sm">
-                      💡 <strong>Markdown supported!</strong> Use **bold**, *italic*, `code`, # headers, - lists, and more.
-                    </span>
                     <span>{formData.body.length}/5000</span>
+                  </div>
+                </div>
+
+                {/* AI Model */}
+                <div>
+                  <label className="block text-md font-medium mb-1">
+                    AI Model *
+                  </label>
+                  <p className="mb-3 text-sm text-muted-foreground">Click a model to select it. Only one model can be selected at a time.</p>
+                  <div className="flex flex-wrap gap-2 p-0 rounded-md">
+                    {MODELS.map((model) => (
+                      <ModelBadge
+                        key={model}
+                        model={model}
+                        showIcon={true}
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setFormData(prev => ({ ...prev, model }))}
+                        className={`cursor-pointer transition-all ${
+                          formData.model === model 
+                            ? 'bg-primary text-primary-foreground border-primary' 
+                            : 'hover:bg-muted'
+                        }`}
+                      />
+                    ))}
                   </div>
                 </div>
 
                 {/* Visibility */}
                 <div>
-                  <label className="block text-sm font-medium mb-3">
+                  <label className="block text-md font-medium mb-3">
                     Visibility
                   </label>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -313,43 +312,53 @@ export default function EditPromptPage({ params }: EditPromptPageProps) {
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center justify-between pt-6 border-t">
+                <div className="flex items-center justify-start gap-4 pt-6 border-t">
+                  <Button
+                    type="submit"
+                    disabled={saving}
+                    className="flex items-center gap-2 h-10"
+                  >
+                    <Save size={18} />
+                    {saving ? 'Saving...' : 'Save Changes'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => router.back()}
+                    className="flex items-center gap-2 h-10"
+                  >
+                    <X size={18} />
+                    Cancel
+                  </Button>
                   <Button
                     type="button"
                     variant="destructive"
-                    onClick={handleDelete}
+                    onClick={() => setShowDeleteDialog(true)}
                     disabled={deleting}
-                    className="flex items-center gap-2 h-10"
+                    className="flex items-center gap-2 h-10 ml-auto"
                   >
                     <Trash2 size={16} />
                     {deleting ? 'Deleting...' : 'Delete Prompt'}
                   </Button>
-
-                  <div className="flex items-center gap-4">
-                    <Button
-                      type="submit"
-                      disabled={saving}
-                      className="flex items-center gap-2 h-10"
-                    >
-                      <Save size={18} />
-                      {saving ? 'Saving...' : 'Save Changes'}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => router.back()}
-                      className="flex items-center gap-2 h-10"
-                    >
-                      <X size={18} />
-                      Cancel
-                    </Button>
-                  </div>
                 </div>
               </form>
             </CardContent>
           </Card>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        title="Delete Prompt"
+        description="Are you sure you want to delete this prompt? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="destructive"
+        onConfirm={handleDelete}
+        isLoading={deleting}
+      />
     </MainLayout>
   )
 }

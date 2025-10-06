@@ -140,7 +140,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Run initialization
     const initialize = async () => {
-      await testConnection()
+      if (process.env.NODE_ENV === 'development') {
+        await testConnection()
+      }
       await getInitialSession()
     }
 

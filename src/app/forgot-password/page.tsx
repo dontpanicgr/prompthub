@@ -41,7 +41,7 @@ function ForgotPasswordContent() {
   if (success) {
     return (
       <MainLayout>
-        <div className="p-6 flex items-center justify-center min-h-screen">
+        <div className="p-6 flex items-top justify-center min-h-screen">
           <div className="max-w-md w-full">
             {/* Back Button */}
             <Link
@@ -81,7 +81,7 @@ function ForgotPasswordContent() {
 
   return (
     <MainLayout>
-      <div className="p-6 flex items-center justify-center min-h-screen">
+      <div className="p-6 flex items-top justify-center min-h-screen">
         <div className="max-w-md w-full">
           {/* Back Button */}
           <Link
@@ -130,6 +130,7 @@ function ForgotPasswordContent() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-10"
+                  autoComplete="email"
                     placeholder="Enter your email"
                     required
                   />

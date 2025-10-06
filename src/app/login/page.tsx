@@ -75,7 +75,7 @@ function LoginContent() {
 
   return (
     <MainLayout>
-      <div className="p-6 flex items-center justify-center min-h-screen">
+      <div className="p-6 flex items-top justify-center min-h-screen">
         <div className="max-w-md w-full">
         {/* Back Button */}
         <Link
@@ -97,7 +97,7 @@ function LoginContent() {
               Welcome back
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
-              Sign in to your PromptHub account
+              Sign in to your Lexee account
             </p>
           </div>
 
@@ -124,6 +124,7 @@ function LoginContent() {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   className="pl-10"
+                  autoComplete="username"
                   placeholder="Enter your email"
                   required
                 />
@@ -144,6 +145,7 @@ function LoginContent() {
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   className="pl-10 pr-12"
+                  autoComplete="current-password"
                   placeholder="Enter your password"
                   required
                 />

@@ -5,154 +5,137 @@ import { Badge, type BadgeProps } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { Sparkles } from "lucide-react"
 
-// Model icon components using TypingMind repository icons
+// Model icon components using SVG logos
 const GPTIcon = ({ className }: { className?: string }) => (
   <img 
-    src="/logos/gpt-4.webp" 
+    src="/Logos SVG/gpt.svg" 
     alt="GPT" 
-    className={`w-4 h-4 object-contain ${className}`}
+    className={`w-4 h-4 bg-white rounded-sm object-contain mr-2 flex-shrink-0 ${className}`}
   />
 )
 
 const ClaudeIcon = ({ className }: { className?: string }) => (
   <img 
-    src="/logos/claude.webp" 
+    src="/Logos SVG/claude.svg" 
     alt="Claude" 
-    className={`w-4 h-4 object-contain ${className}`}
+    className={`w-4 h-4 bg-white rounded-sm object-contain mr-2 flex-shrink-0 ${className}`}
   />
 )
 
 const GeminiIcon = ({ className }: { className?: string }) => (
   <img 
-    src="/logos/gemini.png" 
+    src="/Logos SVG/gemini.svg" 
     alt="Gemini" 
-    className={`w-4 h-4 object-contain ${className}`}
+    className={`w-4 h-4 bg-white rounded-sm object-contain mr-2 flex-shrink-0 ${className}`}
   />
 )
 
 const GemmaIcon = ({ className }: { className?: string }) => (
   <img 
-    src="/logos/gemma.jpg" 
+    src="/Logos SVG/gemma.svg" 
     alt="Gemma" 
-    className={`w-4 h-4 object-contain ${className}`}
+    className={`w-4 h-4 bg-white rounded-sm object-contain mr-2 flex-shrink-0 ${className}`}
   />
 )
 
 const GrokIcon = ({ className }: { className?: string }) => (
   <img 
-    src="/logos/grok-new.png" 
+    src="/Logos SVG/grok.svg" 
     alt="Grok" 
-    className={`w-4 h-4 object-contain ${className}`}
+    className={`w-4 h-4 bg-white rounded-sm object-contain mr-2 flex-shrink-0 ${className}`}
   />
 )
 
 const PerplexityIcon = ({ className }: { className?: string }) => (
   <img 
-    src="/logos/perplexityai.png" 
+    src="/Logos SVG/perplexity.svg" 
     alt="Perplexity" 
-    className={`w-4 h-4 object-contain ${className}`}
+    className={`w-4 h-4 bg-white rounded-sm object-contain mr-2 flex-shrink-0 ${className}`}
   />
 )
 
 const GitHubIcon = ({ className }: { className?: string }) => (
   <img 
-    src="/logos/github-icon.webp" 
+    src="/Logos SVG/github.svg" 
     alt="GitHub" 
-    className={`w-4 h-4 object-contain ${className}`}
+    className={`w-4 h-4 bg-white rounded-sm object-contain mr-2 flex-shrink-0 ${className}`}
   />
 )
 
 const CopilotIcon = ({ className }: { className?: string }) => (
   <img 
-    src="/logos/copilot.png" 
+    src="/Logos SVG/copilot.svg" 
     alt="Copilot" 
-    className={`w-4 h-4 object-contain ${className}`}
+    className={`w-4 h-4 bg-white rounded-sm object-contain mr-2 flex-shrink-0 ${className}`}
   />
 )
 
 const MistralIcon = ({ className }: { className?: string }) => (
   <img 
-    src="/logos/mistralai.png" 
+    src="/Logos SVG/mistral.svg" 
     alt="Mistral" 
-    className={`w-4 h-4 object-contain ${className}`}
+    className={`w-4 h-4 bg-white rounded-sm object-contain mr-2 flex-shrink-0 ${className}`}
   />
 )
 
-const LlamaIcon = ({ className }: { className?: string }) => (
+const MetaIcon = ({ className }: { className?: string }) => (
   <img 
-    src="/logos/llama.png" 
-    alt="Llama" 
-    className={`w-4 h-4 object-contain ${className}`}
+    src="/Logos SVG/meta.svg" 
+    alt="Meta" 
+    className={`w-4 h-4 bg-white rounded-sm object-contain mr-2 flex-shrink-0 ${className}`}
   />
 )
 
-const PiIcon = ({ className }: { className?: string }) => (
+const OllamaIcon = ({ className }: { className?: string }) => (
   <img 
-    src="/logos/pi-logo-192.png" 
-    alt="Pi" 
-    className={`w-4 h-4 object-contain ${className}`}
+    src="/Logos SVG/ollama.svg" 
+    alt="Ollama" 
+    className={`w-4 h-4 bg-white rounded-sm object-contain mr-2 flex-shrink-0 ${className}`}
   />
 )
 
 const CohereIcon = ({ className }: { className?: string }) => (
   <img 
-    src="/logos/cohere.png" 
+    src="/Logos SVG/cohere.svg" 
     alt="Cohere" 
-    className={`w-4 h-4 object-contain ${className}`}
+    className={`w-4 h-4 bg-white rounded-sm object-contain mr-2 flex-shrink-0 ${className}`}
   />
 )
 
-const JasperIcon = ({ className }: { className?: string }) => (
-  <Sparkles className={`w-4 h-4 ${className}`} />
-)
 
 const QwenIcon = ({ className }: { className?: string }) => (
   <img 
-    src="/logos/qwen2.png" 
+    src="/Logos SVG/qwen.svg" 
     alt="Qwen" 
-    className={`w-4 h-4 object-contain ${className}`}
+    className={`w-4 h-4 bg-white rounded-sm object-contain mr-2 flex-shrink-0 ${className}`}
   />
 )
 
 const DeepSeekIcon = ({ className }: { className?: string }) => (
   <img 
-    src="/logos/deepseek.png" 
+    src="/Logos SVG/deepseek.svg" 
     alt="DeepSeek" 
-    className={`w-4 h-4 object-contain ${className}`}
+    className={`w-4 h-4 bg-white rounded-sm object-contain mr-2 flex-shrink-0 ${className}`}
   />
 )
 
 const MoonshotIcon = ({ className }: { className?: string }) => (
   <img 
-    src="/logos/moonshot.png" 
+    src="/Logos SVG/moonshot.svg" 
     alt="Moonshot" 
-    className={`w-4 h-4 object-contain ${className}`}
+    className={`w-4 h-4 bg-white rounded-sm object-contain mr-2 flex-shrink-0 ${className}`}
   />
 )
 
 const BlackForestLabsIcon = ({ className }: { className?: string }) => (
   <img 
-    src="/logos/black_forest_labs.png" 
+    src="/Logos SVG/black-forrest-labs.svg" 
     alt="Black Forest Labs" 
-    className={`w-4 h-4 object-contain ${className}`}
+    className={`w-4 h-4 bg-white rounded-sm object-contain mr-2 flex-shrink-0 ${className}`}
   />
 )
 
-const AlpacaIcon = ({ className }: { className?: string }) => (
-  <img 
-    src="/logos/alpaca.png" 
-    alt="Alpaca" 
-    className={`w-4 h-4 object-contain ${className}`}
-  />
-)
 
-const FalconIcon = ({ className }: { className?: string }) => (
-  <img 
-    src="/logos/falcon.png" 
-    alt="Falcon" 
-    className={`w-4 h-4 object-contain ${className}`}
-  />
-)
 
 const OtherIcon = ({ className }: { className?: string }) => (
   <Sparkles className={`w-4 h-4 ${className}`} />
@@ -169,16 +152,13 @@ const modelIcons = {
   'GitHub': GitHubIcon,
   'Copilot': CopilotIcon,
   'Mistral': MistralIcon,
-  'Llama': LlamaIcon,
-  'Pi': PiIcon,
+  'Meta': MetaIcon,
+  'Ollama': OllamaIcon,
   'Cohere': CohereIcon,
-  'Jasper': JasperIcon,
   'Qwen': QwenIcon,
   'DeepSeek': DeepSeekIcon,
   'Moonshot': MoonshotIcon,
   'Black Forest Labs': BlackForestLabsIcon,
-  'Alpaca': AlpacaIcon,
-  'Falcon': FalconIcon,
   'Other': OtherIcon,
 } as const
 

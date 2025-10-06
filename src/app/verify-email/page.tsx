@@ -116,7 +116,7 @@ function VerifyEmailContent() {
               </h3>
               <ol className="text-sm text-blue-700 dark:text-blue-400 space-y-1">
                 <li>1. Check your email inbox</li>
-                <li>2. Look for an email from PromptHub</li>
+                <li>2. Look for an email from Lexee</li>
                 <li>3. Click the verification link in the email</li>
                 <li>4. Return here and click "I've verified my email"</li>
               </ol>

@@ -161,6 +161,7 @@ function ResetPasswordContent() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="pl-10 pr-12"
+                  autoComplete="new-password"
                     placeholder="Enter new password"
                     required
                   />
@@ -192,6 +193,7 @@ function ResetPasswordContent() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     className="pl-10 pr-12"
+                  autoComplete="new-password"
                     placeholder="Confirm new password"
                     required
                   />

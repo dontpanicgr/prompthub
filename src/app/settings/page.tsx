@@ -218,6 +218,7 @@ export default function SettingsPage() {
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                      autoComplete="email"
                       placeholder="Enter your email"
                     />
                   </div>
