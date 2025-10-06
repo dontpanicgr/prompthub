@@ -54,9 +54,8 @@ const getInitialCollapsedState = (): boolean => {
 export default function Sidebar({ user, onSignOut }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
-  const [isCollapsed, setIsCollapsed] = useState(false) // Initialize as false to prevent hydration mismatch
+  const [isCollapsed, setIsCollapsed] = useState(getInitialCollapsedState)
   const [userButtonRect, setUserButtonRect] = useState<DOMRect | null>(null)
-  const [isHydrated, setIsHydrated] = useState(false)
   const pathname = usePathname()
   useAuth()
   const { theme, setTheme } = useTheme()
@@ -82,12 +81,6 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
       }
     }
   }
-
-  // Load initial state after hydration to prevent mismatch
-  useEffect(() => {
-    setIsHydrated(true)
-    setIsCollapsed(getInitialCollapsedState())
-  }, [])
 
   // Listen for external sidebar state changes (e.g., from settings page)
   useEffect(() => {
@@ -129,23 +122,20 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
         hidden lg:block fixed inset-y-0 left-0 z-40 bg-background text-foreground border-r border-border
         transform transition-all duration-150 ease-out h-screen overflow-hidden
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-        ${isHydrated && isCollapsed ? 'w-16 cursor-pointer max-w-16 min-w-16' : 'w-64 max-w-64 min-w-64'}
+        ${isCollapsed ? 'w-16 cursor-pointer' : 'w-64'}
       `}
+        onClick={() => {
+          if (isCollapsed && !isOpen) {
+            handleToggleCollapsed()
+          }
+        }}
       >
-        <div className="flex flex-col h-screen min-w-0">
+        <div className="flex flex-col h-screen">
           {/* Brand - Fixed at top */}
-          <div 
-            className="flex-shrink-0 p-4 border-b border-border flex items-center justify-between min-w-0"
-            onClick={() => {
-              // Only expand if sidebar is collapsed
-              if (isCollapsed) {
-                handleToggleCollapsed()
-              }
-            }}
-          >
+          <div className="flex-shrink-0 p-4 border-b border-border flex items-center justify-between">
             <Link 
               href="/" 
-              className={`flex items-center ${isHydrated && isCollapsed ? 'gap-0' : 'gap-3'} group relative`}
+              className={`flex items-center ${isCollapsed ? 'gap-0' : 'gap-3'} group relative`}
               onClick={(e) => {
                 if (isCollapsed) {
                   e.preventDefault()
@@ -153,29 +143,27 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
                   handleToggleCollapsed()
                   return
                 }
-                e.stopPropagation()
                 setIsOpen(false)
               }}
               aria-label="Go to home"
             >
               <div className="relative w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                <span className={`text-white font-bold text-sm ${isHydrated && isCollapsed ? 'opacity-100 group-hover:opacity-0 transition-opacity' : ''}`}>Lx</span>
-                {isHydrated && isCollapsed && (
+                <span className={`text-white font-bold text-sm ${isCollapsed ? 'opacity-100 group-hover:opacity-0 transition-opacity' : ''}`}>Lx</span>
+                {isCollapsed && (
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <PanelRightClose size={16} className="text-white" />
                   </div>
                 )}
               </div>
-              {!isHydrated || !isCollapsed ? (
+              {!isCollapsed && (
                 <span className="text-xl font-bold text-gray-900 dark:text-white">
                   Lexee
                 </span>
-              ) : null}
+              )}
             </Link>
-            {!isHydrated || !isCollapsed ? (
+            {!isCollapsed && (
               <button
                 onClick={(e) => {
-                  e.preventDefault()
                   e.stopPropagation()
                   handleToggleCollapsed()
                 }}
@@ -185,11 +173,11 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
               >
                 <PanelLeftClose size={16} className="text-gray-500 dark:text-gray-400" />
               </button>
-            ) : null}
+            )}
           </div>
 
           {/* Navigation - Flexible content */}
-          <nav className={`flex-1 space-y-1 overflow-y-auto overflow-x-hidden p-3 min-w-0`}>
+          <nav className={`flex-1 space-y-1 overflow-y-auto overflow-x-hidden p-3`}>
             {navItems.map((item) => {
               const Icon = item.icon
               const isActive = pathname === item.href
@@ -199,10 +187,10 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
                   key={item.href}
                   href={item.href}
                   className={`
-                    flex items-center ${isHydrated && isCollapsed ? 'justify-center px-1' : 'gap-3 px-3'} h-10 rounded-lg text-sm font-medium transition-colors group relative
+                    flex items-center ${isCollapsed ? 'justify-center px-1' : 'gap-3 px-3'} h-10 rounded-lg text-sm font-medium transition-colors group relative
                     ${isActive
                       ? 'bg-nav-active text-nav-foreground'
-                      : isHydrated && isCollapsed 
+                      : isCollapsed 
                         ? 'text-muted-foreground hover:bg-nav-active hover:text-nav-foreground'
                         : 'text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground'
                     }
@@ -212,13 +200,13 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
                     setIsOpen(false)
                   }}
                   aria-current={isActive ? 'page' : undefined}
-                  title={isHydrated && isCollapsed ? item.label : undefined}
+                  title={isCollapsed ? item.label : undefined}
                 >
                   <Icon size={20} className="flex-shrink-0" />
-                  {!isHydrated || !isCollapsed ? (
+                  {!isCollapsed && (
                     <span className="truncate">{item.label}</span>
-                  ) : null}
-                  {isHydrated && isCollapsed && (
+                  )}
+                  {isCollapsed && (
                     <div className="absolute left-full ml-3 px-3 py-1.5 bg-gray-900 text-white text-sm rounded-md  opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 dark:bg-gray-700">
                       {item.label}
                     </div>
@@ -229,7 +217,7 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
           </nav>
 
           {/* Sidebar Footer - Fixed at bottom */}
-          <div className="flex-shrink-0 p-3 border-t border-border min-w-0">
+          <div className="flex-shrink-0 p-3 border-t border-border">
             <div className="space-y-2">
               {/* Theme Button */}
               <button
@@ -237,14 +225,14 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
                   e.stopPropagation()
                   toggleTheme()
                 }}
-                className={`w-full flex items-center ${isHydrated && isCollapsed ? 'justify-center px-2' : 'gap-3 px-3'} h-10 text-sm font-medium text-muted-foreground ${isHydrated && isCollapsed ? 'hover:bg-nav-active hover:text-nav-foreground' : 'hover:bg-nav-hover hover:text-nav-foreground'} rounded-lg transition-colors group relative`}
-                title={isHydrated && isCollapsed ? (theme === 'dark' ? 'Turn lights on' : 'Turn lights off') : undefined}
+                className={`w-full flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-3 px-3'} h-10 text-sm font-medium text-muted-foreground ${isCollapsed ? 'hover:bg-nav-active hover:text-nav-foreground' : 'hover:bg-nav-hover hover:text-nav-foreground'} rounded-lg transition-colors group relative`}
+                title={isCollapsed ? (theme === 'dark' ? 'Turn lights on' : 'Turn lights off') : undefined}
               >
                 {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-                {!isHydrated || !isCollapsed ? (
+                {!isCollapsed && (
                   <span>{theme === 'dark' ? 'Lights on' : 'Lights off'}</span>
-                ) : null}
-                {isHydrated && isCollapsed && (
+                )}
+                {isCollapsed && (
                   <div className="absolute left-full ml-3 px-3 py-1.5 bg-gray-900 text-white text-sm rounded-md  opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 dark:bg-gray-700">
                     {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
                   </div>
@@ -261,8 +249,8 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
                       setUserButtonRect(rect)
                       setIsUserMenuOpen(!isUserMenuOpen)
                     }}
-                    className={`w-full flex items-center ${isHydrated && isCollapsed ? 'justify-center px-2' : 'gap-2 px-3'} h-10 text-sm font-medium text-muted-foreground ${isHydrated && isCollapsed ? 'hover:bg-nav-active hover:text-nav-foreground' : 'hover:bg-nav-hover hover:text-nav-foreground'} rounded-lg transition-colors group relative`}
-                    title={isHydrated && isCollapsed ? 'User menu' : undefined}
+                    className={`w-full flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-2 px-3'} h-10 text-sm font-medium text-muted-foreground ${isCollapsed ? 'hover:bg-nav-active hover:text-nav-foreground' : 'hover:bg-nav-hover hover:text-nav-foreground'} rounded-lg transition-colors group relative`}
+                    title={isCollapsed ? 'User menu' : undefined}
                   >
                     <div className="w-6 h-6 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center flex-shrink-0">
                       {user.avatar_url ? (
@@ -275,10 +263,10 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
                         <User size={14} className="text-gray-500" />
                       )}
                     </div>
-                    {!isHydrated || !isCollapsed ? (
+                    {!isCollapsed && (
                       <span className="truncate">{user.name}</span>
-                    ) : null}
-                    {isHydrated && isCollapsed && (
+                    )}
+                    {isCollapsed && (
                       <div className="absolute left-full ml-3 px-3 py-1.5 bg-gray-900 text-white text-sm rounded-md  opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 dark:bg-gray-700">
                         {user.name}
                       </div>
@@ -292,12 +280,12 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
                     e.stopPropagation()
                     handleSignIn()
                   }}
-                  className={`w-full flex items-center ${isHydrated && isCollapsed ? 'justify-center px-2' : 'gap-2 px-3'} h-10 text-sm font-medium text-muted-foreground ${isHydrated && isCollapsed ? 'hover:bg-nav-active hover:text-nav-foreground' : 'hover:bg-nav-hover hover:text-nav-foreground'} rounded-lg transition-colors group relative`}
-                  title={isHydrated && isCollapsed ? 'Sign in' : undefined}
+                  className={`w-full flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-2 px-3'} h-10 text-sm font-medium text-muted-foreground ${isCollapsed ? 'hover:bg-nav-active hover:text-nav-foreground' : 'hover:bg-nav-hover hover:text-nav-foreground'} rounded-lg transition-colors group relative`}
+                  title={isCollapsed ? 'Sign in' : undefined}
                 >
                   <LogIn size={18} />
-                  {!isHydrated || !isCollapsed ? <span>Sign In</span> : null}
-                  {isHydrated && isCollapsed && (
+                  {!isCollapsed && <span>Sign In</span>}
+                  {isCollapsed && (
                     <div className="absolute left-full ml-3 px-3 py-1.5 bg-gray-900 text-white text-sm rounded-md  opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 dark:bg-gray-700">
                       Sign In
                     </div>
