@@ -102,7 +102,7 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
   const navItems = [
     { href: '/create', label: 'New Prompt', icon: Plus },
     { href: '/', label: 'Browse', icon: Compass },
-    { href: '/popular', label: 'Trending', icon: TrendingUp },
+    { href: '/trending', label: 'Trending', icon: TrendingUp },
     { href: '/latest', label: 'Latest', icon: Calendar },
     { href: '/me', label: 'My Prompts', icon: User },
   ]

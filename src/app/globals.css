@@ -169,12 +169,103 @@
   * {
     @apply border-border outline-ring/50;
   }
+  
+  /* Smooth theme transitions */
+  :root {
+    transition: 
+      --background 0.3s ease-in-out,
+      --foreground 0.3s ease-in-out,
+      --card 0.3s ease-in-out,
+      --card-foreground 0.3s ease-in-out,
+      --popover 0.3s ease-in-out,
+      --popover-foreground 0.3s ease-in-out,
+      --primary 0.3s ease-in-out,
+      --primary-foreground 0.3s ease-in-out,
+      --secondary 0.3s ease-in-out,
+      --secondary-foreground 0.3s ease-in-out,
+      --muted 0.3s ease-in-out,
+      --muted-foreground 0.3s ease-in-out,
+      --accent 0.3s ease-in-out,
+      --accent-foreground 0.3s ease-in-out,
+      --destructive 0.3s ease-in-out,
+      --border 0.3s ease-in-out,
+      --input 0.3s ease-in-out,
+      --ring 0.3s ease-in-out,
+      --chart-1 0.3s ease-in-out,
+      --chart-2 0.3s ease-in-out,
+      --chart-3 0.3s ease-in-out,
+      --chart-4 0.3s ease-in-out,
+      --chart-5 0.3s ease-in-out,
+      --sidebar 0.3s ease-in-out,
+      --sidebar-foreground 0.3s ease-in-out,
+      --sidebar-primary 0.3s ease-in-out,
+      --sidebar-primary-foreground 0.3s ease-in-out,
+      --sidebar-accent 0.3s ease-in-out,
+      --sidebar-accent-foreground 0.3s ease-in-out,
+      --sidebar-border 0.3s ease-in-out,
+      --sidebar-ring 0.3s ease-in-out,
+      --nav-active 0.3s ease-in-out,
+      --nav-hover 0.3s ease-in-out,
+      --nav-foreground 0.3s ease-in-out;
+  }
+  
+  /* Enhanced transitions during theme changes */
+  :root.theme-transitioning {
+    transition: 
+      --background 0.3s ease-in-out,
+      --foreground 0.3s ease-in-out,
+      --card 0.3s ease-in-out,
+      --card-foreground 0.3s ease-in-out,
+      --popover 0.3s ease-in-out,
+      --popover-foreground 0.3s ease-in-out,
+      --primary 0.3s ease-in-out,
+      --primary-foreground 0.3s ease-in-out,
+      --secondary 0.3s ease-in-out,
+      --secondary-foreground 0.3s ease-in-out,
+      --muted 0.3s ease-in-out,
+      --muted-foreground 0.3s ease-in-out,
+      --accent 0.3s ease-in-out,
+      --accent-foreground 0.3s ease-in-out,
+      --destructive 0.3s ease-in-out,
+      --border 0.3s ease-in-out,
+      --input 0.3s ease-in-out,
+      --ring 0.3s ease-in-out,
+      --chart-1 0.3s ease-in-out,
+      --chart-2 0.3s ease-in-out,
+      --chart-3 0.3s ease-in-out,
+      --chart-4 0.3s ease-in-out,
+      --chart-5 0.3s ease-in-out,
+      --sidebar 0.3s ease-in-out,
+      --sidebar-foreground 0.3s ease-in-out,
+      --sidebar-primary 0.3s ease-in-out,
+      --sidebar-primary-foreground 0.3s ease-in-out,
+      --sidebar-accent 0.3s ease-in-out,
+      --sidebar-accent-foreground 0.3s ease-in-out,
+      --sidebar-border 0.3s ease-in-out,
+      --sidebar-ring 0.3s ease-in-out,
+      --nav-active 0.3s ease-in-out,
+      --nav-hover 0.3s ease-in-out,
+      --nav-foreground 0.3s ease-in-out;
+  }
+  
   body {
     @apply bg-background text-foreground;
+    transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
   }
+  
+  /* Ensure smooth transitions for theme-related properties */
+  * {
+    transition: 
+      background-color 0.3s ease-in-out,
+      color 0.3s ease-in-out,
+      border-color 0.3s ease-in-out,
+      box-shadow 0.3s ease-in-out;
+  }
+  
   h1 {
     @apply text-2xl font-bold text-foreground;
   }
+  
   button, a {
     @apply cursor-pointer;
   }

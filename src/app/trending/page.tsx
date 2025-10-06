@@ -8,7 +8,7 @@ import { getPopularPrompts } from '@/lib/database'
 import { useAuth } from '@/components/auth-provider'
 import { TrendingUp, Bookmark, Clock } from 'lucide-react'
 
-export default function PopularPage() {
+export default function TrendingPage() {
   const { user } = useAuth()
   const [prompts, setPrompts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -22,7 +22,7 @@ export default function PopularPage() {
         const data = await getPopularPrompts(user?.id)
         setPrompts(data)
       } catch (error) {
-        console.error('Error fetching popular prompts:', error)
+        console.error('Error fetching trending prompts:', error)
       } finally {
         setLoading(false)
       }

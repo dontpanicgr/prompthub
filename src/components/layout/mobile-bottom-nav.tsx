@@ -14,7 +14,7 @@ export default function MobileBottomNav() {
 
   const navItems = [
     { href: '/', label: 'Browse', icon: Compass },
-    { href: '/popular', label: 'Trending', icon: TrendingUp },
+    { href: '/trending', label: 'Trending', icon: TrendingUp },
     { href: '/latest', label: 'Latest', icon: Clock },
     { href: '/create', label: 'Create', icon: Plus },
   ]

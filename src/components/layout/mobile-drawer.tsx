@@ -35,7 +35,7 @@ export default function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
   const navItems = [
     { href: '/create', label: 'New Prompt', icon: Plus },
     { href: '/', label: 'Browse', icon: Compass },
-    { href: '/popular', label: 'Trending', icon: TrendingUp },
+    { href: '/trending', label: 'Trending', icon: TrendingUp },
     { href: '/latest', label: 'Latest', icon: Clock },
     { href: '/me', label: 'My Prompts', icon: User },
   ]

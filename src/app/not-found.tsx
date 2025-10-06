@@ -29,7 +29,7 @@ export default function NotFound() {
             </Button>
             
             <Button variant="outline" asChild className="w-full">
-              <Link href="/popular">
+              <Link href="/trending">
                 <Search size={20} className="mr-2" />
                 Browse prompts
               </Link>
