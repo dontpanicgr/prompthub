@@ -78,6 +78,8 @@ export function GoogleAnalytics() {
 export function MixpanelAnalytics() {
   useEffect(() => {
     const MIXPANEL_TOKEN = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN
+    const MIXPANEL_API_HOST = process.env.NEXT_PUBLIC_MIXPANEL_API_HOST
+    const MIXPANEL_REGION = process.env.NEXT_PUBLIC_MIXPANEL_REGION // e.g. 'EU'
 
     if (!MIXPANEL_TOKEN) {
       console.warn('Mixpanel token not found')
@@ -89,17 +91,25 @@ export function MixpanelAnalytics() {
       try {
         const mixpanel = await import('mixpanel-browser')
         
+        // Determine API host (explicit env has priority, then region hint)
+        const apiHost = MIXPANEL_API_HOST || (MIXPANEL_REGION === 'EU' ? 'https://api-eu.mixpanel.com' : undefined)
+
         // Initialize Mixpanel
         mixpanel.default.init(MIXPANEL_TOKEN, {
           debug: process.env.NODE_ENV === 'development',
           track_pageview: false, // We'll handle this manually
           ignore_dnt: true,
+          batch_requests: true,
+          api_host: apiHost,
         })
 
         // Make it available globally for the analytics library
         window.mixpanel = mixpanel.default
         
-        console.log('Mixpanel initialized successfully')
+        if (process.env.NODE_ENV === 'development') {
+          const masked = MIXPANEL_TOKEN.slice(0, 4) + '...' + MIXPANEL_TOKEN.slice(-4)
+          console.log('Mixpanel initialized', { apiHost: apiHost || 'default', token: masked })
+        }
       } catch (error) {
         console.error('Failed to initialize Mixpanel:', error)
       }

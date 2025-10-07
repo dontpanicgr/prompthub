@@ -1,10 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useAuth } from '@/components/auth-provider'
 import { useTheme } from '@/components/theme-provider'
+import { supabase } from '@/lib/supabase'
+import { toast } from 'sonner'
 import { 
   X,
   Plus,
@@ -17,7 +19,9 @@ import {
   LogOut,
   LogIn,
   Clock,
-  Compass
+  Compass,
+  HatGlasses,
+  Eye
 } from 'lucide-react'
 
 interface MobileDrawerProps {
@@ -31,6 +35,39 @@ export default function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
   const router = useRouter()
   const { user, signOut } = useAuth()
   const { theme, setTheme } = useTheme()
+  const [isPrivate, setIsPrivate] = useState(false)
+  const [updatingPrivacy, setUpdatingPrivacy] = useState(false)
+
+  useEffect(() => {
+    const loadPrivacy = async () => {
+      try {
+        if (!user?.id) return
+        const { data } = await supabase.from('profiles').select('is_private').eq('id', user.id).single()
+        if (data) setIsPrivate(!!data.is_private)
+      } catch {}
+    }
+    loadPrivacy()
+  }, [user?.id])
+
+  const togglePrivacy = async () => {
+    if (!user?.id || updatingPrivacy) return
+    try {
+      setUpdatingPrivacy(true)
+      const next = !isPrivate
+      const { error } = await supabase.from('profiles').update({ is_private: next, updated_at: new Date().toISOString() }).eq('id', user.id)
+      if (!error) {
+        setIsPrivate(next)
+        try {
+          window.dispatchEvent(new CustomEvent('privacy-mode-change', { detail: { isPrivate: next } }))
+        } catch {}
+        try {
+          toast.success(next ? 'Private mode enabled' : 'Public mode enabled')
+        } catch {}
+      }
+    } finally {
+      setUpdatingPrivacy(false)
+    }
+  }
 
   const navItems = [
     { href: '/create', label: 'New Prompt', icon: Plus },
@@ -114,6 +151,18 @@ export default function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
 
           {/* Footer */}
           <div className="p-4 border-t border-border space-y-2">
+            {/* Privacy Mode Button */}
+            {user && (
+              <button
+                onClick={togglePrivacy}
+                disabled={updatingPrivacy}
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground transition-colors"
+              >
+                {isPrivate ? <HatGlasses size={18} /> : <Eye size={18} />}
+                {isPrivate ? 'Private on' : 'Public on'}
+              </button>
+            )}
+
             {/* Theme Button */}
             <button
               onClick={toggleTheme}

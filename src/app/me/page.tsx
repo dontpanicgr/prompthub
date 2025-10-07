@@ -122,6 +122,21 @@ export default function MyPromptsPage() {
     }
   }, [])
 
+  const handleSearch = useCallback((query: string, models: string[]) => {
+    console.log('Search triggered:', { query, models, totalPrompts: prompts.length })
+    setSearchQuery(query)
+    setSelectedModels(models)
+    const filtered = prompts.filter(prompt => {
+      const matchesSearch = query === '' ||
+        prompt.title.toLowerCase().includes(query.toLowerCase()) ||
+        prompt.body.toLowerCase().includes(query.toLowerCase())
+      const matchesModel = models.length === 0 || models.includes(prompt.model)
+      return matchesSearch && matchesModel
+    })
+    console.log('Filtered results:', filtered.length)
+    setFilteredPrompts(filtered)
+  }, [prompts])
+
   // Show loading while auth is loading
   if (authLoading) {
     return (
@@ -240,22 +255,7 @@ export default function MyPromptsPage() {
     }
   }
 
-  const handleSearch = useCallback((query: string, models: string[]) => {
-    console.log('Search triggered:', { query, models, totalPrompts: prompts.length })
-    setSearchQuery(query)
-    setSelectedModels(models)
-    
-    const filtered = prompts.filter(prompt => {
-      const matchesSearch = query === '' || 
-                           prompt.title.toLowerCase().includes(query.toLowerCase()) ||
-                           prompt.body.toLowerCase().includes(query.toLowerCase())
-      const matchesModel = models.length === 0 || models.includes(prompt.model)
-      return matchesSearch && matchesModel
-    })
-    
-    console.log('Filtered results:', filtered.length)
-    setFilteredPrompts(filtered)
-  }, [prompts])
+  
 
   return (
     <MainLayout>
@@ -269,7 +269,8 @@ export default function MyPromptsPage() {
                 name: profile?.name || user.user_metadata?.name || user.email?.split('@')[0] || 'User',
                 avatar_url: profile?.avatar_url || user.user_metadata?.avatar_url,
                 bio: profile?.bio,
-                website_url: profile?.website_url
+                website_url: profile?.website_url,
+                is_private: !!profile?.is_private
               }}
               stats={userStats}
             />

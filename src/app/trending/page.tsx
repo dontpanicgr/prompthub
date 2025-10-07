@@ -102,6 +102,7 @@ export default function TrendingPage() {
             setSelectedModels={setSelectedModels}
             onSearch={handleSearch}
             placeholder="Search prompts..."
+            toggleTooltip={layoutPref === 'table' ? 'Switch to card view' : 'Switch to list view'}
           />
 
         </div>

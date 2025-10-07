@@ -114,9 +114,11 @@ export default function UserPage({ params }: UserPageProps) {
                 name: user.name,
                 avatar_url: user.avatar_url,
                 bio: user.bio,
-                website_url: user.website_url
+                website_url: user.website_url,
+                is_private: user.is_private
               }}
               stats={stats}
+              showStats={false}
             />
           </div>
 

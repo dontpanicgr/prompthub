@@ -145,7 +145,7 @@ export async function getPublicPrompts(userId?: string): Promise<Prompt[]> {
       .from('prompts')
       .select(`
         *,
-        creator:profiles!prompts_creator_id_fkey(id, name, avatar_url)
+        creator:profiles!prompts_creator_id_fkey(id, name, avatar_url, is_private)
       `)
       .eq('is_public', true)
       .order('created_at', { ascending: false })
@@ -222,7 +222,10 @@ export async function getPublicPrompts(userId?: string): Promise<Prompt[]> {
       })
     }
 
-    const result = promptsWithCreator.map(prompt => ({
+    // Filter out prompts where creator is private (unless viewer is the creator)
+    const visiblePrompts = promptsWithCreator.filter((p: any) => !p.creator?.is_private || p.creator_id === userId)
+
+    const result = visiblePrompts.map(prompt => ({
       ...prompt,
       like_count: likeCountMap.get(prompt.id) || 0,
       bookmark_count: bookmarkCountMap.get(prompt.id) || 0,
@@ -246,7 +249,7 @@ export async function getPromptById(id: string, userId?: string): Promise<Prompt
     .from('prompts')
     .select(`
       *,
-      creator:profiles!prompts_creator_id_fkey(id, name, avatar_url, bio, website_url),
+      creator:profiles!prompts_creator_id_fkey(id, name, avatar_url, bio, website_url, is_private),
       like_count:likes(count),
       bookmark_count:bookmarks(count)
     `)
@@ -264,6 +267,11 @@ export async function getPromptById(id: string, userId?: string): Promise<Prompt
 
   if (error) {
     console.error('Error fetching prompt:', error)
+    return null
+  }
+
+  // Enforce creator privacy: if creator is private and viewer is not owner, block
+  if (data?.creator?.is_private && data.creator_id !== userId) {
     return null
   }
 
@@ -519,7 +527,7 @@ export async function getPopularPrompts(userId?: string): Promise<Prompt[]> {
     .from('prompts')
     .select(`
       *,
-      creator:profiles!prompts_creator_id_fkey(id, name, avatar_url),
+      creator:profiles!prompts_creator_id_fkey(id, name, avatar_url, is_private),
       like_count:likes(count),
       bookmark_count:bookmarks(count)
     `)
@@ -550,8 +558,10 @@ export async function getPopularPrompts(userId?: string): Promise<Prompt[]> {
     userBookmarks = bookmarks?.map(b => b.prompt_id) || []
   }
 
-  // Calculate popularity score and sort
-  const promptsWithScore = data?.map(prompt => {
+  // Filter out private creators (unless viewer is owner), then calculate popularity score and sort
+  const promptsWithScore = (data || [])
+    .filter((p: any) => !p.creator?.is_private || p.creator_id === userId)
+    .map(prompt => {
     const likeCount = prompt.like_count?.[0]?.count || 0
     const bookmarkCount = prompt.bookmark_count?.[0]?.count || 0
     const createdAt = new Date(prompt.created_at)
@@ -574,7 +584,7 @@ export async function getPopularPrompts(userId?: string): Promise<Prompt[]> {
       is_bookmarked: userBookmarks.includes(prompt.id),
       popularity_score: popularityScore
     }
-  }) || []
+  })
 
   // Sort by popularity score (highest first)
   return promptsWithScore.sort((a, b) => b.popularity_score - a.popularity_score)
@@ -586,7 +596,7 @@ export async function searchPrompts(query: string, userId?: string): Promise<Pro
     .from('prompts')
     .select(`
       *,
-      creator:profiles!prompts_creator_id_fkey(id, name, avatar_url),
+      creator:profiles!prompts_creator_id_fkey(id, name, avatar_url, is_private),
       like_count:likes(count),
       bookmark_count:bookmarks(count)
     `)
@@ -618,7 +628,9 @@ export async function searchPrompts(query: string, userId?: string): Promise<Pro
     userBookmarks = bookmarks?.map(b => b.prompt_id) || []
   }
 
-  return data?.map(prompt => ({
+  return (data || [])
+    .filter((p: any) => !p.creator?.is_private || p.creator_id === userId)
+    .map(prompt => ({
     ...prompt,
     like_count: prompt.like_count?.[0]?.count || 0,
     bookmark_count: prompt.bookmark_count?.[0]?.count || 0,

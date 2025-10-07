@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { notFound } from 'next/navigation'
 import MainLayout from '@/components/layout/main-layout'
 import PromptDetails from '@/components/prompts/prompt-details'
-import { supabase } from '@/lib/supabase'
+import { getPromptById } from '@/lib/database'
 import { useAuth } from '@/components/auth-provider'
 
 interface PromptPageProps {
@@ -22,52 +22,11 @@ export default function PromptPage({ params }: PromptPageProps) {
     async function fetchPrompt() {
       try {
         const { id } = await params
-        
-        // Build query - allow public prompts or private prompts owned by current user
-        let query = supabase
-          .from('prompts')
-          .select(`
-            *,
-            creator:profiles!prompts_creator_id_fkey(
-              id,
-              name,
-              avatar_url,
-              bio,
-              website_url
-            ),
-            likes!left(
-              user_id
-            ),
-            bookmarks!left(
-              user_id
-            )
-          `)
-          .eq('id', id)
-
-        // If user is authenticated, allow viewing their own private prompts
-        if (user) {
-          query = query.or(`is_public.eq.true,creator_id.eq.${user.id}`)
-        } else {
-          // If not authenticated, only allow public prompts
-          query = query.eq('is_public', true)
-        }
-
-        const { data: promptData, error } = await query.single()
-
-        if (error || !promptData) {
+        const promptData = await getPromptById(id, user?.id)
+        if (!promptData) {
           notFound()
         }
-
-        // Process the data to add like/bookmark status for current user
-        const processedPrompt = {
-          ...promptData,
-          is_liked: user ? promptData.likes?.some((like: any) => like.user_id === user.id) : false,
-          is_bookmarked: user ? promptData.bookmarks?.some((bookmark: any) => bookmark.user_id === user.id) : false,
-          like_count: promptData.likes?.length || 0,
-          bookmark_count: promptData.bookmarks?.length || 0
-        }
-
-        setPrompt(processedPrompt)
+        setPrompt(promptData)
       } catch (error) {
         console.error('Error fetching prompt:', error)
         notFound()
@@ -75,7 +34,6 @@ export default function PromptPage({ params }: PromptPageProps) {
         setLoading(false)
       }
     }
-
     fetchPrompt()
   }, [params, user])
 

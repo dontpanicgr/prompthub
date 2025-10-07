@@ -37,6 +37,7 @@ interface SearchFiltersProps {
   setSelectedModels: (models: string[]) => void
   onSearch: (query: string, models: string[]) => void
   placeholder?: string
+  toggleTooltip?: string
 }
 
 export default function SearchFilters({
@@ -45,7 +46,8 @@ export default function SearchFilters({
   selectedModels,
   setSelectedModels,
   onSearch,
-  placeholder = "Search prompts..."
+  placeholder = "Search prompts...",
+  toggleTooltip
 }: SearchFiltersProps) {
   const [showModelBadges, setShowModelBadges] = useState(false)
   const [layout, setLayout] = useState<'card' | 'table'>(() => {
@@ -131,7 +133,7 @@ export default function SearchFilters({
 
         {/* Layout toggle (Card/List) */}
         <div className="flex items-center">
-          <Tooltip content="Toggle layout">
+          <Tooltip content={toggleTooltip || (layout === 'table' ? 'Switch to card view' : 'Switch to list view')}>
             <Button
               type="button"
               variant="outline"

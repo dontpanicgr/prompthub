@@ -43,6 +43,8 @@ export default function SettingsPage() {
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [changingPassword, setChangingPassword] = useState(false)
+  const [isPrivate, setIsPrivate] = useState(false)
+  const [updatingPrivacy, setUpdatingPrivacy] = useState(false)
   
 
   const isEmailPasswordUser = useMemo(() => {
@@ -67,6 +69,7 @@ export default function SettingsPage() {
           bio: data.bio || '',
           website_url: data.website_url || ''
         })
+        setIsPrivate(!!data.is_private)
       }
     } catch (error) {
       console.error('Error loading profile:', error)
@@ -486,6 +489,39 @@ export default function SettingsPage() {
               <CardContent className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
+                    <label className="text-sm font-medium">Private profile</label>
+                    <p className="text-sm text-muted-foreground">
+                      Hide your profile and prompts from others (visible only to you).
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={isPrivate}
+                      onChange={async (checked) => {
+                        try {
+                          setUpdatingPrivacy(true)
+                          setIsPrivate(checked)
+                          const { error } = await supabase
+                            .from('profiles')
+                            .update({ is_private: checked, updated_at: new Date().toISOString() })
+                            .eq('id', user!.id)
+                          if (error) throw error
+                          toast.success(checked ? 'Profile set to private' : 'Profile set to public')
+                        } catch (e: any) {
+                          console.error(e)
+                          setIsPrivate((prev) => !prev)
+                          toast.error('Failed to update privacy')
+                        } finally {
+                          setUpdatingPrivacy(false)
+                        }
+                      }}
+                      disabled={updatingPrivacy}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
                     <label className="text-sm font-medium">Two-Factor Authentication</label>
                     <p className="text-sm text-muted-foreground">
                       Add an extra layer of security to your account.
@@ -497,21 +533,21 @@ export default function SettingsPage() {
                 </div>
 
                 {isEmailPasswordUser && (
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <label className="text-sm font-medium">Change Password</label>
-                      <p className="text-sm text-muted-foreground">
-                        Update your account password for better security.
-                      </p>
-                    </div>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <label className="text-sm font-medium">Change Password</label>
+                    <p className="text-sm text-muted-foreground">
+                      Update your account password for better security.
+                    </p>
+                  </div>
                     <Button 
                       variant="outline" 
                       size="sm"
                       onClick={() => setChangePasswordOpen(true)}
                     >
-                      Change Password
-                    </Button>
-                  </div>
+                    Change Password
+                  </Button>
+                </div>
                 )}
 
                 <div className="flex items-center justify-between">

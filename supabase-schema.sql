@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   avatar_url TEXT,
   bio TEXT,
   website_url TEXT,
+  is_private BOOLEAN DEFAULT false,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

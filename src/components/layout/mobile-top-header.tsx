@@ -1,13 +1,18 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/components/auth-provider'
+import { supabase } from '@/lib/supabase'
 import { 
   Menu, 
   User, 
-  LogIn 
-} from 'lucide-react'
+  LogIn, 
+  HatGlasses,
+  Eye
+ } from 'lucide-react'
+import Tooltip from '@/components/ui/tooltip'
+import { toast } from 'sonner'
 
 interface MobileTopHeaderProps {
   onMenuClick: () => void
@@ -15,6 +20,39 @@ interface MobileTopHeaderProps {
 
 export default function MobileTopHeader({ onMenuClick }: MobileTopHeaderProps) {
   const { user } = useAuth()
+  const [isPrivate, setIsPrivate] = useState(false)
+  const [updatingPrivacy, setUpdatingPrivacy] = useState(false)
+
+  useEffect(() => {
+    const loadPrivacy = async () => {
+      try {
+        if (!user?.id) return
+        const { data } = await supabase.from('profiles').select('is_private').eq('id', user.id).single()
+        if (data) setIsPrivate(!!data.is_private)
+      } catch {}
+    }
+    loadPrivacy()
+  }, [user?.id])
+
+  const togglePrivacy = async () => {
+    if (!user?.id || updatingPrivacy) return
+    try {
+      setUpdatingPrivacy(true)
+      const next = !isPrivate
+      const { error } = await supabase.from('profiles').update({ is_private: next, updated_at: new Date().toISOString() }).eq('id', user.id)
+      if (!error) {
+        setIsPrivate(next)
+        try {
+          window.dispatchEvent(new CustomEvent('privacy-mode-change', { detail: { isPrivate: next } }))
+        } catch {}
+        try {
+          toast.success(next ? 'Private mode enabled' : 'Public mode enabled')
+        } catch {}
+      }
+    } finally {
+      setUpdatingPrivacy(false)
+    }
+  }
 
   return (
     <header className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
@@ -38,24 +76,47 @@ export default function MobileTopHeader({ onMenuClick }: MobileTopHeaderProps) {
           </span>
         </Link>
 
-        {/* Right: User avatar or sign in button */}
+        {/* Right: Privacy toggle + avatar or sign in */}
         {user ? (
-          <Link
-            href="/me"
-            className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted transition-colors"
-          >
-            <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
-              {user.user_metadata?.avatar_url ? (
-                <img 
-                  src={user.user_metadata.avatar_url} 
-                  alt={user.user_metadata.name || 'User'} 
-                  className="w-8 h-8 rounded-full"
-                />
-              ) : (
-                <User size={16} className="text-gray-500" />
-              )}
-            </div>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Tooltip
+              content={
+                <div className="max-w-[240px] p-1">
+                  <div className="text-xs font-medium mb-1">Privacy mode</div>
+                  <div className="text-xs">
+                    <div>👁️ Public: Your prompts and profile page are visible to all</div>
+                    <div>🥸 Private: Your prompts are private, and profile page is visible.</div>
+                  </div>
+                </div>
+              }
+            >
+              <button
+                onClick={togglePrivacy}
+                disabled={updatingPrivacy}
+                className="p-2 rounded-lg hover:bg-muted transition-colors"
+                aria-label="Toggle privacy mode"
+                title={isPrivate ? 'Private on' : 'Public on'}
+              >
+                {isPrivate ? <HatGlasses size={18} /> : <Eye size={18} />}
+              </button>
+            </Tooltip>
+            <Link
+              href="/me"
+              className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted transition-colors"
+            >
+              <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
+                {user.user_metadata?.avatar_url ? (
+                  <img 
+                    src={user.user_metadata.avatar_url} 
+                    alt={user.user_metadata.name || 'User'} 
+                    className="w-8 h-8 rounded-full"
+                  />
+                ) : (
+                  <User size={16} className="text-gray-500" />
+                )}
+              </div>
+            </Link>
+          </div>
         ) : (
           <Link
             href="/login?redirect=/"
