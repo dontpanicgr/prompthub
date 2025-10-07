@@ -106,22 +106,6 @@ export default function UserPage({ params }: UserPageProps) {
     <MainLayout>
       <div className="w-full">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* User Profile Card - Sidebar */}
-          <div className="lg:col-span-1">
-            <UserBioCard
-              user={{
-                id: user.id,
-                name: user.name,
-                avatar_url: user.avatar_url,
-                bio: user.bio,
-                website_url: user.website_url,
-                is_private: user.is_private
-              }}
-              stats={stats}
-              showStats={false}
-            />
-          </div>
-
           {/* Prompts Section */}
           <div className="lg:col-span-3">
             <div className="mb-6">
@@ -155,6 +139,22 @@ export default function UserPage({ params }: UserPageProps) {
                 />
               )}
             </div>
+          </div>
+
+          {/* User Profile Card - Sidebar */}
+          <div className="lg:col-span-1">
+            <UserBioCard
+              user={{
+                id: user.id,
+                name: user.name,
+                avatar_url: user.avatar_url,
+                bio: user.bio,
+                website_url: user.website_url,
+                is_private: user.is_private
+              }}
+              stats={stats}
+              showStats={false}
+            />
           </div>
         </div>
       </div>

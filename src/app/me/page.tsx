@@ -261,21 +261,6 @@ export default function MyPromptsPage() {
     <MainLayout>
       <div className="w-full">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Sidebar - Profile Card */}
-          <div className="lg:col-span-1">
-            <UserBioCard
-              user={{
-                id: user.id,
-                name: profile?.name || user.user_metadata?.name || user.email?.split('@')[0] || 'User',
-                avatar_url: profile?.avatar_url || user.user_metadata?.avatar_url,
-                bio: profile?.bio,
-                website_url: profile?.website_url,
-                is_private: !!profile?.is_private
-              }}
-              stats={userStats}
-            />
-          </div>
-
           {/* Main Content */}
           <div className="lg:col-span-3">
             <div className="mb-6">
@@ -395,6 +380,21 @@ export default function MyPromptsPage() {
                 </div>
               )
             )}
+          </div>
+
+          {/* Sidebar - Profile Card */}
+          <div className="lg:col-span-1">
+            <UserBioCard
+              user={{
+                id: user.id,
+                name: profile?.name || user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+                avatar_url: profile?.avatar_url || user.user_metadata?.avatar_url,
+                bio: profile?.bio,
+                website_url: profile?.website_url,
+                is_private: !!profile?.is_private
+              }}
+              stats={userStats}
+            />
           </div>
         </div>
       </div>
