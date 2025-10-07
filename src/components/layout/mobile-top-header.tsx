@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useAuth } from '@/components/auth-provider'
 import { supabase } from '@/lib/supabase'
 import { 
-  Menu, 
+  PanelLeft, 
   User, 
   LogIn, 
   HatGlasses,
@@ -46,7 +46,18 @@ export default function MobileTopHeader({ onMenuClick }: MobileTopHeaderProps) {
           window.dispatchEvent(new CustomEvent('privacy-mode-change', { detail: { isPrivate: next } }))
         } catch {}
         try {
-          toast.success(next ? 'Private mode enabled' : 'Public mode enabled')
+          const message = next ? 'Private mode enabled' : 'Public mode enabled'
+          const isMobile = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(max-width: 1024px)').matches
+          if (isMobile) {
+            toast.success(message, {
+              action: {
+                label: 'Refresh',
+                onClick: () => window.location.reload()
+              }
+            })
+          } else {
+            toast.success(message)
+          }
         } catch {}
       }
     } finally {
@@ -63,17 +74,14 @@ export default function MobileTopHeader({ onMenuClick }: MobileTopHeaderProps) {
           className="p-2 rounded-lg hover:bg-muted transition-colors"
           aria-label="Open menu"
         >
-          <Menu size={20} />
+          <PanelLeft size={20} />
         </button>
 
-        {/* Center: Logo */}
-        <Link href="/" className="flex items-center gap-2">
+        {/* Center: Logo (icon only on mobile) */}
+        <Link href="/" className="flex items-center">
           <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">Lx</span>
+            <span className="text-white font-bold text-sm">Px</span>
           </div>
-          <span className="text-xl font-bold text-foreground">
-            Lexee
-          </span>
         </Link>
 
         {/* Right: Privacy toggle + avatar or sign in */}

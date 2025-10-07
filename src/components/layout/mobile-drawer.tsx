@@ -61,7 +61,18 @@ export default function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
           window.dispatchEvent(new CustomEvent('privacy-mode-change', { detail: { isPrivate: next } }))
         } catch {}
         try {
-          toast.success(next ? 'Private mode enabled' : 'Public mode enabled')
+          const message = next ? 'Private mode enabled' : 'Public mode enabled'
+          const isMobile = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(max-width: 1024px)').matches
+          if (isMobile) {
+            toast.success(message, {
+              action: {
+                label: 'Refresh',
+                onClick: () => window.location.reload()
+              }
+            })
+          } else {
+            toast.success(message)
+          }
         } catch {}
       }
     } finally {

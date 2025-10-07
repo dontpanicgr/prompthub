@@ -506,7 +506,23 @@ export default function SettingsPage() {
                             .update({ is_private: checked, updated_at: new Date().toISOString() })
                             .eq('id', user!.id)
                           if (error) throw error
-                          toast.success(checked ? 'Profile set to private' : 'Profile set to public')
+                          // Show toast with refresh action on mobile only
+                          const message = checked ? 'Profile set to private' : 'Profile set to public'
+                          try {
+                            const isMobile = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(max-width: 1024px)').matches
+                            if (isMobile) {
+                              toast.success(message, {
+                                action: {
+                                  label: 'Refresh',
+                                  onClick: () => window.location.reload()
+                                }
+                              })
+                            } else {
+                              toast.success(message)
+                            }
+                          } catch {
+                            toast.success(message)
+                          }
                         } catch (e: any) {
                           console.error(e)
                           setIsPrivate((prev) => !prev)
