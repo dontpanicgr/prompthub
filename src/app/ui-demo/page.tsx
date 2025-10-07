@@ -151,7 +151,7 @@ export default function UIDemoPage() {
                     Edit
                   </Button>
                   <Button size="sm" variant="destructive">
-                    <Trash2 className="h-4 w-4 mr-1" />
+                    <Trash2 className="h-4 w-4 mr-1 text-destructive" />
                     Remove
                   </Button>
                 </div>
@@ -370,7 +370,7 @@ export default function UIDemoPage() {
                 </div>
                 <div className="flex gap-2">
                   <Button size="sm" variant="destructive">
-                    <Trash2 className="h-4 w-4 mr-1" />
+                    <Trash2 className="h-4 w-4 mr-1 text-destructive" />
                     Delete
                   </Button>
                   <Button size="sm" variant="outline">

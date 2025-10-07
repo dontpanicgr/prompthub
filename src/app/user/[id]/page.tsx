@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import { notFound } from 'next/navigation'
 import MainLayout from '@/components/layout/main-layout'
 import UserPromptsGrid from '@/components/prompts/user-prompts-grid'
+import PromptList from '@/components/prompts/prompt-list'
+import PromptGrid from '@/components/prompts/prompt-grid'
 import SearchFilters from '@/components/ui/search-filters'
 import UserBioCard from '@/components/ui/user-bio-card'
 import { getUserEngagementStats } from '@/lib/database'
@@ -25,6 +27,11 @@ export default function UserPage({ params }: UserPageProps) {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedModels, setSelectedModels] = useState<string[]>([])
+  const [layoutPref, setLayoutPref] = useState<'card' | 'table'>(() => {
+    if (typeof window === 'undefined') return 'card'
+    const pref = (localStorage.getItem('layout-preference') as 'card' | 'table' | null)
+    return pref === 'table' ? 'table' : 'card'
+  })
 
   useEffect(() => {
     async function fetchUserData() {
@@ -55,6 +62,21 @@ export default function UserPage({ params }: UserPageProps) {
 
     fetchUserData()
   }, [params])
+
+  // Listen for layout preference changes
+  useEffect(() => {
+    const handler = (e: CustomEvent) => {
+      setLayoutPref(e.detail.layout === 'table' ? 'table' : 'card')
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('layout-preference-change', handler as EventListener)
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('layout-preference-change', handler as EventListener)
+      }
+    }
+  }, [])
 
   const handleSearch = (query: string, models: string[]) => {
     console.log('Search query:', query, 'Models:', models)
@@ -118,14 +140,18 @@ export default function UserPage({ params }: UserPageProps) {
               />
             </div>
 
-            {/* Prompts Grid */}
+            {/* Prompts Grid/List based on preference */}
             <div>
-              <UserPromptsGrid 
-                userId={user.id} 
-                maxColumns={3} 
-                searchQuery={searchQuery}
-                selectedModels={selectedModels}
-              />
+              {layoutPref === 'table' ? (
+                <PromptList />
+              ) : (
+                <UserPromptsGrid 
+                  userId={user.id} 
+                  maxColumns={3} 
+                  searchQuery={searchQuery}
+                  selectedModels={selectedModels}
+                />
+              )}
             </div>
           </div>
         </div>

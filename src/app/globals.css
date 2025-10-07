@@ -307,3 +307,8 @@
     background-color: #161618 !important;
   }
 }
+
+/* Override highlight.js default background to be transparent */
+.hljs {
+  background: transparent !important;
+}

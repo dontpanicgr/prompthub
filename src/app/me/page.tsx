@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import MainLayout from '@/components/layout/main-layout'
 import PromptCard from '@/components/prompts/prompt-card'
+import PromptList from '@/components/prompts/prompt-list'
 import SearchFilters from '@/components/ui/search-filters'
 import UserBioCard from '@/components/ui/user-bio-card'
 import { Plus, Heart, Bookmark, User } from 'lucide-react'
@@ -21,6 +22,11 @@ export default function MyPromptsPage() {
 
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedModels, setSelectedModels] = useState<string[]>([])
+  const [layoutPref, setLayoutPref] = useState<'card' | 'table'>(() => {
+    if (typeof window === 'undefined') return 'card'
+    const pref = (localStorage.getItem('layout-preference') as 'card' | 'table' | null)
+    return pref === 'table' ? 'table' : 'card'
+  })
   const [userStats, setUserStats] = useState({
     prompts_created: 0,
     likes_received: 0,
@@ -100,6 +106,21 @@ export default function MyPromptsPage() {
       router.push(`/login?redirect=${encodeURIComponent('/me')}`)
     }
   }, [user, authLoading, router])
+
+  // Listen for layout preference changes
+  useEffect(() => {
+    const handler = (e: CustomEvent) => {
+      setLayoutPref(e.detail.layout === 'table' ? 'table' : 'card')
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('layout-preference-change', handler as EventListener)
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('layout-preference-change', handler as EventListener)
+      }
+    }
+  }, [])
 
   // Show loading while auth is loading
   if (authLoading) {
@@ -358,16 +379,20 @@ export default function MyPromptsPage() {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredPrompts.map((prompt) => (
-                  <PromptCard
-                    key={prompt.id}
-                    prompt={prompt}
-                    onLike={handleLike}
-                    onBookmark={handleBookmark}
-                  />
-                ))}
-              </div>
+              layoutPref === 'table' ? (
+                <PromptList prompts={filteredPrompts} loading={false} onLike={handleLike} onBookmark={handleBookmark} />
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredPrompts.map((prompt) => (
+                    <PromptCard
+                      key={prompt.id}
+                      prompt={prompt}
+                      onLike={handleLike}
+                      onBookmark={handleBookmark}
+                    />
+                  ))}
+                </div>
+              )
             )}
           </div>
         </div>

@@ -1,10 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { MessageSquare, Send } from 'lucide-react'
+import { TextareaCombo } from '@/components/ui/textarea-combo'
 import { toast } from 'sonner'
 import { processMentions } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
@@ -17,6 +14,7 @@ interface CommentFormProps {
   placeholder?: string
   isReply?: boolean
 }
+
 
 export default function CommentForm({ 
   promptId, 
@@ -85,27 +83,18 @@ export default function CommentForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
-      <div className="space-y-3">
-        <Textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder={placeholder}
-          disabled={isSubmitting}
-          className="w-full min-h-20 text-base"
-        />
-        <div className="flex items-center justify-between">
-          <Button 
-            type="submit" 
-            disabled={!content.trim() || isSubmitting}
-            size="sm"
-          >
-            {isReply ? 'Reply' : 'Comment'}
-          </Button>
-          <div className="text-sm text-muted-foreground">
-            💡 <strong>Markdown supported!</strong> Use **bold**, *italic*, `code`, # headers, - lists, and more.
-          </div>
-        </div>
-      </div>
+      <TextareaCombo
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        placeholder={placeholder}
+        disabled={isSubmitting}
+        onSubmit={handleSubmit}
+        isSubmitting={isSubmitting}
+        primaryButtonText={isReply ? 'Reply' : 'Comment'}
+        showSendButton={false}
+        helperText="💡Markdown supported!"
+        className="w-full"
+      />
       
       {isReply && (
         <div className="text-xs text-muted-foreground">

@@ -13,6 +13,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { PageMenu, PageMenuItem } from '@/components/ui/page-menu'
 import { Switch } from '@/components/ui/switch'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { useMemo } from 'react'
+ 
 
 export default function SettingsPage() {
   const { user, loading: authLoading } = useAuth()
@@ -28,9 +31,25 @@ export default function SettingsPage() {
   const [preferences, setPreferences] = useState({
     emailNotifications: true,
     sidebarCollapsed: false,
-    autoSave: true,
-    compactMode: false
+    autoSave: false,
+    layout: 'card' as 'card' | 'table',
+    marketingEmails: true,
+    pushNotifications: true,
   })
+
+  // Security state
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [changingPassword, setChangingPassword] = useState(false)
+  
+
+  const isEmailPasswordUser = useMemo(() => {
+    // Supabase returns identities on the user object; presence of 'email' provider implies email/pass account
+    const providers = (user as any)?.identities?.map((i: any) => i?.provider) || []
+    return providers.includes('email')
+  }, [user])
 
   // Load user profile data
   const loadUserData = useCallback(async () => {
@@ -118,9 +137,11 @@ export default function SettingsPage() {
     // Load sidebar state from localStorage
     if (typeof window !== 'undefined') {
       const sidebarCollapsed = localStorage.getItem('sidebar-collapsed')
+      const layoutPref = localStorage.getItem('layout-preference') as 'card' | 'table' | null
       setPreferences(prev => ({
         ...prev,
-        sidebarCollapsed: sidebarCollapsed ? JSON.parse(sidebarCollapsed) : false
+        sidebarCollapsed: sidebarCollapsed ? JSON.parse(sidebarCollapsed) : false,
+        layout: layoutPref === 'table' ? 'table' : 'card',
       }))
     }
   }
@@ -322,17 +343,43 @@ export default function SettingsPage() {
                 
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <label className="text-sm font-medium">Compact Mode</label>
+                    <label className="text-sm font-medium">Layout</label>
                     <p className="text-sm text-muted-foreground">
-                      Use a more compact layout to fit more content.
+                      Choose how to display prompts (cards or list rows).
                     </p>
                   </div>
-                  <Switch
-                    checked={preferences.compactMode}
-                    onChange={(checked) =>
-                      setPreferences(prev => ({ ...prev, compactMode: checked }))
-                    }
-                  />
+                  <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+                    <button
+                      onClick={() => {
+                        setPreferences(prev => ({ ...prev, layout: 'card' }))
+                        if (typeof window !== 'undefined') {
+                          localStorage.setItem('layout-preference', 'card')
+                        }
+                      }}
+                      className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                        preferences.layout === 'card'
+                          ? 'bg-background text-foreground shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      Card
+                    </button>
+                    <button
+                      onClick={() => {
+                        setPreferences(prev => ({ ...prev, layout: 'table' }))
+                        if (typeof window !== 'undefined') {
+                          localStorage.setItem('layout-preference', 'table')
+                        }
+                      }}
+                      className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                        preferences.layout === 'table'
+                          ? 'bg-background text-foreground shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      List
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -352,14 +399,13 @@ export default function SettingsPage() {
                   <div className="space-y-0.5">
                     <label className="text-sm font-medium">Auto-save</label>
                     <p className="text-sm text-muted-foreground">
-                      Automatically save your work as you type.
+                      Not supported yet. Planned for the editor experience.
                     </p>
                   </div>
                   <Switch
-                    checked={preferences.autoSave}
-                    onChange={(checked) =>
-                      setPreferences(prev => ({ ...prev, autoSave: checked }))
-                    }
+                    checked={false}
+                    disabled
+                    onChange={() => {}}
                   />
                 </div>
               </CardContent>
@@ -401,7 +447,7 @@ export default function SettingsPage() {
                     </p>
                   </div>
                   <Switch
-                    checked={preferences.marketingEmails || false}
+                    checked={preferences.marketingEmails}
                     onChange={(checked) =>
                       setPreferences(prev => ({ ...prev, marketingEmails: checked }))
                     }
@@ -416,7 +462,7 @@ export default function SettingsPage() {
                     </p>
                   </div>
                   <Switch
-                    checked={preferences.pushNotifications || false}
+                    checked={preferences.pushNotifications}
                     onChange={(checked) =>
                       setPreferences(prev => ({ ...prev, pushNotifications: checked }))
                     }
@@ -445,22 +491,28 @@ export default function SettingsPage() {
                       Add an extra layer of security to your account.
                     </p>
                   </div>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" disabled title="Coming soon">
                     Enable 2FA
                   </Button>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <label className="text-sm font-medium">Change Password</label>
-                    <p className="text-sm text-muted-foreground">
-                      Update your account password for better security.
-                    </p>
+                {isEmailPasswordUser && (
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <label className="text-sm font-medium">Change Password</label>
+                      <p className="text-sm text-muted-foreground">
+                        Update your account password for better security.
+                      </p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setChangePasswordOpen(true)}
+                    >
+                      Change Password
+                    </Button>
                   </div>
-                  <Button variant="outline" size="sm">
-                    Change Password
-                  </Button>
-                </div>
+                )}
 
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
@@ -469,34 +521,91 @@ export default function SettingsPage() {
                       View and manage your active login sessions.
                     </p>
                   </div>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" disabled title="Coming soon">
                     View Sessions
                   </Button>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Danger Zone</CardTitle>
-                <CardDescription>
-                  Irreversible and destructive actions.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <label className="text-sm font-medium text-destructive">Delete Account</label>
-                    <p className="text-sm text-muted-foreground">
-                      Permanently delete your account and all associated data.
-                    </p>
+            {/* Danger Zone intentionally hidden for now */}
+
+            {/* Change Password Dialog */}
+            <Dialog open={changePasswordOpen} onOpenChange={setChangePasswordOpen}>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Change Password</DialogTitle>
+                  <DialogDescription>
+                    This applies only to accounts created with email and password.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-3 py-2">
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium">Current Password</label>
+                    <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
                   </div>
-                  <Button variant="destructive" size="sm">
-                    Delete Account
-                  </Button>
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium">New Password</label>
+                    <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium">Confirm New Password</label>
+                    <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
+                <DialogFooter>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setChangePasswordOpen(false)}
+                    disabled={changingPassword}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={async () => {
+                      if (!isEmailPasswordUser) {
+                        toast.error('Password changes are only for email/password accounts')
+                        return
+                      }
+                      if (!currentPassword || !newPassword || !confirmPassword) {
+                        toast.error('Please complete all fields')
+                        return
+                      }
+                      if (newPassword !== confirmPassword) {
+                        toast.error('New passwords do not match')
+                        return
+                      }
+                      setChangingPassword(true)
+                      try {
+                        // Reauthenticate by attempting a sign-in with email + current password
+                        const email = user?.email as string
+                        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password: currentPassword })
+                        if (signInError) {
+                          throw new Error('Current password is incorrect')
+                        }
+                        const { error } = await supabase.auth.updateUser({ password: newPassword })
+                        if (error) {
+                          throw error
+                        }
+                        toast.success('Password updated')
+                        setChangePasswordOpen(false)
+                        setCurrentPassword('')
+                        setNewPassword('')
+                        setConfirmPassword('')
+                      } catch (e: any) {
+                        console.error(e)
+                        toast.error(e?.message || 'Failed to change password')
+                      } finally {
+                        setChangingPassword(false)
+                      }
+                    }}
+                    disabled={changingPassword}
+                  >
+                    {changingPassword ? 'Updating...' : 'Update Password'}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         )
 

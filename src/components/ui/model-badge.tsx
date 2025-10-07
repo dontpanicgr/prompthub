@@ -175,6 +175,7 @@ interface ModelBadgeProps extends Omit<BadgeProps, 'children'> {
 }
 
 const sizeClasses = {
+  xs: 'text-[11px] px-2 py-0.5 h-6',
   sm: 'text-xs px-2 py-1 h-8',
   md: 'text-sm px-3 py-1 h-10', 
   lg: 'text-base px-4 py-2 h-12'

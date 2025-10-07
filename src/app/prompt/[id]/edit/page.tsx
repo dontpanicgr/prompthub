@@ -337,7 +337,7 @@ export default function EditPromptPage({ params }: EditPromptPageProps) {
                     disabled={deleting}
                     className="flex items-center gap-2 h-10 ml-auto"
                   >
-                    <Trash2 size={16} />
+                    <Trash2 size={16} className="text-destructive" />
                     {deleting ? 'Deleting...' : 'Delete Prompt'}
                   </Button>
                 </div>

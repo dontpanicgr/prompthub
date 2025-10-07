@@ -1,19 +1,45 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import MainLayout from '@/components/layout/main-layout'
 import PromptGrid from '@/components/prompts/prompt-grid'
+import PromptList from '@/components/prompts/prompt-list'
 import SearchFilters from '@/components/ui/search-filters'
 import { getPublicPrompts, getPopularPrompts } from '@/lib/database'
 import type { Prompt } from '@/lib/database'
 import { useAuth } from '@/components/auth-provider'
 export default function BrowsePage() {
   const { user } = useAuth()
+  const searchParams = useSearchParams()
   const [prompts, setPrompts] = useState<Prompt[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedModels, setSelectedModels] = useState<string[]>([])
   const [sortBy, setSortBy] = useState<'recent' | 'popular' | 'bookmarked'>('recent')
+  const [layoutPref, setLayoutPref] = useState<'card' | 'table'>('card')
+
+  // Initialize selected models from URL parameters
+  useEffect(() => {
+    const modelParam = searchParams.get('model')
+    if (modelParam) {
+      setSelectedModels([modelParam])
+    }
+  }, [searchParams])
+
+  // Load layout preference from localStorage
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const pref = (localStorage.getItem('layout-preference') as 'card' | 'table' | null)
+    if (pref === 'table') setLayoutPref('table')
+    else setLayoutPref('card')
+
+    const handler = (e: CustomEvent) => {
+      setLayoutPref(e.detail.layout === 'table' ? 'table' : 'card')
+    }
+    window.addEventListener('layout-preference-change', handler as EventListener)
+    return () => window.removeEventListener('layout-preference-change', handler as EventListener)
+  }, [])
 
   useEffect(() => {
     async function fetchPrompts() {
@@ -104,7 +130,11 @@ export default function BrowsePage() {
 
         </div>
 
-        <PromptGrid prompts={filteredPrompts} loading={loading} />
+        {layoutPref === 'table' ? (
+          <PromptList prompts={filteredPrompts} loading={loading} />
+        ) : (
+          <PromptGrid prompts={filteredPrompts} loading={loading} />
+        )}
       </div>
     </MainLayout>
   )

@@ -229,50 +229,49 @@ export default function PromptDetails({ prompt }: PromptDetailsProps) {
     <div className="w-full">
       {/* Mobile Layout */}
       <div className="lg:hidden">
-        {/* HEAD Section */}
-        <div className="mb-6">
-          {/* Title */}
-          <h1 className="text-2xl font-bold text-card-foreground mb-4">
-            {prompt.title}
-          </h1>
-          
-          {/* Model • Private • Date • Username */}
-          <div className="flex items-center gap-2 mb-4">
-            <ModelBadge 
-              model={prompt.model as any} 
-              variant="secondary" 
-              size="sm"
-              className="bg-muted text-muted-foreground"
-            />
-            {!prompt.is_public && (
-              <>
-                <PrivateBadge size="sm" />
-                <span className="text-muted-foreground">•</span>
-              </>
-            )}
-            <span className="text-sm text-muted-foreground">{formatDateShort(prompt.created_at)}</span>
-            <span className="text-muted-foreground">•</span>
+        {/* HEAD Section - Reordered mobile layout */}
+        <div className="mb-8">
+          {/* Meta Information */}
+          <div className="flex items-center gap-3 text-sm text-muted-foreground mb-3">
             <Link 
-              href={`/user/${prompt.creator.id}`}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              href={`/?model=${encodeURIComponent(prompt.model)}`}
+              className="hover:opacity-80 transition-opacity"
             >
-              {prompt.creator.name}
+                  <ModelBadge 
+                    model={prompt.model as any} 
+                    variant="outline" 
+                    size="sm"
+                    className="border text-foreground bg-card dark:bg-secondary dark:border-secondary dark:text-secondary-foreground cursor-pointer"
+                  />
             </Link>
             {!prompt.is_public && (
               <>
-                <span className="text-muted-foreground">•</span>
                 <PrivateBadge size="sm" />
+                <span>·</span>
               </>
             )}
+            <span>{formatDateShort(prompt.created_at)}</span>
+            <span>·</span>
+            <Link 
+              href={`/user/${prompt.creator.id}`}
+              className="hover:text-foreground transition-colors"
+            >
+              {prompt.creator.name}
+            </Link>
           </div>
           
+          {/* Title */}
+          <h1 className="text-2xl font-semibold text-card-foreground mb-4 leading-tight">
+            {prompt.title}
+          </h1>
+          
           {/* Actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Button
               onClick={handleLike}
               variant="outline"
               size="lg"
-              className="h-10 gap-2 border"
+              className="h-10 gap-2 border px-4"
             >
               <Heart size={16} className={isLiked ? 'fill-primary text-primary' : ''} />
               {likeCount}
@@ -282,15 +281,25 @@ export default function PromptDetails({ prompt }: PromptDetailsProps) {
               onClick={handleBookmark}
               variant="outline"
               size="lg"
-              className="h-10 gap-2 border"
+              className="h-10 gap-2 border px-4"
             >
               <Bookmark size={16} className={isBookmarked ? 'fill-primary text-primary' : ''} />
               {bookmarkCount}
             </Button>
             
+            <Button
+              onClick={handleCopy}
+              variant="outline"
+              size="lg"
+              className="h-10 gap-2 border px-4"
+            >
+              <Copy size={16} />
+              Copy
+            </Button>
+            
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="h-10 border">
+                <Button variant="outline" className="h-10 border px-3">
                   <MoreHorizontal size={16} />
                 </Button>
               </DropdownMenuTrigger>
@@ -316,7 +325,7 @@ export default function PromptDetails({ prompt }: PromptDetailsProps) {
                       onClick={() => setShowDeleteDialog(true)}
                       className="text-destructive focus:text-destructive"
                     >
-                      <Trash2 size={16} className="mr-2" />
+                      <Trash2 size={16} className="mr-2 text-destructive" />
                       Delete
                     </DropdownMenuItem>
                   </>
@@ -359,89 +368,109 @@ export default function PromptDetails({ prompt }: PromptDetailsProps) {
         <div className="grid grid-cols-4 gap-6">
           {/* Main Content */}
           <div className="col-span-3">
-            {/* Prompt Header - 2 columns on desktop, stacked on mobile */}
-            <div className="mb-6">
-              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-                {/* Column 1: Title and Model Badge */}
-                <div className="flex-1">
-                  <h1 className="text-2xl font-bold text-card-foreground mb-3">
-                    {prompt.title}
-                  </h1>
-                  <div className="flex items-center gap-2 mb-4 lg:mb-0">
-                    <ModelBadge 
-                      model={prompt.model as any} 
-                      variant="secondary" 
-                      size="sm"
-                      className="bg-muted text-muted-foreground"
-                    />
-                    {!prompt.is_public && (
-                      <PrivateBadge size="sm" />
-                    )}
-                    <span className="text-muted-foreground text-sm">·</span>
-                    <span className="text-muted-foreground text-sm">
-                      {formatDate(prompt.created_at)}
-                    </span>
-                  </div>
-                </div>
+            {/* Prompt Header - Reordered layout */}
+            <div className="mb-8">
+              {/* Meta Information Row */}
+              <div className="flex items-center gap-3 text-sm text-muted-foreground mb-3">
+                <Link 
+                  href={`/?model=${encodeURIComponent(prompt.model)}`}
+                  className="hover:opacity-80 transition-opacity"
+                >
+                  <ModelBadge 
+                    model={prompt.model as any} 
+                    variant="outline" 
+                    size="sm"
+                    className="border text-foreground bg-card dark:bg-secondary dark:border-secondary dark:text-secondary-foreground cursor-pointer"
+                  />
+                </Link>
+                {!prompt.is_public && (
+                  <>
+                    <PrivateBadge size="sm" />
+                    <span>·</span>
+                  </>
+                )}
+                <span>{formatDate(prompt.created_at)}</span>
+                <span>·</span>
+                <Link 
+                  href={`/user/${prompt.creator.id}`}
+                  className="hover:text-foreground transition-colors"
+                >
+                  {prompt.creator.name}
+                </Link>
+              </div>
+              
+              {/* Title */}
+              <h1 className="text-3xl font-semibold text-card-foreground mb-4 leading-tight">
+                {prompt.title}
+              </h1>
+              
+              {/* Action Buttons Row */}
+              <div className="flex items-center gap-3">
+                <Button
+                  onClick={handleLike}
+                  variant="outline"
+                  size="lg"
+                  className="h-11 gap-2 border px-6"
+                >
+                  <Heart size={16} className={isLiked ? 'fill-primary text-primary' : ''} />
+                  {likeCount}
+                </Button>
                 
-                {/* Column 2: Like, Bookmark and Menu buttons */}
-                <div className="flex items-center gap-2 lg:flex-shrink-0">
-                  <Button
-                    onClick={handleLike}
-                    variant="outline"
-                    size="lg"
-                    className="h-10 gap-2 border"
-                  >
-                    <Heart size={16} className={isLiked ? 'fill-primary text-primary' : ''} />
-                    {likeCount}
-                  </Button>
-                  
-                  <Button
-                    onClick={handleBookmark}
-                    variant="outline"
-                    size="lg"
-                    className="h-10 gap-2 border"
-                  >
-                    <Bookmark size={16} className={isBookmarked ? 'fill-primary text-primary' : ''} />
-                    {bookmarkCount}
-                  </Button>
-                  
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" className="h-10 border">
-                        <MoreHorizontal size={16} />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={handleShare}>
-                        <Share2 size={16} className="mr-2" />
-                        Share
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Flag size={16} className="mr-2" />
-                        Report
-                      </DropdownMenuItem>
-                      {isOwner && (
-                        <>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem asChild>
-                            <Link href={`/prompt/${prompt.id}/edit`}>
-                              <Edit size={16} className="mr-2" />
-                              Edit
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            onClick={() => setShowDeleteDialog(true)}
-                            className="text-destructive focus:text-destructive"
-                          >
-                            <Trash2 size={16} className="mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        </>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+                <Button
+                  onClick={handleBookmark}
+                  variant="outline"
+                  size="lg"
+                  className="h-11 gap-2 border px-6"
+                >
+                  <Bookmark size={16} className={isBookmarked ? 'fill-primary text-primary' : ''} />
+                  {bookmarkCount}
+                </Button>
+                
+                <Button
+                  onClick={handleCopy}
+                  variant="outline"
+                  size="lg"
+                  className="h-11 gap-2 border px-6"
+                >
+                  <Copy size={16} />
+                  Copy
+                </Button>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="h-11 border px-4">
+                      <MoreHorizontal size={16} />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={handleShare}>
+                      <Share2 size={16} className="mr-2" />
+                      Share
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <Flag size={16} className="mr-2" />
+                      Report
+                    </DropdownMenuItem>
+                    {isOwner && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                          <Link href={`/prompt/${prompt.id}/edit`}>
+                            <Edit size={16} className="mr-2" />
+                            Edit
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => setShowDeleteDialog(true)}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash2 size={16} className="mr-2 text-destructive" />
+                          Delete
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
 

@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Search, Filter, X, Settings2 } from 'lucide-react'
+import { Search, Filter, X, Settings2, LayoutGrid, List } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Badge } from '@/components/ui/badge'
 import { ModelBadge } from '@/components/ui/model-badge'
+import Tooltip from '@/components/ui/tooltip'
 
 const MODELS = [
   'All Models',
@@ -47,6 +48,11 @@ export default function SearchFilters({
   placeholder = "Search prompts..."
 }: SearchFiltersProps) {
   const [showModelBadges, setShowModelBadges] = useState(false)
+  const [layout, setLayout] = useState<'card' | 'table'>(() => {
+    if (typeof window === 'undefined') return 'card'
+    const pref = (localStorage.getItem('layout-preference') as 'card' | 'table' | null)
+    return pref === 'table' ? 'table' : 'card'
+  })
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     onSearch(searchQuery, selectedModels)
@@ -76,6 +82,28 @@ export default function SearchFilters({
     onSearch(searchQuery, selectedModels)
   }, [searchQuery, selectedModels, onSearch])
 
+  // Auto-show model badges when there are selected models
+  useEffect(() => {
+    if (selectedModels.length > 0) {
+      setShowModelBadges(true)
+    }
+  }, [selectedModels])
+
+  // Listen for external layout changes
+  useEffect(() => {
+    const handler = (e: CustomEvent) => {
+      setLayout(e.detail.layout === 'table' ? 'table' : 'card')
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('layout-preference-change', handler as EventListener)
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('layout-preference-change', handler as EventListener)
+      }
+    }
+  }, [])
+
   return (
     <div>
       <form onSubmit={handleSearch} className="flex items-center gap-2">
@@ -101,6 +129,34 @@ export default function SearchFilters({
           )}
         </div>
 
+        {/* Layout toggle (Card/List) */}
+        <div className="flex items-center">
+          <Tooltip content="Toggle layout">
+            <Button
+              type="button"
+              variant="outline"
+              className="h-10 w-10 p-0 bg-card border"
+              onClick={() => {
+                if (typeof window === 'undefined') return
+                const current = layout
+                const next = current === 'card' ? 'table' : 'card'
+                setLayout(next)
+                localStorage.setItem('layout-preference', next)
+                window.dispatchEvent(new CustomEvent('layout-preference-change', { detail: { layout: next } }))
+              }}
+              aria-label="Toggle layout"
+              aria-pressed={layout === 'table'}
+            >
+              {/* Icon reflects current layout */}
+              {layout === 'card' ? (
+                <LayoutGrid className="h-5 w-5" />
+              ) : (
+                <List className="h-5 w-5" />
+              )}
+            </Button>
+          </Tooltip>
+        </div>
+
         {/* Icon-only 48x48 filter button with multi-select menu - HIDDEN FOR TESTING */}
         {/* <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -122,18 +178,20 @@ export default function SearchFilters({
         </DropdownMenu> */}
 
         {/* Settings button to toggle model badges visibility */}
-        <Button 
-          type="button" 
-          variant="outline" 
-          className="h-10 w-10 p-0 bg-card border relative"
-          onClick={() => setShowModelBadges(!showModelBadges)}
-        >
-          <Settings2 className="h-5 w-5" />
-          {/* Filter indicator dot - only show when filters are active and badges are hidden */}
-          {selectedModels.length > 0 && !showModelBadges && (
-            <div className="absolute -top-1 -right-1 h-3 w-3 bg-primary rounded-full border-2 border-background" />
-          )}
-        </Button>
+        <Tooltip content={showModelBadges ? 'Hide model filters' : 'Show model filters'}>
+          <Button 
+            type="button" 
+            variant="outline" 
+            className="h-10 w-10 p-0 bg-card border relative"
+            onClick={() => setShowModelBadges(!showModelBadges)}
+          >
+            <Settings2 className="h-5 w-5" />
+            {/* Filter indicator dot - only show when filters are active and badges are hidden */}
+            {selectedModels.length > 0 && !showModelBadges && (
+              <div className="absolute -top-1 -right-1 h-3 w-3 bg-primary rounded-full border-2 border-background" />
+            )}
+          </Button>
+        </Tooltip>
       </form>
 
       {/* Model Badges Filters */}

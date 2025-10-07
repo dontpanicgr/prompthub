@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import MainLayout from '@/components/layout/main-layout'
 import PromptGrid from '@/components/prompts/prompt-grid'
+import PromptList from '@/components/prompts/prompt-list'
 import SearchFilters from '@/components/ui/search-filters'
 import { getPopularPrompts } from '@/lib/database'
 import { useAuth } from '@/components/auth-provider'
@@ -14,6 +15,11 @@ export default function TrendingPage() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedModels, setSelectedModels] = useState<string[]>([])
+  const [layoutPref, setLayoutPref] = useState<'card' | 'table'>(() => {
+    if (typeof window === 'undefined') return 'card'
+    const pref = (localStorage.getItem('layout-preference') as 'card' | 'table' | null)
+    return pref === 'table' ? 'table' : 'card'
+  })
 
   useEffect(() => {
     async function fetchPrompts() {
@@ -30,6 +36,21 @@ export default function TrendingPage() {
 
     fetchPrompts()
   }, [user?.id])
+
+  // Listen for layout preference changes
+  useEffect(() => {
+    const handler = (e: CustomEvent) => {
+      setLayoutPref(e.detail.layout === 'table' ? 'table' : 'card')
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('layout-preference-change', handler as EventListener)
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('layout-preference-change', handler as EventListener)
+      }
+    }
+  }, [])
 
   const handleSearch = (query: string, models: string[]) => {
     console.log('Search query:', query, 'Models:', models)
@@ -84,8 +105,11 @@ export default function TrendingPage() {
           />
 
         </div>
-
-        <PromptGrid prompts={filteredPrompts} loading={loading} />
+        {layoutPref === 'table' ? (
+          <PromptList prompts={filteredPrompts} loading={loading} />
+        ) : (
+          <PromptGrid prompts={filteredPrompts} loading={loading} />
+        )}
       </div>
     </MainLayout>
   )

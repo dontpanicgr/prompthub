@@ -130,7 +130,9 @@ export default function CommentItem({
             <div>
               <div className="font-medium text-base">{comment.user.name}</div>
               <div className="text-sm text-muted-foreground">
-                {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+                {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true, includeSeconds: false })
+                  .replace(/^about /, '')
+                  .replace('less than a minute ago', 'Few moments ago')}
               </div>
             </div>
           </div>
@@ -151,7 +153,7 @@ export default function CommentItem({
                   onClick={() => setShowDeleteDialog(true)}
                   className="text-destructive focus:text-destructive"
                 >
-                  <Trash2 size={16} className="mr-2" />
+                  <Trash2 size={16} className="mr-2 text-destructive" />
                   Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -174,6 +176,7 @@ export default function CommentItem({
                 onClick={handleEdit} 
                 size="sm"
                 disabled={!editContent.trim() || isSubmitting}
+                className="h-10"
               >
                 Save
               </Button>
@@ -184,6 +187,7 @@ export default function CommentItem({
                 }} 
                 variant="outline" 
                 size="sm"
+                className="h-10"
               >
                 Cancel
               </Button>
