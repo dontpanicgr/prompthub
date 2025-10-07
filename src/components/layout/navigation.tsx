@@ -17,6 +17,7 @@ import {
   ChevronDown,
   Compass,
   Clock,
+  Trophy,
   LogIn,
   Wrench
 } from 'lucide-react'
@@ -36,6 +37,7 @@ export default function Navigation() {
     { href: '/', label: 'Browse', icon: Compass },
     { href: '/trending', label: 'Trending', icon: TrendingUp },
     { href: '/latest', label: 'Latest', icon: Clock },
+    { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
     { href: '/me', label: 'My Prompts', icon: User },
   ]
 

@@ -111,7 +111,8 @@ export default function PromptCard({ prompt, onLike, onBookmark, variant = 'card
       {variant === 'row' ? (
         <div className="flex flex-row items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 mb-1 min-w-0">
+            <h3 className="text-base font-semibold text-card-foreground truncate mb-2">{prompt.title}</h3>
+            <div className="flex items-center gap-2 min-w-0">
               <ModelBadge 
                 model={prompt.model as any} 
                 variant="outline" 
@@ -138,7 +139,6 @@ export default function PromptCard({ prompt, onLike, onBookmark, variant = 'card
                 </button>
               </div>
             </div>
-            <h3 className="text-base font-semibold text-card-foreground truncate">{prompt.title}</h3>
           </div>
           <div className="flex items-center gap-1 shrink-0 self-center">
             <button

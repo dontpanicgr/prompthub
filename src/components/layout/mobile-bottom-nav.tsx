@@ -6,7 +6,8 @@ import {
   Compass, 
   TrendingUp, 
   Clock, 
-  Plus 
+  Plus,
+  Trophy
 } from 'lucide-react'
 
 export default function MobileBottomNav() {
@@ -16,6 +17,7 @@ export default function MobileBottomNav() {
     { href: '/', label: 'Browse', icon: Compass },
     { href: '/trending', label: 'Trending', icon: TrendingUp },
     { href: '/latest', label: 'Latest', icon: Clock },
+    { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
     { href: '/create', label: 'Create', icon: Plus },
   ]
 

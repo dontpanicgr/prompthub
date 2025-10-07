@@ -98,6 +98,18 @@ export interface User {
   updated_at: string
 }
 
+export interface LeaderboardCreator {
+  creator: {
+    id: string
+    name: string
+    avatar_url?: string | null
+  }
+  likes: number
+  bookmarks: number
+  promptsCreated: number
+  joinedAt?: string | null
+}
+
 export interface Comment {
   id: string
   prompt_id: string
@@ -637,6 +649,102 @@ export async function searchPrompts(query: string, userId?: string): Promise<Pro
     is_liked: userLikes.includes(prompt.id),
     is_bookmarked: userBookmarks.includes(prompt.id)
   })) || []
+}
+
+// Get creators leaderboard based on engagement on their public prompts
+export async function getCreatorsLeaderboard(): Promise<LeaderboardCreator[]> {
+  try {
+    // Fetch public prompts with creator info (including privacy)
+    const { data: prompts, error: promptsError } = await supabase
+      .from('prompts')
+      .select(`
+        id,
+        creator_id,
+        creator:profiles!prompts_creator_id_fkey(id, name, avatar_url, is_private, created_at)
+      `)
+      .eq('is_public', true)
+
+    if (promptsError || !prompts) {
+      console.error('Error fetching prompts for leaderboard:', promptsError)
+      return []
+    }
+
+    // Filter out private creators
+    const visiblePrompts = prompts.filter((p: any) => !p.creator?.is_private)
+
+    if (visiblePrompts.length === 0) return []
+
+    const allPromptIds: string[] = visiblePrompts.map((p: any) => p.id)
+
+    // Map prompt -> creator for aggregation
+    const promptIdToCreatorId = new Map<string, string>()
+    const creatorIdToInfo = new Map<string, { id: string, name: string, avatar_url?: string | null, created_at?: string | null }>()
+    const creatorPromptCount = new Map<string, number>()
+    visiblePrompts.forEach((p: any) => {
+      promptIdToCreatorId.set(p.id, p.creator_id)
+      if (p.creator) {
+        creatorIdToInfo.set(p.creator_id, {
+          id: p.creator.id,
+          name: p.creator.name || 'Unknown',
+          avatar_url: p.creator.avatar_url || null,
+          created_at: p.creator.created_at || null
+        })
+      }
+      const current = creatorPromptCount.get(p.creator_id) || 0
+      creatorPromptCount.set(p.creator_id, current + 1)
+    })
+
+    // Fetch likes and bookmarks related to these prompts
+    const [likesRes, bookmarksRes] = await Promise.all([
+      supabase.from('likes').select('prompt_id').in('prompt_id', allPromptIds),
+      supabase.from('bookmarks').select('prompt_id').in('prompt_id', allPromptIds)
+    ])
+
+    const likes = likesRes.data || []
+    const bookmarks = bookmarksRes.data || []
+
+    // Aggregate counts per creator
+    const creatorStats = new Map<string, { likes: number, bookmarks: number }>()
+
+    const incrementForCreator = (promptId: string, field: 'likes' | 'bookmarks') => {
+      const creatorId = promptIdToCreatorId.get(promptId)
+      if (!creatorId) return
+      const current = creatorStats.get(creatorId) || { likes: 0, bookmarks: 0 }
+      current[field] += 1
+      creatorStats.set(creatorId, current)
+    }
+
+    likes.forEach((row: any) => incrementForCreator(row.prompt_id, 'likes'))
+    bookmarks.forEach((row: any) => incrementForCreator(row.prompt_id, 'bookmarks'))
+
+    // Build result array
+    const result: LeaderboardCreator[] = Array.from(creatorStats.entries()).map(([creatorId, stats]) => {
+      const info = creatorIdToInfo.get(creatorId)
+      return {
+        creator: {
+          id: info?.id || creatorId,
+          name: info?.name || 'Unknown',
+          avatar_url: info?.avatar_url || null
+        },
+        likes: stats.likes,
+        bookmarks: stats.bookmarks,
+        promptsCreated: creatorPromptCount.get(creatorId) || 0,
+        joinedAt: info?.created_at || null
+      }
+    })
+
+    // Sort by likes desc, then bookmarks desc, then name asc
+    result.sort((a, b) => {
+      if (b.likes !== a.likes) return b.likes - a.likes
+      if (b.bookmarks !== a.bookmarks) return b.bookmarks - a.bookmarks
+      return a.creator.name.localeCompare(b.creator.name)
+    })
+
+    return result
+  } catch (e) {
+    console.error('Error building creators leaderboard:', e)
+    return []
+  }
 }
 
 // Get all prompts that a user has liked (including private ones they own)

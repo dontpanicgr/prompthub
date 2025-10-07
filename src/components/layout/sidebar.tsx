@@ -18,6 +18,7 @@ import {
   PanelLeft,
   Settings,
   Compass,
+  Trophy,
   PanelLeftClose,
   PanelRightClose
 } from 'lucide-react'
@@ -151,6 +152,7 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
     { href: '/', label: 'Browse', icon: Compass },
     { href: '/trending', label: 'Trending', icon: TrendingUp },
     { href: '/latest', label: 'Latest', icon: Calendar },
+    { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
     { href: '/me', label: 'My Prompts', icon: User },
   ]
 
