@@ -29,16 +29,16 @@ export default function UserBioCard({ user, stats, className = '', showStats = t
     <div className={`bg-card rounded-lg border border-border p-6 hover:border-foreground transition-all duration-200 cursor-pointer ${className}`}>
       <Link href={`/user/${user.id}`} className="block">
         <div className="flex flex-col items-start">
-          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+          <div className="w-16 h-16 rounded-full bg-muted overflow-hidden flex items-center justify-center mb-4">
             {user.avatar_url ? (
               <img
                 src={user.avatar_url}
                 alt={user.name}
-                className="w-16 h-16 rounded-full"
+                className="w-full h-full object-cover"
               />
             ) : (
               <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-                <span className="text-2xl font-semibold text-muted-foreground">
+                <span className="text-2xl font-semibold text-foreground">
                   {getInitials(user.name)}
                 </span>
               </div>

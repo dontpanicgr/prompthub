@@ -23,6 +23,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
+  const syncProfileFromAuth = async (authUser: User) => {
+    try {
+      const avatarFromAuth = (authUser as any)?.user_metadata?.avatar_url
+        || (authUser as any)?.user_metadata?.picture
+        || (authUser as any)?.identities?.find((i: any) => i?.provider === 'google')?.identity_data?.picture
+        || null
+      const nameFromAuth = (authUser as any)?.user_metadata?.name
+        || (authUser as any)?.user_metadata?.full_name
+        || (authUser as any)?.identities?.find((i: any) => i?.provider === 'google')?.identity_data?.name
+        || null
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('avatar_url, name')
+        .eq('id', authUser.id)
+        .single()
+
+      const needsAvatar = !profile?.avatar_url && !!avatarFromAuth
+      const needsName = !profile?.name && !!nameFromAuth
+      if (!needsAvatar && !needsName) return
+
+      const update: any = { id: authUser.id, updated_at: new Date().toISOString() }
+      if (needsAvatar) update.avatar_url = avatarFromAuth
+      if (needsName) update.name = nameFromAuth
+
+      await supabase.from('profiles').upsert(update)
+    } catch (e) {
+      console.error('Failed to sync profile from auth metadata', e)
+    }
+  }
+
   useEffect(() => {
     // Test Supabase connection first
     const testConnection = async () => {
@@ -131,6 +162,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         
         setUser(session?.user ?? null)
+        if (session?.user) {
+          await syncProfileFromAuth(session.user)
+        }
       } catch (error) {
         console.error('Failed to get initial session:', error)
       } finally {
@@ -153,6 +187,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       async (event, session) => {
         setUser(session?.user ?? null)
         setLoading(false)
+        if (session?.user) {
+          await syncProfileFromAuth(session.user)
+        }
       }
     )
 
@@ -163,7 +200,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`
+        redirectTo: `${window.location.origin}/auth/callback`,
+        scopes: 'openid email profile'
       }
     })
     if (error) {

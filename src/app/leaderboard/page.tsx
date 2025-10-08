@@ -74,15 +74,29 @@ export default function LeaderboardPage() {
                 href={`/user/${row.creator.id}`}
                 className="flex items-center justify-between gap-4 bg-card border border-border rounded-lg p-4 hover:bg-muted/40 transition-colors"
               >
-                {/* Left: rank badge + user name */}
+                {/* Left: rank badge + avatar + user name */}
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-8 h-8 rounded-lg bg-foreground text-background text-sm font-semibold grid place-items-center">
                     {idx + 1}
                   </div>
+                  {/* User Avatar */}
+                  <div className="w-10 h-10 rounded-full overflow-hidden bg-muted flex-shrink-0">
+                    {row.creator.avatar_url ? (
+                      <img
+                        src={row.creator.avatar_url}
+                        alt={row.creator.name || 'User avatar'}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-muted flex items-center justify-center text-foreground font-semibold text-lg">
+                        {(row.creator.name || 'U').charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
                   <div className="min-w-0">
                     <div className="truncate font-medium text-card-foreground flex items-center">
                       <span className="truncate">{row.creator.name || 'Unknown'}</span>
-                      {medalForRank(idx) && <span>{medalForRank(idx)}</span>}
+                      {medalForRank(idx) && <span className="ml-1">{medalForRank(idx)}</span>}
                     </div>
                     <div className="text-sm text-muted-foreground truncate">
                       {row.promptsCreated} {row.promptsCreated === 1 ? 'prompt' : 'prompts'} created · Joined {timeAgo(row.joinedAt)}
