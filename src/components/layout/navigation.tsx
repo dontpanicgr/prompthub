@@ -65,7 +65,7 @@ export default function Navigation() {
       </button>
 
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-b border-border">
+      <nav className="fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-b border-border transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
@@ -144,17 +144,12 @@ export default function Navigation() {
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                     className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted transition-colors"
                   >
-                    <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
-                      {user.user_metadata?.avatar_url ? (
-                        <img 
-                          src={user.user_metadata.avatar_url} 
-                          alt={user.user_metadata.name || 'User'} 
-                          className="w-8 h-8 rounded-full"
-                        />
-                      ) : (
-                        <User size={16} className="text-gray-500" />
-                      )}
-                    </div>
+                    <Avatar
+                      src={user.user_metadata?.avatar_url}
+                      alt={user.user_metadata?.name || 'User'}
+                      size="sm"
+                      fallback={user.user_metadata?.name?.charAt(0)?.toUpperCase() || 'U'}
+                    />
                     <span className="text-sm font-medium text-foreground">
                       {user.user_metadata?.name || user.email?.split('@')[0] || 'User'}
                     </span>
@@ -197,7 +192,7 @@ export default function Navigation() {
 
         {/* Mobile Navigation */}
         {isMobileMenuOpen && (
-          <div className="lg:hidden border-t border-border bg-nav-active text-nav-foreground">
+          <div className="lg:hidden border-t border-border bg-nav-active text-nav-foreground transition-colors">
             <div className="px-4 py-2 space-y-1">
               {navItems.map((item) => {
                 const Icon = item.icon

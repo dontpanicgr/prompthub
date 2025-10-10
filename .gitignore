@@ -43,3 +43,11 @@ next-env.d.ts
 # other
 .figma-design
 .specstory/ai_rules_backups
+
+# migration scripts (one-time use)
+*-migration*.sql
+fix-*.sql
+migrate-*.sql
+
+# build artifacts
+tsconfig.tsbuildinfo

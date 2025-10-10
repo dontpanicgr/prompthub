@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS public.prompts (
   model TEXT NOT NULL,
   creator_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
   is_public BOOLEAN DEFAULT true,
+  project_id UUID REFERENCES public.projects(id) ON DELETE SET NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -58,12 +59,26 @@ CREATE TABLE IF NOT EXISTS public.comments (
   is_deleted BOOLEAN DEFAULT false
 );
 
+-- Create projects table (single-level folders)
+CREATE TABLE IF NOT EXISTS public.projects (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  name TEXT NOT NULL,
+  description TEXT,
+  color TEXT,
+  sort_order INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(user_id, name)
+);
+
 -- Enable RLS on all tables
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.prompts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.likes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.bookmarks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.comments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
 
 -- Profiles policies
 CREATE POLICY "Public profiles are viewable by everyone" ON public.profiles
@@ -121,10 +136,24 @@ CREATE POLICY "Users can update their own comments" ON public.comments
 CREATE POLICY "Users can delete their own comments" ON public.comments
   FOR DELETE USING (auth.uid() = user_id);
 
+-- Projects policies
+CREATE POLICY "Users can view their own projects" ON public.projects
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own projects" ON public.projects
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own projects" ON public.projects
+  FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own projects" ON public.projects
+  FOR DELETE USING (auth.uid() = user_id);
+
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS prompts_creator_id_idx ON public.prompts(creator_id);
 CREATE INDEX IF NOT EXISTS prompts_is_public_idx ON public.prompts(is_public);
 CREATE INDEX IF NOT EXISTS prompts_created_at_idx ON public.prompts(created_at DESC);
+CREATE INDEX IF NOT EXISTS prompts_project_id_idx ON public.prompts(project_id);
 CREATE INDEX IF NOT EXISTS likes_prompt_id_idx ON public.likes(prompt_id);
 CREATE INDEX IF NOT EXISTS likes_user_id_idx ON public.likes(user_id);
 CREATE INDEX IF NOT EXISTS bookmarks_prompt_id_idx ON public.bookmarks(prompt_id);
@@ -133,6 +162,8 @@ CREATE INDEX IF NOT EXISTS comments_prompt_id_idx ON public.comments(prompt_id);
 CREATE INDEX IF NOT EXISTS comments_user_id_idx ON public.comments(user_id);
 CREATE INDEX IF NOT EXISTS comments_parent_id_idx ON public.comments(parent_id);
 CREATE INDEX IF NOT EXISTS comments_created_at_idx ON public.comments(created_at ASC);
+CREATE INDEX IF NOT EXISTS projects_user_id_idx ON public.projects(user_id);
+CREATE INDEX IF NOT EXISTS projects_sort_order_idx ON public.projects(sort_order ASC);
 
 -- Function to handle new user signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -140,6 +171,12 @@ RETURNS TRIGGER AS $$
 BEGIN
   INSERT INTO public.profiles (id, email, name, avatar_url)
   VALUES (NEW.id, NEW.email, NEW.raw_user_meta_data->>'name', NEW.raw_user_meta_data->>'avatar_url');
+  
+  -- Create default projects for new user
+  INSERT INTO public.projects (user_id, name, description, sort_order) VALUES
+  (NEW.id, 'Personal', 'Personal prompts and ideas', 0),
+  (NEW.id, 'Work', 'Work-related prompts and projects', 1);
+  
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -170,4 +207,8 @@ CREATE TRIGGER update_prompts_updated_at
 
 CREATE TRIGGER update_comments_updated_at
   BEFORE UPDATE ON public.comments
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+CREATE TRIGGER update_projects_updated_at
+  BEFORE UPDATE ON public.projects
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();

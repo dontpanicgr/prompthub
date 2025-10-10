@@ -10,6 +10,7 @@ import {
   User 
 } from 'lucide-react'
 import { useTheme } from '@/components/theme-provider'
+import Avatar from '@/components/ui/avatar'
 
 interface UserMenuProps {
   user?: {
@@ -39,17 +40,13 @@ export default function UserMenu({ user, onSignOut, isCollapsed = false }: UserM
         className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} w-full p-2 rounded-lg hover:bg-muted transition-colors group relative`}
         title={isCollapsed ? user.name : undefined}
       >
-        <div className="w-8 h-8 rounded-full bg-muted-foreground/30 flex items-center justify-center flex-shrink-0">
-          {user.avatar_url ? (
-            <img 
-              src={user.avatar_url} 
-              alt={user.name} 
-              className="w-8 h-8 rounded-full"
-            />
-          ) : (
-            <User size={16} className="text-gray-300" />
-          )}
-        </div>
+        <Avatar
+          src={user.avatar_url}
+          alt={user.name}
+          size="sm"
+          fallback={user.name?.charAt(0)?.toUpperCase() || 'U'}
+          className="flex-shrink-0"
+        />
         {!isCollapsed && (
           <div className="flex-1 min-w-0 text-left">
             <p className="text-sm font-medium text-foreground truncate">

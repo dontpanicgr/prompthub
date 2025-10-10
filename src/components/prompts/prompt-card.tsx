@@ -1,13 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Heart, Bookmark } from 'lucide-react'
+import { Heart, Bookmark, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { ModelBadge } from '@/components/ui/model-badge'
 import { PrivateBadge } from '@/components/ui/private-badge'
 import { useAuth } from '@/components/auth-provider'
+import PromptMenu from '@/components/ui/prompt-menu'
 
 interface Prompt {
   id: string
@@ -32,15 +33,18 @@ interface PromptCardProps {
   onLike: (promptId: string) => void
   onBookmark: (promptId: string) => void
   variant?: 'card' | 'row'
+  showProjectActions?: boolean
+  onRemoveFromProject?: (promptId: string) => void
 }
 
-export default function PromptCard({ prompt, onLike, onBookmark, variant = 'card' }: PromptCardProps) {
+const PromptCard = memo(function PromptCard({ prompt, onLike, onBookmark, variant = 'card', showProjectActions = false, onRemoveFromProject }: PromptCardProps) {
   const router = useRouter()
   const { user } = useAuth()
   const [isLiked, setIsLiked] = useState(prompt.is_liked || false)
   const [isBookmarked, setIsBookmarked] = useState(prompt.is_bookmarked || false)
   const [likeCount, setLikeCount] = useState(prompt.like_count)
   const [bookmarkCount, setBookmarkCount] = useState(prompt.bookmark_count)
+  const isOwner = user?.id === prompt.creator.id
 
   const handleLike = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -106,6 +110,16 @@ export default function PromptCard({ prompt, onLike, onBookmark, variant = 'card
     })
   }
 
+  const handleCopy = (e?: React.MouseEvent) => {
+    if (e) { e.preventDefault(); e.stopPropagation() }
+    navigator.clipboard.writeText(prompt.body).then(() => toast.success('Prompt copied'))
+  }
+
+  const handleShare = (e?: React.MouseEvent) => {
+    if (e) { e.preventDefault(); e.stopPropagation() }
+    navigator.clipboard.writeText(`${window.location.origin}/prompt/${prompt.id}`).then(() => toast.success('Link copied'))
+  }
+
   const CardInner = () => (
     <>
       {variant === 'row' ? (
@@ -116,7 +130,7 @@ export default function PromptCard({ prompt, onLike, onBookmark, variant = 'card
               <ModelBadge 
                 model={prompt.model as any} 
                 variant="outline" 
-                size="xs"
+                size="sm"
                 className="border text-foreground bg-card dark:bg-secondary dark:border-secondary dark:text-secondary-foreground"
               />
               {prompt.is_public === false && (
@@ -155,6 +169,23 @@ export default function PromptCard({ prompt, onLike, onBookmark, variant = 'card
               <Bookmark size={16} className={`${isBookmarked ? 'fill-primary text-primary' : ''}`} />
               {bookmarkCount}
             </button>
+            <PromptMenu
+              promptId={prompt.id}
+              promptBody={prompt.body}
+              isOwner={isOwner}
+              onCopy={() => handleCopy()}
+              onShare={() => handleShare()}
+              onDelete={() => router.push(`/prompt/${prompt.id}/edit`)}
+            />
+            {showProjectActions && onRemoveFromProject && (
+              <button
+                onClick={() => onRemoveFromProject(prompt.id)}
+                className="flex items-center gap-1 text-md transition-all duration-200 text-destructive font-semibold rounded-md px-2 py-1 hover:bg-destructive/10"
+                title="Remove from project"
+              >
+                <X size={16} />
+              </button>
+            )}
           </div>
         </div>
       ) : (
@@ -196,7 +227,7 @@ export default function PromptCard({ prompt, onLike, onBookmark, variant = 'card
           <div className="text-sm text-muted-foreground mb-2 line-clamp-5 flex-1 break-words whitespace-pre-wrap">
             {prompt.body}
           </div>
-          <div className="flex items-center justify-start gap-0 mt-auto">
+          <div className="flex items-center justify-start gap-1 mt-auto">
             <button
               onClick={handleLike}
               className={`flex items-center gap-1 text-md transition-all duration-200 text-card-foreground font-semibold rounded-md px-2 py-1 hover:bg-secondary`}
@@ -211,6 +242,23 @@ export default function PromptCard({ prompt, onLike, onBookmark, variant = 'card
               <Bookmark size={16} className={`${isBookmarked ? 'fill-primary text-primary' : ''}`} />
               {bookmarkCount}
             </button>
+            <PromptMenu
+              promptId={prompt.id}
+              promptBody={prompt.body}
+              isOwner={isOwner}
+              onCopy={() => handleCopy()}
+              onShare={() => handleShare()}
+              onDelete={() => router.push(`/prompt/${prompt.id}/edit`)}
+            />
+            {showProjectActions && onRemoveFromProject && (
+              <button
+                onClick={() => onRemoveFromProject(prompt.id)}
+                className="flex items-center gap-1 text-md transition-all duration-200 text-destructive font-semibold rounded-md px-2 py-1 hover:bg-destructive/10"
+                title="Remove from project"
+              >
+                <X size={16} />
+              </button>
+            )}
           </div>
         </>
       )}
@@ -219,9 +267,11 @@ export default function PromptCard({ prompt, onLike, onBookmark, variant = 'card
 
   return (
     <Link href={`/prompt/${prompt.id}`} className="group">
-      <div className={`${variant === 'row' ? 'bg-card rounded-lg border border-border p-4 hover:border-foreground transition-all duration-200 cursor-pointer w-full' : 'bg-card rounded-lg border border-border p-4 hover:border-foreground transition-all duration-200 cursor-pointer card-height flex flex-col'}`}>
+      <div className={`${variant === 'row' ? 'bg-card rounded-lg border border-border p-4 hover:border-foreground transition-colors duration-200 cursor-pointer w-full' : 'bg-card rounded-lg border border-border p-4 hover:border-foreground transition-colors duration-200 cursor-pointer card-height flex flex-col'}`}>
         <CardInner />
       </div>
     </Link>
   )
-}
+})
+
+export default PromptCard

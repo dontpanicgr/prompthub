@@ -84,6 +84,8 @@
   --nav-active: #e6e6e9;
   --nav-hover: #f8f8f9;
   --nav-foreground: #1a1a1e;
+  --privacy: #440e0e;
+  --privacy-foreground: #ffffff;
 }
 
 /* Dark theme */
@@ -123,6 +125,8 @@
   --nav-active: #2a2a2f;
   --nav-hover: #2a2a2f;
   --nav-foreground: #e6e6e9;
+  --privacy: #440e0e;
+  --privacy-foreground: #ffffff;
 }
 
 /* Default theme variables - will be overridden by theme classes */
@@ -163,6 +167,8 @@
   --nav-active: #e6e6e9;
   --nav-hover: #f8f8f9;
   --nav-foreground: #1a1a1e;
+  --privacy: #440e0e;
+  --privacy-foreground: #ffffff;
 }
 
 @layer base {
@@ -188,7 +194,6 @@
       --accent 0.3s ease-in-out,
       --accent-foreground 0.3s ease-in-out,
       --destructive 0.3s ease-in-out,
-      --border 0.3s ease-in-out,
       --input 0.3s ease-in-out,
       --ring 0.3s ease-in-out,
       --chart-1 0.3s ease-in-out,
@@ -227,7 +232,6 @@
       --accent 0.3s ease-in-out,
       --accent-foreground 0.3s ease-in-out,
       --destructive 0.3s ease-in-out,
-      --border 0.3s ease-in-out,
       --input 0.3s ease-in-out,
       --ring 0.3s ease-in-out,
       --chart-1 0.3s ease-in-out,
@@ -258,7 +262,6 @@
     transition: 
       background-color 0.3s ease-in-out,
       color 0.3s ease-in-out,
-      border-color 0.3s ease-in-out,
       box-shadow 0.3s ease-in-out;
   }
   
@@ -306,9 +309,26 @@
   [data-theme='dark'] .dark\:bg-gray-800 {
     background-color: #161618 !important;
   }
+
+  /* Privacy background utility */
+  .bg-privacy {
+    background-color: var(--privacy);
+  }
+  .text-privacy-foreground {
+    color: var(--privacy-foreground);
+  }
 }
 
 /* Override highlight.js default background to be transparent */
 .hljs {
   background: transparent !important;
+}
+
+/* Fix toast text colors to inherit properly in both light and dark themes */
+[data-title] {
+  color: inherit !important;
+}
+
+[data-description] {
+  color: inherit !important;
 }

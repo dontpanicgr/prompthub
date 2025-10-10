@@ -21,6 +21,8 @@ export default function SearchBar() {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={20} />
           <Input
             type="text"
+            id="search-bar-input"
+            name="search"
             placeholder="Search prompts by title or model..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}

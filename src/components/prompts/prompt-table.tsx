@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { toast } from 'sonner'
 import { useAuth } from '@/components/auth-provider'
 import { getPublicPrompts, toggleLike, toggleBookmark } from '@/lib/database'
@@ -37,6 +38,12 @@ export default function PromptTable({ prompts: externalPrompts, loading: externa
 
     fetchPrompts()
   }, [user?.id, externalPrompts])
+
+  // Prefetch detail routes for the first visible prompts
+  useEffect(() => {
+    const itemsToPrefetch = (externalPrompts || prompts).slice(0, 30)
+    itemsToPrefetch.forEach((p) => router.prefetch(`/prompt/${p.id}`))
+  }, [router, externalPrompts, prompts])
 
   const ensureAuthed = (action: string) => {
     if (!user) {
@@ -124,7 +131,7 @@ export default function PromptTable({ prompts: externalPrompts, loading: externa
       </div>
       {displayPrompts.map((p) => (
         <div key={p.id} className="grid grid-cols-6 px-4 py-3 text-sm border-t items-center hover:bg-muted/40">
-          <a href={`/prompt/${p.id}`} className="truncate font-medium hover:underline">{p.title}</a>
+          <Link prefetch href={`/prompt/${p.id}`} className="truncate font-medium hover:underline">{p.title}</Link>
           <div className="truncate">{p.model}</div>
           <div className="truncate">{p.creator?.name || 'Unknown'}</div>
           <div className="truncate">{formatDate(p.created_at)}</div>

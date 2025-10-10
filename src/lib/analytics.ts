@@ -21,6 +21,7 @@ declare global {
 
 class Analytics {
   private isEnabled = process.env.NODE_ENV === 'production'
+  private mixpanelEnabled = process.env.NEXT_PUBLIC_MIXPANEL_ENABLED !== 'false'
   private events: Array<{ type: EventType; data: EventData; timestamp: number }> = []
   private googleAnalyticsId = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID
   private mixpanelToken = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN
@@ -48,8 +49,9 @@ class Analytics {
     // Store locally for debugging
     this.events.push(event)
 
-    // Log in development
-    if (process.env.NODE_ENV === 'development') {
+    // Log in development only when explicitly enabled
+    if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_DEBUG_LOGS === 'true') {
+      // eslint-disable-next-line no-console
       console.log('Analytics Event:', event)
     }
 
@@ -86,17 +88,19 @@ class Analytics {
 
   // Send event to Mixpanel
   private sendToMixpanel(type: EventType, data: EventData) {
-    if (!this.mixpanelToken) return
+    if (!this.mixpanelToken || !this.mixpanelEnabled) return
 
     // Check if Mixpanel is available and initialized
     if (!window.mixpanel || typeof window.mixpanel.track !== 'function') {
       if (this.mixpanelRetryCount < this.maxMixpanelRetries) {
         this.mixpanelRetryCount++
-        if (process.env.NODE_ENV === 'development') {
+        if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_DEBUG_LOGS === 'true') {
+          // eslint-disable-next-line no-console
           console.warn(`Mixpanel not ready, retrying in 1000ms (attempt ${this.mixpanelRetryCount}/${this.maxMixpanelRetries})`)
         }
         setTimeout(() => this.sendToMixpanel(type, data), 1000)
-      } else if (process.env.NODE_ENV === 'development') {
+      } else if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_DEBUG_LOGS === 'true') {
+        // eslint-disable-next-line no-console
         console.warn('Mixpanel not ready after max retries, skipping event:', type)
       }
       return
@@ -119,11 +123,16 @@ class Analytics {
 
       window.mixpanel.track(eventName, properties)
       
-      if (process.env.NODE_ENV === 'development') {
+      if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_DEBUG_LOGS === 'true') {
+        // eslint-disable-next-line no-console
         console.log('Mixpanel event sent:', eventName, properties)
       }
     } catch (error) {
-      console.error('Mixpanel error:', error)
+      // Only log errors in development, don't spam production logs
+      if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_DEBUG_LOGS === 'true') {
+        // eslint-disable-next-line no-console
+        console.warn('Mixpanel error (non-critical):', error)
+      }
     }
   }
 
@@ -170,9 +179,11 @@ class Analytics {
           window.mixpanel.people.set(userProperties)
         }
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('Mixpanel identify error:', error)
       }
-    } else if (process.env.NODE_ENV === 'development') {
+    } else if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_DEBUG_LOGS === 'true') {
+      // eslint-disable-next-line no-console
       console.warn('Mixpanel not ready for user identification')
     }
   }
@@ -183,9 +194,11 @@ class Analytics {
       try {
         window.mixpanel.people.set(properties)
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('Mixpanel set properties error:', error)
       }
-    } else if (process.env.NODE_ENV === 'development') {
+    } else if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_DEBUG_LOGS === 'true') {
+      // eslint-disable-next-line no-console
       console.warn('Mixpanel not ready for setting user properties')
     }
   }

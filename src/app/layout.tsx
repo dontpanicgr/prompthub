@@ -6,6 +6,8 @@ import { Toaster } from "@/components/ui/sonner";
 import ErrorBoundary from "@/components/ui/error-boundary";
 import { Analytics } from '@vercel/analytics/next';
 import { AnalyticsProvider, GoogleAnalytics, MixpanelAnalytics } from '@/components/analytics-provider';
+import { DataCacheProvider } from '@/contexts/data-cache-context';
+import MainLayoutWrapper from '@/components/layout/main-layout-wrapper';
 import { Suspense } from 'react';
 import '@/lib/analytics' // Import analytics to enable tracking
 
@@ -102,18 +104,26 @@ export default function RootLayout({
         >
           <ErrorBoundary>
             <AuthProvider>
-              <Suspense fallback={<div />}>
-                <AnalyticsProvider>
-                  {children}
-                </AnalyticsProvider>
-              </Suspense>
+              <DataCacheProvider>
+                <Suspense fallback={<div />}>
+                  <AnalyticsProvider>
+                    <MainLayoutWrapper>
+                      {children}
+                    </MainLayoutWrapper>
+                  </AnalyticsProvider>
+                </Suspense>
+              </DataCacheProvider>
             </AuthProvider>
           </ErrorBoundary>
           <Toaster />
         </ThemeProvider>
-        <GoogleAnalytics />
-        <MixpanelAnalytics />
-        <Analytics />
+        {process.env.NODE_ENV !== 'development' && (
+          <>
+            <GoogleAnalytics />
+            <MixpanelAnalytics />
+            <Analytics />
+          </>
+        )}
       </body>
     </html>
   );

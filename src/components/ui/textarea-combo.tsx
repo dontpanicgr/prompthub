@@ -50,7 +50,7 @@ export function TextareaCombo({
 
   return (
     <div className={cn(
-      "bg-card border-input rounded-md border p-4 transition-[color,box-shadow]",
+      "bg-card dark:bg-input/30 dark:hover:bg-input/50 border-input rounded-md border p-4 transition-[color,box-shadow]",
       isFocused && "focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]",
       "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
       className

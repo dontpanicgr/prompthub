@@ -7,7 +7,10 @@ import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Badge } from '@/components/ui/badge'
 import { ModelBadge } from '@/components/ui/model-badge'
+import { CategoryBadge } from '@/components/ui/category-badge'
 import Tooltip from '@/components/ui/tooltip'
+import { getCategories } from '@/lib/database'
+import type { Category } from '@/lib/database'
 
 const MODELS = [
   'All Models',
@@ -35,61 +38,100 @@ interface SearchFiltersProps {
   setSearchQuery: (query: string) => void
   selectedModels: string[]
   setSelectedModels: (models: string[]) => void
-  onSearch: (query: string, models: string[]) => void
+  selectedCategories: string[]
+  setSelectedCategories: (categories: string[]) => void
+  onSearch: (query: string, models: string[], categories: string[]) => void
   placeholder?: string
   toggleTooltip?: string
+  hideCategories?: boolean
 }
 
 export default function SearchFilters({
   searchQuery,
   setSearchQuery,
-  selectedModels,
+  selectedModels = [],
   setSelectedModels,
+  selectedCategories = [],
+  setSelectedCategories,
   onSearch,
   placeholder = "Search prompts...",
-  toggleTooltip
+  toggleTooltip,
+  hideCategories = false
 }: SearchFiltersProps) {
   const [showModelBadges, setShowModelBadges] = useState(false)
+  const [categories, setCategories] = useState<Category[]>([])
   const [layout, setLayout] = useState<'card' | 'table'>(() => {
     if (typeof window === 'undefined') return 'card'
     const pref = (localStorage.getItem('layout-preference') as 'card' | 'table' | null)
     return pref === 'table' ? 'table' : 'card'
   })
+
+  // Load categories on mount (only when categories are shown)
+  useEffect(() => {
+    if (hideCategories) return
+    async function loadCategories() {
+      try {
+        const cats = await getCategories()
+        setCategories(cats)
+      } catch (error) {
+        console.error('Error loading categories:', error)
+      }
+    }
+    loadCategories()
+  }, [hideCategories])
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    onSearch(searchQuery, selectedModels)
+    onSearch(searchQuery, selectedModels, selectedCategories)
   }
 
-  const toggleModel = (model: string) => {
-    const next = selectedModels.includes(model)
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setSearchQuery(value)
+    // Note: Search will be triggered by form submission or when user stops typing
+    // This prevents too many rapid API calls
+  }
+
+  const handleModelToggle = (model: string) => {
+    const newModels = selectedModels.includes(model)
       ? selectedModels.filter(m => m !== model)
       : [...selectedModels, model]
-    setSelectedModels(next)
-    onSearch(searchQuery, next)
+    setSelectedModels(newModels)
+    // Trigger search immediately when filters change
+    onSearch(searchQuery, newModels, selectedCategories)
   }
+
+  const handleCategoryToggle = (category: string) => {
+    const newCategories = selectedCategories.includes(category)
+      ? selectedCategories.filter(c => c !== category)
+      : [...selectedCategories, category]
+    setSelectedCategories(newCategories)
+    // Trigger search immediately when filters change
+    onSearch(searchQuery, selectedModels, newCategories)
+  }
+
+  // Removed old toggle functions - now using handleModelToggle and handleCategoryToggle
 
   const clearSearchQuery = () => {
     setSearchQuery('')
-    onSearch('', selectedModels)
+    onSearch('', selectedModels, selectedCategories)
   }
 
   const clearFilters = () => {
     setSearchQuery('')
     setSelectedModels([])
-    onSearch('', [])
+    setSelectedCategories([])
+    onSearch('', [], [])
   }
 
-  // Trigger search when search query changes
-  useEffect(() => {
-    onSearch(searchQuery, selectedModels)
-  }, [searchQuery, selectedModels, onSearch])
+  // Note: Removed automatic search trigger to prevent infinite loops
+  // Search is now only triggered by user interactions (form submission, filter changes)
 
-  // Auto-show model badges when there are selected models
+  // Auto-show filter badges when there are selected models or categories
   useEffect(() => {
-    if (selectedModels.length > 0) {
+    if ((selectedModels?.length || 0) > 0 || (selectedCategories?.length || 0) > 0) {
       setShowModelBadges(true)
     }
-  }, [selectedModels])
+  }, [selectedModels, selectedCategories])
 
   // Listen for external layout changes
   useEffect(() => {
@@ -114,10 +156,12 @@ export default function SearchFilters({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={20} />
           <Input
             type="text"
+            id="search-input"
+            name="search"
             placeholder={placeholder}
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 pr-10 h-10 bg-card border"
+            onChange={handleSearchInputChange}
+            className="pl-10 pr-10 h-10"
           />
           {searchQuery && (
             <button
@@ -179,8 +223,8 @@ export default function SearchFilters({
           </DropdownMenuContent>
         </DropdownMenu> */}
 
-        {/* Settings button to toggle model badges visibility */}
-        <Tooltip content={showModelBadges ? 'Hide model filters' : 'Show model filters'}>
+        {/* Settings button to toggle filter badges visibility */}
+        <Tooltip content={showModelBadges ? 'Hide filters' : 'Show filters'}>
           <Button 
             type="button" 
             variant="outline" 
@@ -189,45 +233,74 @@ export default function SearchFilters({
           >
             <Settings2 className="h-5 w-5" />
             {/* Filter indicator dot - only show when filters are active and badges are hidden */}
-            {selectedModels.length > 0 && !showModelBadges && (
+            {((selectedModels?.length || 0) > 0 || (selectedCategories?.length || 0) > 0) && !showModelBadges && (
               <div className="absolute -top-1 -right-1 h-3 w-3 bg-primary rounded-full border-2 border-background" />
             )}
           </Button>
         </Tooltip>
       </form>
 
-      {/* Model Badges Filters */}
+      {/* Combined Filter Badges */}
       {showModelBadges && (
-        <div className="mt-3">
-          <div className="flex flex-wrap items-center gap-2">
-            {MODELS.filter(m => m !== 'All Models').map((model) => (
-              <ModelBadge
-                key={model}
-                model={model as any}
-                variant="outline"
-                size="sm"
-                className={`cursor-pointer inline-flex items-center rounded-lg p-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px] hover:opacity-80 ${
-                  selectedModels.includes(model) 
-                    ? "bg-primary text-primary-foreground" 
-                    : "border text-foreground bg-card"
-                }`}
-                onClick={() => toggleModel(model)}
-              />
-            ))}
+        <div className="mt-3 space-y-4">
+          {/* Models Section */}
+          <div>
+            <div className="text-sm font-medium text-muted-foreground mb-2">Models</div>
+            <div className="flex flex-wrap items-center gap-2">
+              {MODELS.filter(m => m !== 'All Models').map((model) => (
+                <ModelBadge
+                  key={model}
+                  model={model as any}
+                  variant="outline"
+                  size="sm"
+                  className={`cursor-pointer inline-flex items-center rounded-lg p-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px] hover:opacity-80 ${
+                    selectedModels.includes(model) 
+                      ? "bg-primary text-primary-foreground" 
+                      : "border text-foreground bg-card"
+                  }`}
+                  onClick={() => handleModelToggle(model)}
+                />
+              ))}
+            </div>
+          </div>
 
-            {/* Reset all button - only show when models are selected */}
-            {selectedModels.length > 0 && (
+          {/* Categories Section */}
+          {!hideCategories && (
+            <div>
+              <div className="text-sm font-medium text-muted-foreground mb-2">Categories</div>
+              <div className="flex flex-wrap items-center gap-2">
+                {categories.map((category) => (
+                  <CategoryBadge
+                    key={category.slug}
+                    category={category}
+                    variant="outline"
+                    size="sm"
+                    className={`cursor-pointer inline-flex items-center rounded-lg p-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px] hover:opacity-80 ${
+                      selectedCategories.includes(category.slug) 
+                        ? "bg-primary text-primary-foreground" 
+                        : "border text-foreground bg-card"
+                    }`}
+                    onClick={() => handleCategoryToggle(category.slug)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Reset all button - only show when any filters are selected */}
+          {((selectedModels?.length || 0) > 0 || (selectedCategories?.length || 0) > 0) && (
+            <div className="pt-2">
               <Button type="button" variant="ghost" size="sm" onClick={clearFilters}>
                 <X className="h-4 w-4 mr-1" />
-                Reset all
+                Reset all filters
               </Button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       )}
 
       {/* Chips row with Clear - HIDDEN FOR TESTING
-      {selectedModels.length > 0 && (
+      {(selectedModels?.length || 0) > 0 && (
         <div className="mt-3 flex flex-wrap items-center gap-2">
           {selectedModels.map(model => (
             <ModelBadge 

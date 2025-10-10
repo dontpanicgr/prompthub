@@ -13,9 +13,11 @@ interface PromptListProps {
   loading?: boolean
   onLike?: (promptId: string) => void
   onBookmark?: (promptId: string) => void
+  showProjectActions?: boolean
+  onRemoveFromProject?: (promptId: string) => void
 }
 
-export default function PromptList({ prompts: externalPrompts, loading: externalLoading, onLike: externalOnLike, onBookmark: externalOnBookmark }: PromptListProps = {}) {
+export default function PromptList({ prompts: externalPrompts, loading: externalLoading, onLike: externalOnLike, onBookmark: externalOnBookmark, showProjectActions = false, onRemoveFromProject }: PromptListProps = {}) {
   const [prompts, setPrompts] = useState<Prompt[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const { user } = useAuth()
@@ -40,6 +42,14 @@ export default function PromptList({ prompts: externalPrompts, loading: external
 
     fetchPrompts()
   }, [user?.id, externalPrompts])
+
+  // Prefetch detail routes for the first visible prompts to make navigation feel instant
+  useEffect(() => {
+    const itemsToPrefetch = (externalPrompts || prompts).slice(0, 20)
+    itemsToPrefetch.forEach((p) => {
+      router.prefetch(`/prompt/${p.id}`)
+    })
+  }, [router, externalPrompts, prompts])
 
   const ensureAuthed = (action: string) => {
     if (!user) {
@@ -111,6 +121,8 @@ export default function PromptList({ prompts: externalPrompts, loading: external
           onLike={handleLike}
           onBookmark={handleBookmark}
           variant="row"
+          showProjectActions={showProjectActions}
+          onRemoveFromProject={onRemoveFromProject}
         />
       ))}
     </div>

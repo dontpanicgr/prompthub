@@ -1,22 +1,23 @@
 import { createClient } from '@supabase/supabase-js'
+import { logger, maskSecret } from './utils'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-console.log('Environment check:')
-console.log('NODE_ENV:', process.env.NODE_ENV)
-console.log('NEXT_PUBLIC_SUPABASE_URL exists:', !!supabaseUrl)
-console.log('NEXT_PUBLIC_SUPABASE_ANON_KEY exists:', !!supabaseAnonKey)
+logger.debug('Environment check:')
+logger.debug('NODE_ENV:', process.env.NODE_ENV)
+logger.debug('NEXT_PUBLIC_SUPABASE_URL exists:', !!supabaseUrl)
+logger.debug('NEXT_PUBLIC_SUPABASE_ANON_KEY exists:', !!supabaseAnonKey)
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing Supabase environment variables:')
-  console.error('URL:', supabaseUrl)
-  console.error('Key:', supabaseAnonKey ? 'Present' : 'Missing')
+  logger.error('Missing Supabase environment variables:')
+  logger.error('URL present:', !!supabaseUrl)
+  logger.error('Key present:', !!supabaseAnonKey)
   throw new Error('Missing Supabase environment variables')
 }
 
-console.log('Supabase URL:', supabaseUrl)
-console.log('Supabase Key (first 20 chars):', supabaseAnonKey.substring(0, 20) + '...')
+logger.debug('Supabase URL:', maskSecret(supabaseUrl))
+logger.debug('Supabase Key:', maskSecret(supabaseAnonKey))
 
 // Create Supabase client with proper OAuth configuration
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -28,6 +29,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 })
 
-console.log('Supabase client created successfully')
-console.log('Client URL:', supabase.supabaseUrl)
-console.log('Client Key (first 20 chars):', supabase.supabaseKey?.substring(0, 20) + '...')
+logger.debug('Supabase client created successfully')
+logger.debug('Client URL:', maskSecret(supabase.supabaseUrl))
+logger.debug('Client Key:', maskSecret(supabase.supabaseKey))

@@ -13,6 +13,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { ModelBadge } from '@/components/ui/model-badge'
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
+import CategoriesDropdown from '@/components/ui/categories-dropdown'
+import ProjectSelector from '@/components/ui/project-selector'
 
 const MODELS = [
   'GPT',
@@ -52,7 +54,9 @@ export default function EditPromptPage({ params }: EditPromptPageProps) {
     title: '',
     body: '',
     model: '',
-    is_public: true
+    is_public: true,
+    category_ids: [] as string[],
+    project_id: null as string | null
   })
 
   useEffect(() => {
@@ -83,7 +87,9 @@ export default function EditPromptPage({ params }: EditPromptPageProps) {
           title: promptData.title,
           body: promptData.body,
           model: promptData.model,
-          is_public: promptData.is_public
+          is_public: promptData.is_public,
+          category_ids: promptData.categories?.map((cat: any) => cat.id) || [],
+          project_id: promptData.project_id || null
         })
       } catch (error) {
         console.error('Error loading prompt:', error)
@@ -102,7 +108,14 @@ export default function EditPromptPage({ params }: EditPromptPageProps) {
 
     setSaving(true)
     try {
-      const updatedPrompt = await updatePrompt(prompt.id, formData)
+      const updatedPrompt = await updatePrompt(prompt.id, {
+        title: formData.title,
+        body: formData.body,
+        model: formData.model,
+        is_public: formData.is_public,
+        category_ids: formData.category_ids,
+        project_id: formData.project_id
+      })
       if (updatedPrompt) {
         router.push(`/prompt/${prompt.id}`)
       }
@@ -240,6 +253,29 @@ export default function EditPromptPage({ params }: EditPromptPageProps) {
                     ))}
                   </div>
                 </div>
+
+                {/* Categories */}
+                <div>
+                  <label className="block text-md font-medium mb-2">
+                    Categories
+                  </label>
+                  <CategoriesDropdown
+                    selectedCategoryIds={formData.category_ids}
+                    onCategoryChange={(categoryIds) => setFormData(prev => ({ ...prev, category_ids: categoryIds }))}
+                    placeholder="Select categories to help others discover your prompt"
+                    disabled={saving}
+                  />
+                </div>
+
+                {/* Project */}
+                {user && (
+                  <ProjectSelector
+                    selectedProjectId={formData.project_id}
+                    onProjectChange={(projectId) => setFormData(prev => ({ ...prev, project_id: projectId }))}
+                    userId={user.id}
+                    disabled={saving}
+                  />
+                )}
 
                 {/* Visibility */}
                 <div>

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import MainLayout from '@/components/layout/main-layout'
 import { getCreatorsLeaderboard, type LeaderboardCreator } from '@/lib/database'
 import { Heart, Bookmark } from 'lucide-react'
+import Avatar from '@/components/ui/avatar'
 
 export default function LeaderboardPage() {
   const [creators, setCreators] = useState<LeaderboardCreator[]>([])
@@ -80,19 +81,13 @@ export default function LeaderboardPage() {
                     {idx + 1}
                   </div>
                   {/* User Avatar */}
-                  <div className="w-10 h-10 rounded-full overflow-hidden bg-muted flex-shrink-0">
-                    {row.creator.avatar_url ? (
-                      <img
-                        src={row.creator.avatar_url}
-                        alt={row.creator.name || 'User avatar'}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-muted flex items-center justify-center text-foreground font-semibold text-lg">
-                        {(row.creator.name || 'U').charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                  </div>
+                  <Avatar
+                    src={row.creator.avatar_url}
+                    alt={row.creator.name || 'User avatar'}
+                    size="md"
+                    fallback={(row.creator.name || 'U').charAt(0).toUpperCase()}
+                    className="flex-shrink-0"
+                  />
                   <div className="min-w-0">
                     <div className="truncate font-medium text-card-foreground flex items-center">
                       <span className="truncate">{row.creator.name || 'Unknown'}</span>

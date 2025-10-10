@@ -2,141 +2,96 @@
 
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import MainLayout from '@/components/layout/main-layout'
-import PromptGrid from '@/components/prompts/prompt-grid'
-import PromptList from '@/components/prompts/prompt-list'
-import SearchFilters from '@/components/ui/search-filters'
-import { getPublicPrompts, getPopularPrompts } from '@/lib/database'
+import { getPublicPrompts } from '@/lib/database'
 import type { Prompt } from '@/lib/database'
-import { useAuth } from '@/components/auth-provider'
+import { useDataCache } from '@/contexts/data-cache-context'
+import BrowsePageClient from './browse-page-client'
+import SearchFilters from '@/components/ui/search-filters'
+
 export default function BrowsePage() {
-  const { user } = useAuth()
-  const searchParams = useSearchParams()
-  const [prompts, setPrompts] = useState<Prompt[]>([])
+  const [initialPrompts, setInitialPrompts] = useState<Prompt[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedModels, setSelectedModels] = useState<string[]>([])
-  const [sortBy, setSortBy] = useState<'recent' | 'popular' | 'bookmarked'>('recent')
-  const [layoutPref, setLayoutPref] = useState<'card' | 'table'>('card')
-
-  // Initialize selected models from URL parameters
-  useEffect(() => {
-    const modelParam = searchParams.get('model')
-    if (modelParam) {
-      setSelectedModels([modelParam])
-    }
-  }, [searchParams])
-
-  // Load layout preference from localStorage
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const pref = (localStorage.getItem('layout-preference') as 'card' | 'table' | null)
-    if (pref === 'table') setLayoutPref('table')
-    else setLayoutPref('card')
-
-    const handler = (e: CustomEvent) => {
-      setLayoutPref(e.detail.layout === 'table' ? 'table' : 'card')
-    }
-    window.addEventListener('layout-preference-change', handler as EventListener)
-    return () => window.removeEventListener('layout-preference-change', handler as EventListener)
-  }, [])
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
+  const { getCachedPrompts } = useDataCache()
+  const searchParams = useSearchParams()
 
   useEffect(() => {
-    async function fetchPrompts() {
+    const fetchInitialPrompts = async () => {
       try {
-        setLoading(true)
-        let fetchedPrompts: any[] = []
-        
-        switch (sortBy) {
-          case 'popular':
-            fetchedPrompts = await getPublicPrompts(user?.id)
-            // Apply popularity ranking algorithm: likes * 3 + bookmarks * 5 + reduced time bonus
-            fetchedPrompts = fetchedPrompts.sort((a, b) => {
-              const getPopularityScore = (prompt: any) => {
-                const likes = prompt.like_count || 0
-                const bookmarks = prompt.bookmark_count || 0
-                const daysSinceCreated = (Date.now() - new Date(prompt.created_at).getTime()) / (1000 * 60 * 60 * 24)
-                const timeBonus = Math.max(0, 10 - daysSinceCreated) * 0.5 // Reduced time bonus
-                
-                return (likes * 3) + (bookmarks * 5) + timeBonus
-              }
-              
-              return getPopularityScore(b) - getPopularityScore(a)
-            })
-            break
-          case 'bookmarked':
-            const allPrompts = await getPublicPrompts(user?.id)
-            fetchedPrompts = allPrompts.filter(p => p.is_bookmarked)
-            break
-          case 'recent':
-          default:
-            fetchedPrompts = await getPublicPrompts(user?.id)
-            // Sort by created_at descending (most recent first)
-            fetchedPrompts = fetchedPrompts.sort((a, b) => 
-              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-            )
-            break
-        }
-        
-        setPrompts(fetchedPrompts)
+        const prompts = await getCachedPrompts(
+          'browse-prompts',
+          () => getPublicPrompts(),
+          2 * 60 * 1000 // 2 minutes cache
+        )
+        setInitialPrompts(prompts.slice(0, 20)) // Limit initial load for faster LCP
       } catch (error) {
-        console.error('Error fetching prompts:', error)
+        console.error('Error fetching initial prompts:', error)
+        setInitialPrompts([])
       } finally {
         setLoading(false)
       }
     }
 
-    fetchPrompts()
-  }, [user, sortBy])
+    fetchInitialPrompts()
+  }, [getCachedPrompts])
 
-  const handleSearch = (query: string, models: string[]) => {
-    console.log('Search query:', query, 'Models:', models)
+  // Initialize filters from URL query params so direct links pre-apply filters
+  useEffect(() => {
+    if (!searchParams) return
+    const q = searchParams.get('q') || ''
+    const models = searchParams.getAll('model')
+    const categories = searchParams.getAll('category')
+    setSearchQuery(q)
+    setSelectedModels(models)
+    setSelectedCategories(categories)
+  }, [searchParams])
+
+  const handleSearch = (query: string, models: string[], categories: string[]) => {
     setSearchQuery(query)
     setSelectedModels(models)
-    // Search is handled by filtering the prompts
+    setSelectedCategories(categories)
   }
 
-  const filteredPrompts = prompts.filter(prompt => {
-    const matchesSearch = !searchQuery || 
-      prompt.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      prompt.body.toLowerCase().includes(searchQuery.toLowerCase())
-    
-    const matchesModel = selectedModels.length === 0 || 
-      selectedModels.includes(prompt.model)
-    
-    return matchesSearch && matchesModel
-  })
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-muted-foreground"></div>
+      </div>
+    )
+  }
 
   return (
-    <MainLayout>
-      <div className="w-full">
-        <div className="mb-6">
-          <h1 className="mb-2">
-            Browse Prompts
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Discover and explore prompts from our community
-          </p>
-
-          {/* Search and Filters */}
-          <SearchFilters
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            selectedModels={selectedModels}
-            setSelectedModels={setSelectedModels}
-            onSearch={handleSearch}
-            placeholder="Search prompts..."
-            toggleTooltip={layoutPref === 'table' ? 'Switch to card view' : 'Switch to list view'}
-          />
-
-        </div>
-
-        {layoutPref === 'table' ? (
-          <PromptList prompts={filteredPrompts} loading={loading} />
-        ) : (
-          <PromptGrid prompts={filteredPrompts} loading={loading} />
-        )}
+    <div className="w-full">
+      <div className="mb-6">
+        <h1 className="mb-2">
+          Browse Prompts
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400 mb-6">
+          Discover and explore prompts from our community
+        </p>
+        
+        {/* Search and Filters */}
+        <SearchFilters
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          selectedModels={selectedModels}
+          setSelectedModels={setSelectedModels}
+          selectedCategories={selectedCategories}
+          setSelectedCategories={setSelectedCategories}
+          onSearch={handleSearch}
+          placeholder="Search prompts..."
+          toggleTooltip="Switch to list view"
+        />
       </div>
-    </MainLayout>
+      
+      <BrowsePageClient 
+        initialPrompts={initialPrompts} 
+        searchQuery={searchQuery}
+        selectedModels={selectedModels}
+        selectedCategories={selectedCategories}
+      />
+    </div>
   )
 }

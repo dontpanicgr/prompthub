@@ -1,20 +1,22 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import MainLayout from '@/components/layout/main-layout'
 import PromptGrid from '@/components/prompts/prompt-grid'
 import PromptList from '@/components/prompts/prompt-list'
 import SearchFilters from '@/components/ui/search-filters'
 import { getPublicPrompts } from '@/lib/database'
 import type { Prompt } from '@/lib/database'
 import { useAuth } from '@/components/auth-provider'
+import { useDataCache } from '@/contexts/data-cache-context'
 
 export default function LatestPage() {
   const { user } = useAuth()
+  const { getCachedPrompts } = useDataCache()
   const [prompts, setPrompts] = useState<Prompt[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedModels, setSelectedModels] = useState<string[]>([])
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [layoutPref, setLayoutPref] = useState<'card' | 'table'>(() => {
     if (typeof window === 'undefined') return 'card'
     const pref = (localStorage.getItem('layout-preference') as 'card' | 'table' | null)
@@ -25,7 +27,11 @@ export default function LatestPage() {
     async function fetchLatestPrompts() {
       try {
         setLoading(true)
-        const latestPrompts = await getPublicPrompts(user?.id)
+        const latestPrompts = await getCachedPrompts(
+          'latest-prompts',
+          () => getPublicPrompts(user?.id),
+          2 * 60 * 1000 // 2 minutes cache
+        )
         // Sort by created_at descending (most recent first)
         const sortedPrompts = latestPrompts.sort((a, b) => 
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -39,7 +45,7 @@ export default function LatestPage() {
     }
 
     fetchLatestPrompts()
-  }, [user])
+  }, [user, getCachedPrompts])
 
   // Listen for layout preference changes
   useEffect(() => {
@@ -56,10 +62,11 @@ export default function LatestPage() {
     }
   }, [])
 
-  const handleSearch = (query: string, models: string[]) => {
-    console.log('Search query:', query, 'Models:', models)
+  const handleSearch = (query: string, models: string[], categories: string[]) => {
+    console.log('Search query:', query, 'Models:', models, 'Categories:', categories)
     setSearchQuery(query)
     setSelectedModels(models)
+    setSelectedCategories(categories)
     // Search is handled by filtering the prompts
   }
 
@@ -71,39 +78,42 @@ export default function LatestPage() {
     const matchesModel = selectedModels.length === 0 || 
       selectedModels.includes(prompt.model)
     
-    return matchesSearch && matchesModel
+    const matchesCategory = selectedCategories.length === 0 ||
+      (prompt.categories && prompt.categories.some(cat => selectedCategories.includes(cat.slug)))
+    
+    return matchesSearch && matchesModel && matchesCategory
   })
 
   return (
-    <MainLayout>
-      <div className="w-full">
-        <div className="mb-6">
-          <h1 className="mb-2">
-            Latest Prompts
-          </h1>
-          <p className="text-gray-400 mb-6">
-            Discover the most recently added prompts from our community
-          </p>
+    <div className="w-full">
+      <div className="mb-6">
+        <h1 className="mb-2">
+          Latest Prompts
+        </h1>
+        <p className="text-gray-400 mb-6">
+          Discover the most recently added prompts from our community
+        </p>
 
-          {/* Search and Filters */}
-          <SearchFilters
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            selectedModels={selectedModels}
-            setSelectedModels={setSelectedModels}
-            onSearch={handleSearch}
-            placeholder="Search prompts..."
-            toggleTooltip={layoutPref === 'table' ? 'Switch to card view' : 'Switch to list view'}
-          />
+        {/* Search and Filters */}
+        <SearchFilters
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          selectedModels={selectedModels}
+          setSelectedModels={setSelectedModels}
+          selectedCategories={selectedCategories}
+          setSelectedCategories={setSelectedCategories}
+          onSearch={handleSearch}
+          placeholder="Search prompts..."
+          toggleTooltip={layoutPref === 'table' ? 'Switch to card view' : 'Switch to list view'}
+        />
 
-        </div>
-
-        {layoutPref === 'table' ? (
-          <PromptList prompts={filteredPrompts} loading={loading} />
-        ) : (
-          <PromptGrid prompts={filteredPrompts} loading={loading} />
-        )}
       </div>
-    </MainLayout>
+
+      {layoutPref === 'table' ? (
+        <PromptList prompts={filteredPrompts} loading={loading} />
+      ) : (
+        <PromptGrid prompts={filteredPrompts} loading={loading} />
+      )}
+    </div>
   )
 }

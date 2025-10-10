@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import MarkdownRenderer from '@/components/ui/markdown-renderer'
 import { toast } from 'sonner'
+import Avatar from '@/components/ui/avatar'
 import CommentForm from './comment-form'
 import {
   DropdownMenu,
@@ -114,19 +115,12 @@ export default function CommentItem({
         {/* Comment Header */}
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-              {comment.user.avatar_url ? (
-                <img
-                  src={comment.user.avatar_url}
-                  alt={comment.user.name}
-                  className="w-8 h-8 rounded-full"
-                />
-              ) : (
-                <span className="text-sm font-medium">
-                  {comment.user.name.charAt(0).toUpperCase()}
-                </span>
-              )}
-            </div>
+            <Avatar
+              src={comment.user.avatar_url}
+              alt={comment.user.name}
+              size="sm"
+              fallback={comment.user.name.charAt(0).toUpperCase()}
+            />
             <div>
               <div className="font-medium text-base">{comment.user.name}</div>
               <div className="text-sm text-muted-foreground">
@@ -201,7 +195,7 @@ export default function CommentItem({
 
         {/* Comment Actions */}
         {!isEditing && (
-          <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border">
+          <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border transition-colors">
             <Button
               variant="ghost"
               size="sm"

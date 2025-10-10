@@ -120,9 +120,8 @@ export function Tooltip({
       style={{ position: "absolute", top: coords.top, left: coords.left, transform: placement === "top" ? "translate(0, -100%)" : placement === "bottom" ? "translate(0, 0)" : placement === "left" ? "translate(-100%, 0)" : "translate(0, 0)", pointerEvents: "none", zIndex: 99999 }}
       className={cn(
         "rounded-md px-2.5 py-1.5 text-xs shadow-md border",
-        // Theme-aware: dark in Light mode, light in Dark mode
+        // Always dark, regardless of theme
         "bg-black text-white border-black/60",
-        "dark:bg-white dark:text-black dark:border-white/60",
         className
       )}
       onMouseEnter={() => {

@@ -72,16 +72,9 @@ function ResetPasswordContent() {
   if (success) {
     return (
       <MainLayout>
-        <div className="p-6 flex items-center justify-center min-h-screen">
+        <div className="px-0 pt-2 sm:p-6 flex items-center justify-center min-h-screen">
           <div className="max-w-md w-full">
-            {/* Back Button */}
-            <Link
-              href="/login"
-              className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-8 transition-colors"
-            >
-              <ArrowLeft size={20} />
-              Back to Login
-            </Link>
+            
 
             {/* Success Message */}
             <div className="bg-card text-card-foreground rounded-2xl p-8 border border-border text-center">
@@ -112,24 +105,14 @@ function ResetPasswordContent() {
 
   return (
     <MainLayout>
-      <div className="p-6 flex items-center justify-center min-h-screen">
+      <div className="px-0 pt-2 sm:p-6 flex items-center justify-center min-h-screen">
         <div className="max-w-md w-full">
-          {/* Back Button */}
-          <Link
-            href="/login"
-            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-8 transition-colors"
-          >
-            <ArrowLeft size={20} />
-            Back to Login
-          </Link>
+          
 
           {/* Reset Password Form */}
           <div className="bg-card text-card-foreground rounded-2xl p-8 border border-border">
             {/* Header */}
             <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold text-white">P</span>
-              </div>
               <h1 className="mb-2">
                 Set new password
               </h1>

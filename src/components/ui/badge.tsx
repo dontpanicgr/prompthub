@@ -32,5 +32,6 @@ function Badge({
 }
 
 export { Badge, badgeVariants }
+export type BadgeProps = Omit<React.ComponentProps<"div">, "children"> & VariantProps<typeof badgeVariants>
 
 

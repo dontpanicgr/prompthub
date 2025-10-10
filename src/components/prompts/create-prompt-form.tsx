@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Save, X, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
@@ -11,27 +11,20 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { ModelBadge } from '@/components/ui/model-badge'
+import { modelIcons } from '@/components/ui/model-badge'
+import { categoryIcons } from '@/components/ui/category-badge'
+// Project selection removed per new UX
+import { getCategories, type Category } from '@/lib/database'
 
-const MODELS = [
-  'GPT',
-  'Claude',
-  'Gemini',
-  'Gemma',
-  'Grok',
-  'Perplexity',
-  'GitHub',
-  'Copilot',
-  'Mistral',
-  'Meta',
-  'Ollama',
-  'Cohere',
-  'Qwen',
-  'DeepSeek',
-  'Moonshot',
-  'Black Forest Labs',
-  'Other'
-]
+const MODELS = Object.keys(modelIcons) as Array<keyof typeof modelIcons>
+const CATEGORY_SLUGS = Object.keys(categoryIcons) as Array<keyof typeof categoryIcons>
+
+function formatCategoryLabel(slug: string) {
+  return slug
+    .split('-')
+    .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+    .join(' ')
+}
 
 export default function CreatePromptForm() {
   const router = useRouter()
@@ -41,9 +34,26 @@ export default function CreatePromptForm() {
     title: '',
     body: '',
     model: 'GPT',
-    is_public: true
+    is_public: true,
+    category_ids: [] as string[],
+    project_id: null as string | null
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [categories, setCategories] = useState<Category[]>([])
+  const [selectedCategorySlug, setSelectedCategorySlug] = useState<string>('other')
+
+  useEffect(() => {
+    // Fetch categories quietly in the background; UI uses static slugs
+    const run = async () => {
+      try {
+        const cats = await getCategories()
+        setCategories(cats)
+      } catch (e) {
+        // ignore errors; category will be optional if mapping fails
+      }
+    }
+    run()
+  }, [])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target
@@ -111,12 +121,17 @@ export default function CreatePromptForm() {
         creator_id: user.id
       })
 
+      // Map selected slug -> id using fetched categories (if available)
+      const selectedCategoryId = categories.find(c => c.slug === selectedCategorySlug)?.id
+
       const newPrompt = await createPrompt({
         title: formData.title,
         body: formData.body,
         model: formData.model,
         is_public: formData.is_public,
-        creator_id: user.id
+        creator_id: user.id,
+        category_ids: selectedCategoryId ? [selectedCategoryId] : [],
+        project_id: formData.project_id
       })
 
       console.log('Created prompt result:', newPrompt)
@@ -181,6 +196,58 @@ export default function CreatePromptForm() {
               )}
             </div>
 
+            {/* Model + Category Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-md font-medium mb-2">AI Model *</label>
+                <Select value={formData.model} onValueChange={(model) => setFormData(prev => ({ ...prev, model }))}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a model" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MODELS.map((model) => {
+                      const Icon = modelIcons[model]
+                      return (
+                        <SelectItem key={model} value={model}>
+                          <div className="flex items-center gap-2">
+                            <Icon />
+                            <span>{model}</span>
+                          </div>
+                        </SelectItem>
+                      )
+                    })}
+                  </SelectContent>
+                </Select>
+                {errors.model && (
+                  <p className="mt-1 text-sm text-destructive">{errors.model}</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-md font-medium mb-2">Category</label>
+                <Select
+                  value={selectedCategorySlug}
+                  onValueChange={(value) => setSelectedCategorySlug(value)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder={'Select a category'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CATEGORY_SLUGS.map((slug) => {
+                      const Icon = categoryIcons[slug]
+                      return (
+                        <SelectItem key={slug} value={slug}>
+                          <div className="flex items-center gap-2">
+                            <Icon />
+                            <span>{formatCategoryLabel(slug)}</span>
+                          </div>
+                        </SelectItem>
+                      )
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             {/* Prompt Body */}
             <div>
               <label htmlFor="body" className="block text-md font-medium mb-1">
@@ -205,33 +272,9 @@ export default function CreatePromptForm() {
               )}
             </div>
 
-            {/* Model Selection Badges */}
-            <div>
-              <label className="block text-md font-medium mb-1">
-                AI Model *
-              </label>
-              <p className="mb-3 text-sm text-muted-foreground">Click a model to select it. Only one model can be selected at a time.</p>
-              <div className="flex flex-wrap gap-2 p-0 rounded-md">
-                {MODELS.map((model) => (
-                  <ModelBadge
-                    key={model}
-                    model={model}
-                    showIcon={true}
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setFormData(prev => ({ ...prev, model }))}
-                    className={`cursor-pointer transition-all ${
-                      formData.model === model 
-                        ? 'bg-primary text-primary-foreground border-primary' 
-                        : 'hover:bg-muted'
-                    }`}
-                  />
-                ))}
-              </div>
-              {errors.model && (
-                <p className="mt-1 text-sm text-destructive">{errors.model}</p>
-              )}
-            </div>
+            {/* Removed chips UI; replaced above with Selects */}
+
+            {/* Project selection removed to avoid confusion; users move prompts later */}
 
             {/* Visibility */}
             <div>

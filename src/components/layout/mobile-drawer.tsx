@@ -109,10 +109,10 @@ export default function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
       />
       
       {/* Drawer */}
-      <div className="fixed inset-y-0 left-0 z-50 w-80 max-w-[85vw] bg-background border-r border-border transform transition-transform duration-300 ease-in-out">
+      <div className="fixed inset-y-0 left-0 z-50 w-80 max-w-[85vw] bg-background border-r border-border transform transition-transform duration-300 ease-in-out transition-colors">
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-border">
+          <div className="flex items-center justify-between p-4 border-b border-border transition-colors">
             <Link 
               href="/" 
               className="flex items-center gap-3"
@@ -161,7 +161,7 @@ export default function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
           </nav>
 
           {/* Footer */}
-          <div className="p-4 border-t border-border space-y-2">
+          <div className="p-4 border-t border-border space-y-2 transition-colors">
             {/* Privacy Mode Button */}
             {user && (
               <button

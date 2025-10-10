@@ -77,6 +77,9 @@ export function GoogleAnalytics() {
 // Mixpanel setup using mixpanel-browser package
 export function MixpanelAnalytics() {
   useEffect(() => {
+    if (process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_MIXPANEL_ENABLED === 'false') {
+      return
+    }
     const MIXPANEL_TOKEN = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN
     const MIXPANEL_API_HOST = process.env.NEXT_PUBLIC_MIXPANEL_API_HOST
     const MIXPANEL_REGION = process.env.NEXT_PUBLIC_MIXPANEL_REGION // e.g. 'EU'

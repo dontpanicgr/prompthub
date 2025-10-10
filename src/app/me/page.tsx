@@ -7,21 +7,24 @@ import PromptCard from '@/components/prompts/prompt-card'
 import PromptList from '@/components/prompts/prompt-list'
 import SearchFilters from '@/components/ui/search-filters'
 import UserBioCard from '@/components/ui/user-bio-card'
-import { Plus, Heart, Bookmark, User } from 'lucide-react'
+import { Plus, Heart, Bookmark, User, Folder } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
-import { getUserPrompts, getLikedPrompts, getBookmarkedPrompts, toggleLike, toggleBookmark, getUserById, getUserEngagementStats } from '@/lib/database'
+import { getUserPrompts, getLikedPrompts, getBookmarkedPrompts, toggleLike, toggleBookmark, getUserById, getUserEngagementStats, getProjectsByUser } from '@/lib/database'
 import type { Prompt, User as ProfileUser } from '@/lib/database'
+import ProjectsManagement from '@/components/projects/projects-management'
 
 export default function MyPromptsPage() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<'created' | 'liked' | 'bookmarked'>('created')
+  const [activeTab, setActiveTab] = useState<'created' | 'liked' | 'bookmarked' | 'projects'>('created')
   const [prompts, setPrompts] = useState<Prompt[]>([])
   const [filteredPrompts, setFilteredPrompts] = useState<Prompt[]>([])
   const [profile, setProfile] = useState<ProfileUser | null>(null)
+  const [projectsCount, setProjectsCount] = useState(0)
 
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedModels, setSelectedModels] = useState<string[]>([])
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [layoutPref, setLayoutPref] = useState<'card' | 'table'>(() => {
     if (typeof window === 'undefined') return 'card'
     const pref = (localStorage.getItem('layout-preference') as 'card' | 'table' | null)
@@ -64,6 +67,10 @@ export default function MyPromptsPage() {
         // Get counts of prompts the user has liked and bookmarked
         const likedPrompts = await getLikedPrompts(user.id)
         const bookmarkedPrompts = await getBookmarkedPrompts(user.id)
+
+        // Get user's projects count
+        const userProjects = await getProjectsByUser(user.id)
+        setProjectsCount(userProjects.length)
         
         const updatedStats = {
           ...stats,
@@ -122,16 +129,19 @@ export default function MyPromptsPage() {
     }
   }, [])
 
-  const handleSearch = useCallback((query: string, models: string[]) => {
-    console.log('Search triggered:', { query, models, totalPrompts: prompts.length })
+  const handleSearch = useCallback((query: string, models: string[], categories: string[]) => {
+    console.log('Search triggered:', { query, models, categories, totalPrompts: prompts.length })
     setSearchQuery(query)
     setSelectedModels(models)
+    setSelectedCategories(categories)
     const filtered = prompts.filter(prompt => {
       const matchesSearch = query === '' ||
         prompt.title.toLowerCase().includes(query.toLowerCase()) ||
         prompt.body.toLowerCase().includes(query.toLowerCase())
       const matchesModel = models.length === 0 || models.includes(prompt.model)
-      return matchesSearch && matchesModel
+      const matchesCategory = categories.length === 0 ||
+        (prompt.categories && prompt.categories.some(cat => categories.includes(cat.slug)))
+      return matchesSearch && matchesModel && matchesCategory
     })
     console.log('Filtered results:', filtered.length)
     setFilteredPrompts(filtered)
@@ -160,7 +170,7 @@ export default function MyPromptsPage() {
     return null
   }
 
-  const handleTabChange = async (tab: 'created' | 'liked' | 'bookmarked') => {
+  const handleTabChange = async (tab: 'created' | 'liked' | 'bookmarked' | 'projects') => {
     if (!user) return
     
     setActiveTab(tab)
@@ -181,6 +191,10 @@ export default function MyPromptsPage() {
         case 'bookmarked':
           // Show ALL prompts the user has bookmarked (both public and private)
           newPrompts = await getBookmarkedPrompts(user.id)
+          break
+        case 'projects':
+          // For projects tab, we don't load prompts here - they're managed by ProjectsManagement component
+          newPrompts = []
           break
       }
       
@@ -304,23 +318,45 @@ export default function MyPromptsPage() {
                   <Bookmark size={16} />
                   Bookmarked ({userStats.prompts_bookmarked})
                 </button>
+                <button
+                  onClick={() => handleTabChange('projects')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    activeTab === 'projects'
+                      ? 'bg-nav-active text-nav-foreground'
+                      : 'text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground'
+                  }`}
+                >
+                  <Folder size={16} />
+                  Projects ({projectsCount})
+                </button>
               </div>
             </div>
 
             {/* Search Filters */}
-            <div className="mb-6">
-              <SearchFilters
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                selectedModels={selectedModels}
-                setSelectedModels={setSelectedModels}
-                onSearch={handleSearch}
-                placeholder={`Search ${activeTab} prompts...`}
-              />
-            </div>
+            {activeTab !== 'projects' && (
+              <div className="mb-6">
+                <SearchFilters
+                  searchQuery={searchQuery}
+                  setSearchQuery={setSearchQuery}
+                  selectedModels={selectedModels}
+                  setSelectedModels={setSelectedModels}
+                  selectedCategories={selectedCategories}
+                  setSelectedCategories={setSelectedCategories}
+                  onSearch={handleSearch}
+                  placeholder={`Search ${activeTab} prompts...`}
+                />
+              </div>
+            )}
+
+            {/* Projects Management */}
+            {activeTab === 'projects' && user && (
+              <ProjectsManagement userId={user.id} />
+            )}
 
             {/* Prompt Grid */}
-            {loading ? (
+            {activeTab !== 'projects' && (
+              <>
+                {loading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[...Array(8)].map((_, i) => (
                   <div key={i} className="bg-card text-card-foreground rounded-lg border border-border p-6 animate-pulse">
@@ -379,6 +415,8 @@ export default function MyPromptsPage() {
                   ))}
                 </div>
               )
+            )}
+              </>
             )}
           </div>
 

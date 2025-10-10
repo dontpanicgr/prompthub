@@ -5,6 +5,7 @@ import { TextareaCombo } from '@/components/ui/textarea-combo'
 import { toast } from 'sonner'
 import { processMentions } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/components/auth-provider'
 
 interface CommentFormProps {
   promptId: string
@@ -26,11 +27,40 @@ export default function CommentForm({
 }: CommentFormProps) {
   const [content, setContent] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const { signIn } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (!content.trim()) return
+    
+    // Ensure user is signed in before attempting to post
+    try {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const hasSession = !!sessionData.session?.user
+      if (!hasSession || !userId) {
+        toast.error('Please sign in to comment', {
+          action: {
+            label: 'Sign in',
+            onClick: () => {
+              signIn().catch(() => {})
+            },
+          },
+        })
+        return
+      }
+    } catch (_) {
+      // If session check fails, prompt sign-in
+      toast.error('Please sign in to comment', {
+        action: {
+          label: 'Sign in',
+          onClick: () => {
+            signIn().catch(() => {})
+          },
+        },
+      })
+      return
+    }
 
     setIsSubmitting(true)
     

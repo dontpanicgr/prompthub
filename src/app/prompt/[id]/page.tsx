@@ -18,24 +18,45 @@ export default function PromptPage({ params }: PromptPageProps) {
   const [loading, setLoading] = useState(true)
   const { user } = useAuth()
 
+  // Fetch immediately using route param; then refresh auth flags in background when user loads
   useEffect(() => {
-    async function fetchPrompt() {
+    let isActive = true
+
+    const fetchPublicFirst = async () => {
       try {
         const { id } = await params
-        const promptData = await getPromptById(id, user?.id)
+        const promptData = await getPromptById(id)
         if (!promptData) {
           notFound()
+          return
         }
-        setPrompt(promptData)
+        if (isActive) setPrompt(promptData)
       } catch (error) {
         console.error('Error fetching prompt:', error)
         notFound()
       } finally {
-        setLoading(false)
+        if (isActive) setLoading(false)
       }
     }
-    fetchPrompt()
-  }, [params, user])
+
+    fetchPublicFirst()
+
+    return () => { isActive = false }
+  }, [params])
+
+  // When user becomes available, refresh like/bookmark visibility in background
+  useEffect(() => {
+    let cancelled = false
+    const refreshWithAuth = async () => {
+      if (!user) return
+      const { id } = await params
+      getPromptById(id, user.id).then((data) => {
+        if (!cancelled && data) setPrompt(data)
+      }).catch(() => {})
+    }
+    refreshWithAuth()
+    return () => { cancelled = true }
+  }, [user, params])
 
   if (loading) {
     return (

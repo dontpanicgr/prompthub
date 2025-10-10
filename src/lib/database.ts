@@ -1,68 +1,57 @@
 import { supabase } from './supabase'
+import { logger } from './utils'
 
 // Test database connection and table existence
 export async function testDatabaseConnection() {
   try {
-    console.log('Testing database connection...')
-    console.log('Supabase client:', supabase)
-    console.log('Supabase URL:', supabase.supabaseUrl)
-    console.log('Supabase Key (first 20 chars):', supabase.supabaseKey?.substring(0, 20) + '...')
+    logger.debug('Testing database connection...')
     
     // Test 1: Basic Supabase health check using a public table
-    console.log('Test 1: Basic health check (profiles)...')
+    logger.debug('Test 1: Basic health check (profiles)...')
     const { data: healthData, error: healthError } = await supabase
       .from('profiles')
       .select('id')
       .limit(1)
     
-    console.log('Health check result (profiles):', { data: healthData, error: healthError })
+    logger.debug('Health check result (profiles):', { data: !!healthData, error: !!healthError })
     
     // Test 2: Try to access profiles table
-    console.log('Test 2: Accessing profiles table...')
+    logger.debug('Test 2: Accessing profiles table...')
     const { data: profilesData, error: profilesError } = await supabase
       .from('profiles')
       .select('id')
       .limit(1)
     
-    console.log('Profiles table result:', { data: profilesData, error: profilesError })
+    logger.debug('Profiles table result:', { data: !!profilesData, error: !!profilesError })
     
     if (profilesError) {
-      console.error('Profiles table error:', profilesError)
-      console.error('Error code:', profilesError.code)
-      console.error('Error message:', profilesError.message)
-      console.error('Error details:', profilesError.details)
-      console.error('Error hint:', profilesError.hint)
+      logger.error('Profiles table error:', profilesError)
     } else {
-      console.log('Profiles table accessible')
+      logger.debug('Profiles table accessible')
     }
     
     // Test 3: Try to access prompts table
-    console.log('Test 3: Accessing prompts table...')
+    logger.debug('Test 3: Accessing prompts table...')
     const { data: promptsData, error: promptsError } = await supabase
       .from('prompts')
       .select('id')
       .limit(1)
     
-    console.log('Prompts table result:', { data: promptsData, error: promptsError })
+    logger.debug('Prompts table result:', { data: !!promptsData, error: !!promptsError })
     
     if (promptsError) {
-      console.error('Prompts table error:', promptsError)
-      console.error('Error code:', promptsError.code)
-      console.error('Error message:', promptsError.message)
-      console.error('Error details:', promptsError.details)
-      console.error('Error hint:', promptsError.hint)
+      logger.error('Prompts table error:', promptsError)
     } else {
-      console.log('Prompts table accessible')
+      logger.debug('Prompts table accessible')
     }
     
     // If we can access at least one table, consider it a success
     const hasAccess = !profilesError || !promptsError
-    console.log('Database connection test result:', hasAccess)
+    logger.debug('Database connection test result:', hasAccess)
     return hasAccess
     
   } catch (error) {
-    console.error('Database test exception:', error)
-    console.error('Exception details:', JSON.stringify(error, null, 2))
+    logger.error('Database test exception:', error)
     return false
   }
 }
@@ -74,6 +63,7 @@ export interface Prompt {
   model: string
   creator_id: string
   is_public: boolean
+  project_id?: string | null
   created_at: string
   updated_at: string
   creator: {
@@ -81,10 +71,34 @@ export interface Prompt {
     name: string
     avatar_url?: string
   }
+  project?: Project | null
   like_count: number
   bookmark_count: number
   is_liked?: boolean
   is_bookmarked?: boolean
+  categories?: Category[]
+}
+
+export interface Category {
+  id: string
+  slug: string
+  name: string
+  description?: string | null
+  icon?: string | null
+  color?: string | null
+  sort_order?: number | null
+}
+
+export interface Project {
+  id: string
+  user_id: string
+  name: string
+  description?: string | null
+  color?: string | null
+  sort_order: number
+  created_at: string
+  updated_at: string
+  prompt_count?: number
 }
 
 export interface User {
@@ -127,129 +141,88 @@ export interface Comment {
   replies?: Comment[]
 }
 
-// Get all public prompts
+// Check if we're online before making requests
+function checkOnlineStatus(): boolean {
+  // Allow disabling the offline checker for debugging via env flag
+  if (process.env.NEXT_PUBLIC_DISABLE_OFFLINE_CHECKER === 'true') return true
+  if (typeof window === 'undefined') return true
+  return navigator.onLine
+}
+
+// Get all public prompts - OPTIMIZED VERSION
 export async function getPublicPrompts(userId?: string): Promise<Prompt[]> {
   try {
-    console.log('Fetching public prompts...')
+    // Check if we're online
+    if (!checkOnlineStatus()) {
+      logger.warn('⚠️ [getPublicPrompts] Offline - skipping request')
+      return []
+    }
+
+    logger.debug('🔍 [getPublicPrompts] Starting optimized fetch...')
     
-    // First, try a simple query to get basic prompts
-    const { data: basicData, error: basicError } = await supabase
-      .from('prompts')
-      .select('*')
-      .eq('is_public', true)
-      .order('created_at', { ascending: false })
-
-    if (basicError) {
-      console.error('Error fetching basic prompts:', basicError)
-      return []
-    }
-
-    console.log('Basic prompts fetched successfully:', basicData?.length || 0)
-
-    // If no basic data, return empty array
-    if (!basicData || basicData.length === 0) {
-      console.log('No prompts found in database')
-      return []
-    }
-
-    // Now try to get creator information
-    const { data: promptsWithCreator, error: creatorError } = await supabase
+    // Single optimized query with all data in one go
+    const { data: promptsWithData, error: queryError } = await supabase
       .from('prompts')
       .select(`
         *,
-        creator:profiles!prompts_creator_id_fkey(id, name, avatar_url, is_private)
+        creator:profiles!prompts_creator_id_fkey(id, name, avatar_url, is_private),
+        prompt_categories(
+          category:categories(id, slug, name, description, icon, color, sort_order)
+        ),
+        likes(count),
+        bookmarks(count)
       `)
       .eq('is_public', true)
       .order('created_at', { ascending: false })
+      .limit(50) // Limit to 50 prompts for better performance
 
-    if (creatorError) {
-      console.error('Error fetching prompts with creator:', creatorError)
-      // Fallback to basic data without creator info
-      return basicData.map(prompt => ({
-        ...prompt,
-        creator: { id: prompt.creator_id, name: 'Unknown', avatar_url: null },
-        like_count: 0,
-        bookmark_count: 0,
-        is_liked: false,
-        is_bookmarked: false
-      }))
+    if (queryError) {
+      logger.error('❌ [getPublicPrompts] Error fetching prompts:', queryError)
+      return []
     }
 
-    // Try to get like counts using aggregation
-    const { data: likeCounts, error: likeError } = await supabase
-      .from('likes')
-      .select('prompt_id')
-      .in('prompt_id', promptsWithCreator.map(p => p.id))
-
-    if (likeError) {
-      console.error('Error fetching like counts:', likeError)
+    if (!promptsWithData || promptsWithData.length === 0) {
+      logger.debug('⚠️ [getPublicPrompts] No prompts found in database')
+      return []
     }
 
-    // Try to get bookmark counts using aggregation
-    const { data: bookmarkCounts, error: bookmarkError } = await supabase
-      .from('bookmarks')
-      .select('prompt_id')
-      .in('prompt_id', promptsWithCreator.map(p => p.id))
-
-    if (bookmarkError) {
-      console.error('Error fetching bookmark counts:', bookmarkError)
-    }
-
-    // Get user's likes and bookmarks if userId provided
+    // Get user's likes and bookmarks in a single query if userId provided
     let userLikes: string[] = []
     let userBookmarks: string[] = []
 
     if (userId) {
-      const { data: likes } = await supabase
-        .from('likes')
-        .select('prompt_id')
-        .eq('user_id', userId)
-      
-      const { data: bookmarks } = await supabase
-        .from('bookmarks')
-        .select('prompt_id')
-        .eq('user_id', userId)
+      const [likesRes, bookmarksRes] = await Promise.all([
+        supabase
+          .from('likes')
+          .select('prompt_id')
+          .eq('user_id', userId),
+        supabase
+          .from('bookmarks')
+          .select('prompt_id')
+          .eq('user_id', userId)
+      ])
 
-      userLikes = likes?.map(l => l.prompt_id) || []
-      userBookmarks = bookmarks?.map(b => b.prompt_id) || []
-    }
-
-    // Create like and bookmark count maps
-    const likeCountMap = new Map()
-    const bookmarkCountMap = new Map()
-
-    if (likeCounts) {
-      // Count likes per prompt
-      likeCounts.forEach(like => {
-        const currentCount = likeCountMap.get(like.prompt_id) || 0
-        likeCountMap.set(like.prompt_id, currentCount + 1)
-      })
-    }
-
-    if (bookmarkCounts) {
-      // Count bookmarks per prompt
-      bookmarkCounts.forEach(bookmark => {
-        const currentCount = bookmarkCountMap.get(bookmark.prompt_id) || 0
-        bookmarkCountMap.set(bookmark.prompt_id, currentCount + 1)
-      })
+      userLikes = likesRes.data?.map(l => l.prompt_id) || []
+      userBookmarks = bookmarksRes.data?.map(b => b.prompt_id) || []
     }
 
     // Filter out prompts where creator is private (unless viewer is the creator)
-    const visiblePrompts = promptsWithCreator.filter((p: any) => !p.creator?.is_private || p.creator_id === userId)
+    const visiblePrompts = promptsWithData.filter((p: any) => !p.creator?.is_private || p.creator_id === userId)
 
-    const result = visiblePrompts.map(prompt => ({
+    const result = visiblePrompts.map((prompt: any) => ({
       ...prompt,
-      like_count: likeCountMap.get(prompt.id) || 0,
-      bookmark_count: bookmarkCountMap.get(prompt.id) || 0,
+      categories: (prompt.prompt_categories || []).map((pc: any) => pc.category).filter(Boolean),
+      like_count: prompt.likes?.[0]?.count || 0,
+      bookmark_count: prompt.bookmarks?.[0]?.count || 0,
       is_liked: userLikes.includes(prompt.id),
       is_bookmarked: userBookmarks.includes(prompt.id)
     }))
 
-    console.log('Successfully processed prompts:', result.length)
+    logger.debug('✅ [getPublicPrompts] Successfully processed prompts:', result.length)
     return result
 
   } catch (err) {
-    console.error('Exception in getPublicPrompts:', err)
+    logger.error('Exception in getPublicPrompts:', err)
     return []
   }
 }
@@ -263,7 +236,10 @@ export async function getPromptById(id: string, userId?: string): Promise<Prompt
       *,
       creator:profiles!prompts_creator_id_fkey(id, name, avatar_url, bio, website_url, is_private),
       like_count:likes(count),
-      bookmark_count:bookmarks(count)
+      bookmark_count:bookmarks(count),
+      prompt_categories(
+        category:categories(id, slug, name, description, icon, color, sort_order)
+      )
     `)
     .eq('id', id)
 
@@ -278,7 +254,7 @@ export async function getPromptById(id: string, userId?: string): Promise<Prompt
   const { data, error } = await query.single()
 
   if (error) {
-    console.error('Error fetching prompt:', error)
+    logger.error('Error fetching prompt:', error)
     return null
   }
 
@@ -287,31 +263,33 @@ export async function getPromptById(id: string, userId?: string): Promise<Prompt
     return null
   }
 
-  // Get user's like and bookmark status
+  // Get user's like and bookmark status (in parallel)
   let isLiked = false
   let isBookmarked = false
 
   if (userId) {
-    const { data: like } = await supabase
-      .from('likes')
-      .select('id')
-      .eq('prompt_id', id)
-      .eq('user_id', userId)
-      .single()
+    const [likeRes, bookmarkRes] = await Promise.all([
+      supabase
+        .from('likes')
+        .select('id')
+        .eq('prompt_id', id)
+        .eq('user_id', userId)
+        .maybeSingle(),
+      supabase
+        .from('bookmarks')
+        .select('id')
+        .eq('prompt_id', id)
+        .eq('user_id', userId)
+        .maybeSingle()
+    ])
 
-    const { data: bookmark } = await supabase
-      .from('bookmarks')
-      .select('id')
-      .eq('prompt_id', id)
-      .eq('user_id', userId)
-      .single()
-
-    isLiked = !!like
-    isBookmarked = !!bookmark
+    isLiked = !!likeRes.data
+    isBookmarked = !!bookmarkRes.data
   }
 
   return {
     ...data,
+    categories: (data as any)?.prompt_categories?.map((pc: any) => pc.category).filter(Boolean) || [],
     like_count: data.like_count?.[0]?.count || 0,
     bookmark_count: data.bookmark_count?.[0]?.count || 0,
     is_liked: isLiked,
@@ -326,23 +304,49 @@ export async function createPrompt(prompt: {
   model: string
   is_public: boolean
   creator_id: string
+  category_ids?: string[]
+  project_id?: string | null
 }): Promise<Prompt | null> {
-  console.log('createPrompt called with:', prompt)
+  logger.debug('createPrompt called')
   
   const { data, error } = await supabase
     .from('prompts')
-    .insert([prompt])
+    .insert([{
+      title: prompt.title,
+      body: prompt.body,
+      model: prompt.model,
+      is_public: prompt.is_public,
+      creator_id: prompt.creator_id,
+      project_id: prompt.project_id || null
+    }])
     .select(`
       *,
       creator:profiles!prompts_creator_id_fkey(id, name, avatar_url)
     `)
     .single()
 
-  console.log('Supabase response:', { data, error })
+  logger.debug('Supabase response:', { ok: !error })
 
   if (error) {
-    console.error('Error creating prompt:', error)
+    logger.error('Error creating prompt:', error)
     return null
+  }
+
+  // Add categories if provided
+  if (prompt.category_ids && prompt.category_ids.length > 0) {
+    const categoryInserts = prompt.category_ids.map(categoryId => ({
+      prompt_id: data.id,
+      category_id: categoryId
+    }))
+
+    const { error: categoryError } = await supabase
+      .from('prompt_categories')
+      .insert(categoryInserts)
+
+    if (categoryError) {
+      logger.error('Error adding categories to prompt:', categoryError)
+      // Don't fail the entire operation, just log the error
+    }
   }
 
   const result = {
@@ -350,10 +354,11 @@ export async function createPrompt(prompt: {
     like_count: 0,
     bookmark_count: 0,
     is_liked: false,
-    is_bookmarked: false
+    is_bookmarked: false,
+    categories: []
   }
 
-  console.log('createPrompt returning:', result)
+  logger.debug('createPrompt returning')
   return result
 }
 
@@ -363,10 +368,18 @@ export async function updatePrompt(id: string, updates: {
   body?: string
   model?: string
   is_public?: boolean
+  category_ids?: string[]
+  project_id?: string | null
 }): Promise<Prompt | null> {
   const { data, error } = await supabase
     .from('prompts')
-    .update(updates)
+    .update({
+      title: updates.title,
+      body: updates.body,
+      model: updates.model,
+      is_public: updates.is_public,
+      project_id: updates.project_id
+    })
     .eq('id', id)
     .select(`
       *,
@@ -375,8 +388,38 @@ export async function updatePrompt(id: string, updates: {
     .single()
 
   if (error) {
-    console.error('Error updating prompt:', error)
+    logger.error('Error updating prompt:', error)
     return null
+  }
+
+  // Update categories if provided
+  if (updates.category_ids !== undefined) {
+    // First, remove all existing categories
+    const { error: deleteError } = await supabase
+      .from('prompt_categories')
+      .delete()
+      .eq('prompt_id', id)
+
+    if (deleteError) {
+      logger.error('Error removing existing categories:', deleteError)
+    }
+
+    // Then add new categories
+    if (updates.category_ids.length > 0) {
+      const categoryInserts = updates.category_ids.map(categoryId => ({
+        prompt_id: id,
+        category_id: categoryId
+      }))
+
+      const { error: categoryError } = await supabase
+        .from('prompt_categories')
+        .insert(categoryInserts)
+
+      if (categoryError) {
+        logger.error('Error adding categories to prompt:', categoryError)
+        // Don't fail the entire operation, just log the error
+      }
+    }
   }
 
   return {
@@ -384,7 +427,8 @@ export async function updatePrompt(id: string, updates: {
     like_count: 0,
     bookmark_count: 0,
     is_liked: false,
-    is_bookmarked: false
+    is_bookmarked: false,
+    categories: []
   }
 }
 
@@ -396,7 +440,7 @@ export async function deletePrompt(id: string): Promise<boolean> {
     .eq('id', id)
 
   if (error) {
-    console.error('Error deleting prompt:', error)
+    logger.error('Error deleting prompt:', error)
     return false
   }
 
@@ -470,7 +514,7 @@ export async function getUserById(id: string): Promise<User | null> {
     .single()
 
   if (error) {
-    console.error('Error fetching user:', error)
+    logger.error('Error fetching user:', error)
     return null
   }
 
@@ -501,7 +545,7 @@ export async function getUserPrompts(userId: string, currentUserId?: string): Pr
   const { data, error } = await query.order('created_at', { ascending: false })
 
   if (error) {
-    console.error('Error fetching user prompts:', error)
+    logger.error('Error fetching user prompts:', error)
     return []
   }
 
@@ -524,8 +568,11 @@ export async function getUserPrompts(userId: string, currentUserId?: string): Pr
     userBookmarks = bookmarks?.map(b => b.prompt_id) || []
   }
 
-  return data?.map(prompt => ({
+  return data?.map((prompt: any) => ({
     ...prompt,
+    project: prompt.project || null,
+    // Categories are disabled until categories schema is installed
+    categories: [],
     like_count: prompt.like_count?.[0]?.count || 0,
     bookmark_count: prompt.bookmark_count?.[0]?.count || 0,
     is_liked: userLikes.includes(prompt.id),
@@ -547,7 +594,7 @@ export async function getPopularPrompts(userId?: string): Promise<Prompt[]> {
     .order('created_at', { ascending: false })
 
   if (error) {
-    console.error('Error fetching popular prompts:', error)
+    logger.error('Error fetching popular prompts:', error)
     return []
   }
 
@@ -610,14 +657,17 @@ export async function searchPrompts(query: string, userId?: string): Promise<Pro
       *,
       creator:profiles!prompts_creator_id_fkey(id, name, avatar_url, is_private),
       like_count:likes(count),
-      bookmark_count:bookmarks(count)
+      bookmark_count:bookmarks(count),
+      prompt_categories(
+        category:categories(id, slug, name, description, icon, color, sort_order)
+      )
     `)
     .eq('is_public', true)
     .or(`title.ilike.%${query}%,model.ilike.%${query}%`)
     .order('created_at', { ascending: false })
 
   if (error) {
-    console.error('Error searching prompts:', error)
+    logger.error('Error searching prompts:', error)
     return []
   }
 
@@ -642,13 +692,157 @@ export async function searchPrompts(query: string, userId?: string): Promise<Pro
 
   return (data || [])
     .filter((p: any) => !p.creator?.is_private || p.creator_id === userId)
-    .map(prompt => ({
-    ...prompt,
-    like_count: prompt.like_count?.[0]?.count || 0,
-    bookmark_count: prompt.bookmark_count?.[0]?.count || 0,
-    is_liked: userLikes.includes(prompt.id),
-    is_bookmarked: userBookmarks.includes(prompt.id)
-  })) || []
+    .map((prompt: any) => ({
+      ...prompt,
+      categories: (prompt.prompt_categories || []).map((pc: any) => pc.category).filter(Boolean),
+      like_count: prompt.like_count?.[0]?.count || 0,
+      bookmark_count: prompt.bookmark_count?.[0]?.count || 0,
+      is_liked: userLikes.includes(prompt.id),
+      is_bookmarked: userBookmarks.includes(prompt.id)
+    })) || []
+}
+
+// Categories API
+export async function getCategories(): Promise<Category[]> {
+  const { data, error } = await supabase
+    .from('categories')
+    .select('*')
+    .order('sort_order', { ascending: true })
+
+  if (error) {
+    logger.error('Error fetching categories:', error)
+    return []
+  }
+  return (data as Category[]) || []
+}
+
+export async function addCategoryToPrompt(promptId: string, categoryId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('prompt_categories')
+    .insert([{ prompt_id: promptId, category_id: categoryId }])
+
+  if (error) {
+    logger.error('addCategoryToPrompt error:', error)
+    return false
+  }
+  return true
+}
+
+export async function removeCategoryFromPrompt(promptId: string, categoryId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('prompt_categories')
+    .delete()
+    .eq('prompt_id', promptId)
+    .eq('category_id', categoryId)
+
+  if (error) {
+    logger.error('removeCategoryFromPrompt error:', error)
+    return false
+  }
+  return true
+}
+
+export async function setPromptCategories(promptId: string, categoryIds: string[]): Promise<boolean> {
+  const { data: existing, error: fetchError } = await supabase
+    .from('prompt_categories')
+    .select('category_id')
+    .eq('prompt_id', promptId)
+
+  if (fetchError) {
+    logger.error('setPromptCategories fetch error:', fetchError)
+    return false
+  }
+
+  const current = new Set((existing || []).map((r: any) => r.category_id))
+  const desired = new Set(categoryIds)
+
+  const toAdd = [...desired].filter(id => !current.has(id))
+  const toRemove = [...current].filter(id => !desired.has(id))
+
+  if (toAdd.length > 0) {
+    const { error: addError } = await supabase
+      .from('prompt_categories')
+      .insert(toAdd.map(id => ({ prompt_id: promptId, category_id: id })))
+    if (addError) {
+      logger.error('setPromptCategories add error:', addError)
+      return false
+    }
+  }
+
+  if (toRemove.length > 0) {
+    const { error: delError } = await supabase
+      .from('prompt_categories')
+      .delete()
+      .eq('prompt_id', promptId)
+      .in('category_id', toRemove)
+    if (delError) {
+      logger.error('setPromptCategories delete error:', delError)
+      return false
+    }
+  }
+
+  return true
+}
+
+export async function getPublicPromptsByCategorySlug(slug: string, userId?: string): Promise<Prompt[]> {
+  const { data: cat, error: catErr } = await supabase
+    .from('categories')
+    .select('id')
+    .eq('slug', slug)
+    .single()
+
+  if (catErr || !cat) return []
+
+  const { data: pc, error: pcErr } = await supabase
+    .from('prompt_categories')
+    .select('prompt_id')
+    .eq('category_id', (cat as any).id)
+
+  if (pcErr || !pc || pc.length === 0) return []
+
+  const promptIds = pc.map(r => r.prompt_id)
+
+  const { data, error } = await supabase
+    .from('prompts')
+    .select(`
+      *,
+      creator:profiles!prompts_creator_id_fkey(id, name, avatar_url, is_private),
+      like_count:likes(count),
+      bookmark_count:bookmarks(count),
+      prompt_categories(
+        category:categories(id, slug, name, description, icon, color, sort_order)
+      )
+    `)
+    .in('id', promptIds)
+    .eq('is_public', true)
+    .order('created_at', { ascending: false })
+
+  if (error || !data) return []
+
+  // Get user's likes and bookmarks if userId provided
+  let userLikes: string[] = []
+  let userBookmarks: string[] = []
+  if (userId) {
+    const { data: likes } = await supabase
+      .from('likes')
+      .select('prompt_id')
+      .eq('user_id', userId)
+    const { data: bookmarks } = await supabase
+      .from('bookmarks')
+      .select('prompt_id')
+      .eq('user_id', userId)
+    userLikes = likes?.map(l => l.prompt_id) || []
+    userBookmarks = bookmarks?.map(b => b.prompt_id) || []
+  }
+
+  return data.map((p: any) => ({
+    ...p,
+    categories: (p.prompt_categories || []).map((x: any) => x.category).filter(Boolean),
+    like_count: p.like_count?.[0]?.count || 0,
+    bookmark_count: p.bookmark_count?.[0]?.count || 0,
+    is_liked: userLikes.includes(p.id),
+    is_bookmarked: userBookmarks.includes(p.id)
+  }))
 }
 
 // Get creators leaderboard based on engagement on their public prompts
@@ -665,7 +859,7 @@ export async function getCreatorsLeaderboard(): Promise<LeaderboardCreator[]> {
       .eq('is_public', true)
 
     if (promptsError || !prompts) {
-      console.error('Error fetching prompts for leaderboard:', promptsError)
+      logger.error('Error fetching prompts for leaderboard:', promptsError)
       return []
     }
 
@@ -742,7 +936,7 @@ export async function getCreatorsLeaderboard(): Promise<LeaderboardCreator[]> {
 
     return result
   } catch (e) {
-    console.error('Error building creators leaderboard:', e)
+    logger.error('Error building creators leaderboard:', e)
     return []
   }
 }
@@ -756,7 +950,7 @@ export async function getLikedPrompts(userId: string): Promise<Prompt[]> {
     .eq('user_id', userId)
 
   if (likesError) {
-    console.error('Error fetching liked prompt IDs:', likesError)
+    logger.error('Error fetching liked prompt IDs:', likesError)
     return []
   }
 
@@ -784,7 +978,7 @@ export async function getLikedPrompts(userId: string): Promise<Prompt[]> {
     .in('id', promptIds)
 
   if (promptsError) {
-    console.error('Error fetching liked prompts:', promptsError)
+    logger.error('Error fetching liked prompts:', promptsError)
     return []
   }
 
@@ -814,7 +1008,7 @@ export async function getBookmarkedPrompts(userId: string): Promise<Prompt[]> {
     .eq('user_id', userId)
 
   if (bookmarksError) {
-    console.error('Error fetching bookmarked prompt IDs:', bookmarksError)
+    logger.error('Error fetching bookmarked prompt IDs:', bookmarksError)
     return []
   }
 
@@ -842,7 +1036,7 @@ export async function getBookmarkedPrompts(userId: string): Promise<Prompt[]> {
     .in('id', promptIds)
 
   if (promptsError) {
-    console.error('Error fetching bookmarked prompts:', promptsError)
+    logger.error('Error fetching bookmarked prompts:', promptsError)
     return []
   }
 
@@ -901,7 +1095,7 @@ export async function getUserEngagementStats(userId: string, includePrivate: boo
       .in('prompt_id', promptIds)
 
     if (likesError) {
-      console.error('Error fetching likes received:', likesError)
+      logger.error('Error fetching likes received:', likesError)
       return { prompts_created: promptsCreated, likes_received: 0, bookmarks_received: 0 }
     }
 
@@ -912,7 +1106,7 @@ export async function getUserEngagementStats(userId: string, includePrivate: boo
       .in('prompt_id', promptIds)
 
     if (bookmarksError) {
-      console.error('Error fetching bookmarks received:', bookmarksError)
+      logger.error('Error fetching bookmarks received:', bookmarksError)
       return { prompts_created: promptsCreated, likes_received: likes?.length || 0, bookmarks_received: 0 }
     }
 
@@ -922,7 +1116,7 @@ export async function getUserEngagementStats(userId: string, includePrivate: boo
       bookmarks_received: bookmarks?.length || 0
     }
   } catch (error) {
-    console.error('Error calculating user engagement stats:', error)
+    logger.error('Error calculating user engagement stats:', error)
     return { prompts_created: 0, likes_received: 0, bookmarks_received: 0 }
   }
 }
@@ -940,7 +1134,7 @@ export async function getCommentsForPrompt(promptId: string): Promise<Comment[]>
     .order('created_at', { ascending: false })
 
   if (error) {
-    console.error('Error fetching comments:', error)
+    logger.error('Error fetching comments:', error)
     return []
   }
 
@@ -976,7 +1170,7 @@ export async function createComment(comment: {
   content: string
   parent_id?: string
 }): Promise<Comment | null> {
-  console.log('createComment called with:', comment)
+  logger.debug('createComment called')
   
   const { data, error } = await supabase
     .from('comments')
@@ -987,10 +1181,10 @@ export async function createComment(comment: {
     `)
     .single()
 
-  console.log('Supabase response:', { data, error })
+  logger.debug('Supabase response:', { ok: !error })
 
   if (error) {
-    console.error('Error creating comment:', error)
+    logger.error('Error creating comment:', error)
     return null
   }
 
@@ -1010,7 +1204,7 @@ export async function updateComment(commentId: string, content: string): Promise
     .single()
 
   if (error) {
-    console.error('Error updating comment:', error)
+    logger.error('Error updating comment:', error)
     return null
   }
 
@@ -1025,7 +1219,7 @@ export async function deleteComment(commentId: string): Promise<boolean> {
     .eq('id', commentId)
 
   if (error) {
-    console.error('Error deleting comment:', error)
+    logger.error('Error deleting comment:', error)
     return false
   }
 
@@ -1041,9 +1235,175 @@ export async function getCommentCountForPrompt(promptId: string): Promise<number
     .eq('is_deleted', false)
 
   if (error) {
-    console.error('Error fetching comment count:', error)
+    logger.error('Error fetching comment count:', error)
     return 0
   }
 
   return count || 0
+}
+
+// Projects API
+export async function getProjectsByUser(userId: string): Promise<Project[]> {
+  const { data, error } = await supabase
+    .from('projects')
+    .select('*')
+    .eq('user_id', userId)
+    .order('sort_order', { ascending: true })
+
+  if (error) {
+    logger.error('Error fetching projects:', error)
+    return []
+  }
+
+  return (data || []).map((project: any) => ({
+    ...project,
+    // Relationship-based count removed due to missing FK; default to 0.
+    prompt_count: 0
+  }))
+}
+
+export async function createProject(project: {
+  name: string
+  description?: string
+  color?: string
+  user_id: string
+}): Promise<Project | null> {
+  // Get the next sort order
+  const { data: lastProject } = await supabase
+    .from('projects')
+    .select('sort_order')
+    .eq('user_id', project.user_id)
+    .order('sort_order', { ascending: false })
+    .limit(1)
+
+  const nextSortOrder = lastProject?.[0]?.sort_order !== undefined 
+    ? (lastProject[0].sort_order + 1) 
+    : 0
+
+  const { data, error } = await supabase
+    .from('projects')
+    .insert([{
+      ...project,
+      sort_order: nextSortOrder
+    }])
+    .select()
+    .single()
+
+  if (error) {
+    logger.error('Error creating project:', error)
+    return null
+  }
+
+  return { ...data, prompt_count: 0 }
+}
+
+export async function updateProject(projectId: string, updates: {
+  name?: string
+  description?: string
+  color?: string
+}): Promise<Project | null> {
+  const { data, error } = await supabase
+    .from('projects')
+    .update(updates)
+    .eq('id', projectId)
+    .select(`
+      *,
+      prompt_count:prompts(count)
+    `)
+    .single()
+
+  if (error) {
+    logger.error('Error updating project:', error)
+    return null
+  }
+
+  return {
+    ...data,
+    prompt_count: data.prompt_count?.[0]?.count || 0
+  }
+}
+
+export async function deleteProject(projectId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('projects')
+    .delete()
+    .eq('id', projectId)
+
+  if (error) {
+    logger.error('Error deleting project:', error)
+    return false
+  }
+
+  return true
+}
+
+export async function movePromptToProject(promptId: string, projectId: string | null): Promise<boolean> {
+  const { error } = await supabase
+    .from('prompts')
+    .update({ project_id: projectId })
+    .eq('id', promptId)
+
+  if (error) {
+    logger.error('Error moving prompt to project:', error)
+    return false
+  }
+
+  return true
+}
+
+export async function getPromptsByProject(projectId: string, userId?: string): Promise<Prompt[]> {
+  // Build query without FK-based project relation to avoid schema dependency
+  let query = supabase
+    .from('prompts')
+    .select(`
+      *,
+      creator:profiles!prompts_creator_id_fkey(id, name, avatar_url, is_private),
+      prompt_categories(
+        category:categories(id, slug, name, description, icon, color, sort_order)
+      ),
+      like_count:likes(count),
+      bookmark_count:bookmarks(count)
+    `)
+    .eq('project_id', projectId)
+
+  // If no user context, restrict to public prompts only. Owners can see all.
+  if (!userId) {
+    query = query.eq('is_public', true)
+  }
+
+  const { data, error } = await query.order('created_at', { ascending: false })
+
+  if (error) {
+    logger.error('Error fetching prompts by project:', error)
+    return []
+  }
+
+  // Get user's likes and bookmarks if userId provided
+  let userLikes: string[] = []
+  let userBookmarks: string[] = []
+  if (userId) {
+    const { data: likes } = await supabase
+      .from('likes')
+      .select('prompt_id')
+      .eq('user_id', userId)
+    const { data: bookmarks } = await supabase
+      .from('bookmarks')
+      .select('prompt_id')
+      .eq('user_id', userId)
+    userLikes = likes?.map(l => l.prompt_id) || []
+    userBookmarks = bookmarks?.map(b => b.prompt_id) || []
+  }
+
+  return (data || [])
+    .filter((p: any) => !p.creator?.is_private || p.creator_id === userId)
+    .map((prompt: any) => ({
+      ...prompt,
+      // Project relationship omitted intentionally; keep null for now
+      project: null,
+      categories: (prompt.prompt_categories || []).map((pc: any) => pc.category).filter(Boolean),
+      like_count: prompt.like_count?.[0]?.count || 0,
+      bookmark_count: prompt.bookmark_count?.[0]?.count || 0,
+      is_liked: userLikes.includes(prompt.id),
+      is_bookmarked: userBookmarks.includes(prompt.id)
+    }))
 }

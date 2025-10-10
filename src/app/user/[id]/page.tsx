@@ -27,6 +27,7 @@ export default function UserPage({ params }: UserPageProps) {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedModels, setSelectedModels] = useState<string[]>([])
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [layoutPref, setLayoutPref] = useState<'card' | 'table'>(() => {
     if (typeof window === 'undefined') return 'card'
     const pref = (localStorage.getItem('layout-preference') as 'card' | 'table' | null)
@@ -78,10 +79,11 @@ export default function UserPage({ params }: UserPageProps) {
     }
   }, [])
 
-  const handleSearch = (query: string, models: string[]) => {
-    console.log('Search query:', query, 'Models:', models)
+  const handleSearch = (query: string, models: string[], categories: string[]) => {
+    console.log('Search query:', query, 'Models:', models, 'Categories:', categories)
     setSearchQuery(query)
     setSelectedModels(models)
+    setSelectedCategories(categories)
     // Search is handled by the UserPromptsGrid component
   }
 
@@ -121,6 +123,8 @@ export default function UserPage({ params }: UserPageProps) {
                 setSearchQuery={setSearchQuery}
                 selectedModels={selectedModels}
                 setSelectedModels={setSelectedModels}
+                selectedCategories={selectedCategories}
+                setSelectedCategories={setSelectedCategories}
                 onSearch={handleSearch}
                 placeholder="Search user's prompts..."
               />
@@ -136,6 +140,11 @@ export default function UserPage({ params }: UserPageProps) {
                   maxColumns={3} 
                   searchQuery={searchQuery}
                   selectedModels={selectedModels}
+                  user={{
+                    id: user.id,
+                    name: user.name,
+                    is_private: user.is_private
+                  }}
                 />
               )}
             </div>

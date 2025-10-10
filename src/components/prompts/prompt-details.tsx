@@ -6,21 +6,12 @@ import Link from 'next/link'
 import { toast } from 'sonner'
 import { 
   Heart, 
-  Bookmark, 
-  User, 
-  Calendar, 
-  Copy, 
-  Share2, 
-  ExternalLink,
-  ArrowLeft,
-  Edit,
-  Trash2,
-  EyeOff,
-  MoreHorizontal,
-  Flag
+  Bookmark,
+  Copy
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ModelBadge } from '@/components/ui/model-badge'
+import { CategoryBadge } from '@/components/ui/category-badge'
 import { PrivateBadge } from '@/components/ui/private-badge'
 import UserBioCard from '@/components/ui/user-bio-card'
 import { useAuth } from '@/components/auth-provider'
@@ -29,13 +20,7 @@ import { supabase } from '@/lib/supabase'
 import Snackbar from '@/components/ui/snackbar'
 import CommentList from '@/components/comments/comment-list'
 import MarkdownRenderer from '@/components/ui/markdown-renderer'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+import PromptMenu from '@/components/ui/prompt-menu'
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
 
 interface Prompt {
@@ -58,6 +43,7 @@ interface Prompt {
   bookmark_count: number
   is_liked?: boolean
   is_bookmarked?: boolean
+  categories?: { id: string, slug: string, name: string }[]
 }
 
 interface PromptDetailsProps {
@@ -229,20 +215,40 @@ export default function PromptDetails({ prompt }: PromptDetailsProps) {
     <div className="w-full">
       {/* Mobile Layout */}
       <div className="lg:hidden">
-        {/* HEAD Section - Reordered mobile layout */}
-        <div className="mb-8">
+        {/* HEAD Section - Mobile layout */}
+        <div className="mb-6">
+          {/* Title */}
+          <h1 className="text-2xl font-semibold text-card-foreground mb-4 leading-tight">
+            {prompt.title}
+          </h1>
+          
           {/* Meta Information */}
-          <div className="flex items-center gap-3 text-sm text-muted-foreground mb-3">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+            {/* Categories (before model) */}
+            {Array.isArray(prompt.categories) && prompt.categories.length > 0 && (
+              <div className="flex items-center gap-1">
+                {prompt.categories.map(cat => (
+                  <CategoryBadge
+                    key={cat.id}
+                    category={cat}
+                    size="sm"
+                    variant="outline"
+                    href={`/?category=${encodeURIComponent(cat.slug)}`}
+                    className="border text-foreground bg-card dark:bg-secondary dark:border-secondary dark:text-secondary-foreground cursor-pointer hover:opacity-80 transition-opacity"
+                  />
+                ))}
+              </div>
+            )}
             <Link 
               href={`/?model=${encodeURIComponent(prompt.model)}`}
               className="hover:opacity-80 transition-opacity"
             >
-                  <ModelBadge 
-                    model={prompt.model as any} 
-                    variant="outline" 
-                    size="sm"
-                    className="border text-foreground bg-card dark:bg-secondary dark:border-secondary dark:text-secondary-foreground cursor-pointer"
-                  />
+                <ModelBadge 
+                  model={prompt.model as any} 
+                  variant="outline" 
+                  size="sm"
+                  className="border text-foreground bg-card dark:bg-secondary dark:border-secondary dark:text-secondary-foreground cursor-pointer"
+                />
             </Link>
             {!prompt.is_public && (
               <>
@@ -259,19 +265,25 @@ export default function PromptDetails({ prompt }: PromptDetailsProps) {
               {prompt.creator.name}
             </Link>
           </div>
-          
-          {/* Title */}
-          <h1 className="text-2xl font-semibold text-card-foreground mb-4 leading-tight">
-            {prompt.title}
-          </h1>
-          
-          {/* Actions */}
-          <div className="flex items-center gap-2 flex-wrap">
+        </div>
+
+        {/* MAIN Section */}
+        <div className="space-y-6">
+          {/* Prompt Content */}
+          <div className="bg-card rounded-lg border border-border p-4">
+            <MarkdownRenderer 
+              content={prompt.body}
+              className="text-card-foreground"
+            />
+          </div>
+
+          {/* Actions - Moved below prompt content */}
+          <div className="flex items-center gap-2">
             <Button
               onClick={handleLike}
               variant="outline"
               size="lg"
-              className="h-10 gap-2 border px-4"
+              className="h-10 gap-2 border px-6"
             >
               <Heart size={16} className={isLiked ? 'fill-primary text-primary' : ''} />
               {likeCount}
@@ -281,76 +293,21 @@ export default function PromptDetails({ prompt }: PromptDetailsProps) {
               onClick={handleBookmark}
               variant="outline"
               size="lg"
-              className="h-10 gap-2 border px-4"
+              className="h-10 gap-2 border px-6"
             >
               <Bookmark size={16} className={isBookmarked ? 'fill-primary text-primary' : ''} />
               {bookmarkCount}
             </Button>
             
-            <Button
-              onClick={handleCopy}
-              variant="outline"
-              size="lg"
-              className="h-10 gap-2 border px-4"
-            >
-              <Copy size={16} />
-              Copy
-            </Button>
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="h-10 border px-3">
-                  <MoreHorizontal size={16} />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handleShare}>
-                  <Share2 size={16} className="mr-2" />
-                  Share
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Flag size={16} className="mr-2" />
-                  Report
-                </DropdownMenuItem>
-                {isOwner && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link href={`/prompt/${prompt.id}/edit`}>
-                        <Edit size={16} className="mr-2" />
-                        Edit
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => setShowDeleteDialog(true)}
-                      className="text-destructive focus:text-destructive"
-                    >
-                      <Trash2 size={16} className="mr-2 text-destructive" />
-                      Delete
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-
-        {/* MAIN Section */}
-        <div className="space-y-6">
-          {/* Prompt Content */}
-          <div className="bg-card rounded-lg border border-border p-4">
-            <MarkdownRenderer 
-              content={prompt.body}
-              className="text-card-foreground mb-6"
+            <PromptMenu
+              promptId={prompt.id}
+              promptBody={prompt.body}
+              isOwner={!!isOwner}
+              onCopy={() => handleCopy()}
+              onShare={() => handleShare()}
+              onDelete={() => setShowDeleteDialog(true)}
+              triggerClassName="w-10 h-10 inline-flex items-center justify-center rounded-md bg-card"
             />
-            <Button
-              onClick={handleCopy}
-              variant="outline"
-              className="h-10 gap-2"
-            >
-              <Copy size={16} />
-              Copy
-            </Button>
           </div>
 
           {/* Comments Section */}
@@ -368,10 +325,30 @@ export default function PromptDetails({ prompt }: PromptDetailsProps) {
         <div className="grid grid-cols-4 gap-6">
           {/* Main Content */}
           <div className="col-span-3">
-            {/* Prompt Header - Reordered layout */}
-            <div className="mb-8">
+            {/* Prompt Header */}
+            <div className="mb-6">
+              {/* Title */}
+              <h1 className="text-3xl font-semibold text-card-foreground mb-4 leading-tight">
+                {prompt.title}
+              </h1>
+              
               {/* Meta Information Row */}
-              <div className="flex items-center gap-3 text-sm text-muted-foreground mb-3">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+                {/* Categories (before model) */}
+                {Array.isArray(prompt.categories) && prompt.categories.length > 0 && (
+                  <div className="flex items-center gap-1">
+                    {prompt.categories.map(cat => (
+                      <CategoryBadge
+                        key={cat.id}
+                        category={cat}
+                        size="sm"
+                        variant="outline"
+                        href={`/?category=${encodeURIComponent(cat.slug)}`}
+                        className="border text-foreground bg-card dark:bg-secondary dark:border-secondary dark:text-secondary-foreground cursor-pointer hover:opacity-80 transition-opacity"
+                      />
+                    ))}
+                  </div>
+                )}
                 <Link 
                   href={`/?model=${encodeURIComponent(prompt.model)}`}
                   className="hover:opacity-80 transition-opacity"
@@ -398,98 +375,59 @@ export default function PromptDetails({ prompt }: PromptDetailsProps) {
                   {prompt.creator.name}
                 </Link>
               </div>
-              
-              {/* Title */}
-              <h1 className="text-3xl font-semibold text-card-foreground mb-4 leading-tight">
-                {prompt.title}
-              </h1>
-              
-              {/* Action Buttons Row */}
-              <div className="flex items-center gap-3">
-                <Button
-                  onClick={handleLike}
-                  variant="outline"
-                  size="lg"
-                  className="h-11 gap-2 border px-6"
-                >
-                  <Heart size={16} className={isLiked ? 'fill-primary text-primary' : ''} />
-                  {likeCount}
-                </Button>
-                
-                <Button
-                  onClick={handleBookmark}
-                  variant="outline"
-                  size="lg"
-                  className="h-11 gap-2 border px-6"
-                >
-                  <Bookmark size={16} className={isBookmarked ? 'fill-primary text-primary' : ''} />
-                  {bookmarkCount}
-                </Button>
-                
-                <Button
-                  onClick={handleCopy}
-                  variant="outline"
-                  size="lg"
-                  className="h-11 gap-2 border px-6"
-                >
-                  <Copy size={16} />
-                  Copy
-                </Button>
-                
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="h-11 border px-4">
-                      <MoreHorizontal size={16} />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={handleShare}>
-                      <Share2 size={16} className="mr-2" />
-                      Share
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Flag size={16} className="mr-2" />
-                      Report
-                    </DropdownMenuItem>
-                    {isOwner && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild>
-                          <Link href={`/prompt/${prompt.id}/edit`}>
-                            <Edit size={16} className="mr-2" />
-                            Edit
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          onClick={() => setShowDeleteDialog(true)}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <Trash2 size={16} className="mr-2 text-destructive" />
-                          Delete
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
             </div>
 
             {/* Prompt Content */}
-            <div className="mb-6">
+            <div className="mb-4">
               <div className="bg-card rounded-lg border border-border p-4">
                 <MarkdownRenderer 
                   content={prompt.body}
-                  className="text-card-foreground mb-4"
+                  className="text-card-foreground"
                 />
-                <Button
-                  onClick={handleCopy}
-                  variant="outline"
-                  className="h-10 gap-2"
-                >
-                  <Copy size={16} />
-                  Copy
-                </Button>
               </div>
+            </div>
+
+            {/* Action Buttons Row - Moved below prompt content */}
+            <div className="flex items-center gap-2 mb-6">
+              <Button
+                onClick={handleCopy}
+                variant="outline"
+                size="lg"
+                className="h-10 gap-2 border px-6"
+              >
+                <Copy size={16} />
+                Copy
+              </Button>
+              
+              <Button
+                onClick={handleLike}
+                variant="outline"
+                size="lg"
+                className="h-10 gap-2 border px-6"
+              >
+                <Heart size={16} className={isLiked ? 'fill-primary text-primary' : ''} />
+                {likeCount}
+              </Button>
+              
+              <Button
+                onClick={handleBookmark}
+                variant="outline"
+                size="lg"
+                className="h-10 gap-2 border px-6"
+              >
+                <Bookmark size={16} className={isBookmarked ? 'fill-primary text-primary' : ''} />
+                {bookmarkCount}
+              </Button>
+              
+              <PromptMenu
+                promptId={prompt.id}
+                promptBody={prompt.body}
+                isOwner={!!isOwner}
+                onCopy={() => handleCopy()}
+                onShare={() => handleShare()}
+                onDelete={() => setShowDeleteDialog(true)}
+              triggerClassName="w-10 h-10 inline-flex items-center justify-center rounded-md bg-card"
+              />
             </div>
 
             {/* Comments Section */}

@@ -28,6 +28,7 @@ import { HatGlasses, Eye } from 'lucide-react'
 import Tooltip from '@/components/ui/tooltip'
 import { toast } from 'sonner'
 import { useTheme } from '@/components/theme-provider'
+import Avatar from '@/components/ui/avatar'
 
 interface SidebarProps {
   user?: {
@@ -40,32 +41,41 @@ interface SidebarProps {
 
 // Helper function to get initial collapsed state from localStorage
 const getInitialCollapsedState = (): boolean => {
-  if (typeof window === 'undefined') return false
+  // On server, always return true to prevent hydration mismatch
+  if (typeof window === 'undefined') {
+    return true
+  }
   
+  // On client, try to read from localStorage immediately
   try {
     const saved = localStorage.getItem('sidebar-collapsed')
     if (saved) {
-      const parsed = JSON.parse(saved)
-      return parsed === true
+      return JSON.parse(saved) === true
     }
   } catch (error) {
-    console.warn('Failed to parse sidebar state from localStorage, clearing corrupted data:', error)
-    localStorage.removeItem('sidebar-collapsed')
+    console.warn('Failed to parse sidebar state from localStorage:', error)
   }
   
-  return false
+  // Default to collapsed if no saved state
+  return true
 }
 
 export default function Sidebar({ user, onSignOut }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(getInitialCollapsedState)
+  const [isInitialized, setIsInitialized] = useState(false)
   const [userButtonRect, setUserButtonRect] = useState<DOMRect | null>(null)
   const pathname = usePathname()
   useAuth()
   const { theme, setTheme } = useTheme()
   const [isPrivate, setIsPrivate] = useState<boolean>(false)
   const [updatingPrivacy, setUpdatingPrivacy] = useState<boolean>(false)
+
+  // Initialize the sidebar after hydration
+  useEffect(() => {
+    setIsInitialized(true)
+  }, [])
 
   useEffect(() => {
     const loadPrivacy = async () => {
@@ -169,21 +179,34 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
       {/* Sidebar - collapsible - Hidden on mobile */}
       <aside className={`
         hidden lg:block fixed inset-y-0 left-0 z-40 bg-background text-foreground border-r border-border
-        transform transition-all duration-150 ease-out h-screen overflow-hidden
+        h-screen overflow-hidden
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-        ${isCollapsed ? 'w-16 cursor-pointer' : 'w-64'}
+        ${isCollapsed ? 'w-16 max-w-16 min-w-16 cursor-pointer' : 'w-64 max-w-64 min-w-64'}
+        ${isInitialized ? 'transform transition-all duration-150 ease-out' : ''}
       `}
-        onClick={() => {
+        onClick={(e) => {
+          // Only expand if clicking on empty areas (not on interactive elements)
           if (isCollapsed && !isOpen) {
-            handleToggleCollapsed()
+            // Check if the click target is the sidebar itself or a non-interactive element
+            const target = e.target as HTMLElement
+            const isInteractiveElement = target.closest('a, button, [role="button"], [data-navigation="true"]')
+            
+            // Allow expansion if clicking on the sidebar container or its direct children (like divs)
+            const isSidebarContainer = target === e.currentTarget
+            const isSidebarChild = target.closest('aside') === e.currentTarget && !isInteractiveElement
+            
+            if ((isSidebarContainer || isSidebarChild) && !isInteractiveElement) {
+              handleToggleCollapsed()
+            }
           }
         }}
       >
         <div className="flex flex-col h-screen">
           {/* Brand - Fixed at top */}
-          <div className="flex-shrink-0 p-4 border-b border-border flex items-center justify-between">
+          <div className="flex-shrink-0 p-4 border-b border-border flex items-center justify-between transition-colors">
             <Link 
               href="/" 
+              data-navigation="true"
               className={`flex items-center ${isCollapsed ? 'gap-0' : 'gap-3'} group relative`}
               onClick={(e) => {
                 if (isCollapsed) {
@@ -235,6 +258,7 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
                 <Link
                   key={item.href}
                   href={item.href}
+                  data-navigation="true"
                   className={`
                     flex items-center ${isCollapsed ? 'justify-center px-1 w-10' : 'gap-3 px-3 w-full'} h-10 rounded-lg text-sm font-medium transition-colors group relative
                     ${isActive
@@ -266,10 +290,11 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
           </nav>
 
           {/* Sidebar Footer - Fixed at bottom */}
-          <div className="flex-shrink-0 p-3 border-t border-border">
+          <div className="flex-shrink-0 p-3 border-t border-border transition-colors">
             <div className="space-y-2">
               {/* Theme Button */}
               <button
+                data-navigation="true"
                 onClick={(e) => {
                   e.stopPropagation()
                   toggleTheme()
@@ -298,19 +323,21 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
                     <div className="max-w-[240px] p-1">
                       <div className="text-xs font-medium mb-1">Privacy mode</div>
                       <div className="text-xs">
-                        <div>👁️ Public: Your prompts and profile page are visible to all</div>
-                        <div>🥸 Private: Your prompts are private, and profile page is visible.</div>
+                        <div>👁️ Public: Your profile is visible; your public prompts are visible to all.</div>
+                        <div>🥸 Private: Your profile is visible; your prompts are hidden.</div>
+                        <div>💡 You can also make individual prompts private and keep your profile public.</div>
                       </div>
                     </div>
                   }
                 >
                   <button
+                    data-navigation="true"
                     onClick={(e) => {
                       e.stopPropagation()
                       togglePrivacy()
                     }}
                     disabled={updatingPrivacy}
-                    className={`${isCollapsed ? 'w-10' : 'w-full'} flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-3 px-3'} h-10 text-sm font-medium ${isCollapsed ? 'hover:bg-nav-active hover:text-nav-foreground text-muted-foreground' : 'text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground'} rounded-lg transition-colors group relative`}
+                    className={`${isCollapsed ? 'w-10' : 'w-full'} flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-3 px-3'} h-10 text-sm font-medium ${isPrivate ? 'bg-privacy text-privacy-foreground' : ''} ${isCollapsed ? `${isPrivate ? '' : 'hover:bg-nav-active hover:text-nav-foreground text-muted-foreground'}` : `${isPrivate ? '' : 'text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground'}`} rounded-lg transition-colors group relative`}
                     title={isCollapsed ? (isPrivate ? 'Switch to Public mode' : 'Switch to Private mode') : undefined}
                   >
                     {isPrivate ? <HatGlasses size={18} /> : <Eye size={18} />}
@@ -325,6 +352,7 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
               {user ? (
                 <div className="relative">
                   <button
+                    data-navigation="true"
                     onClick={(e) => {
                       e.stopPropagation()
                       const rect = e.currentTarget.getBoundingClientRect()
@@ -334,17 +362,13 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
                     className={`${isCollapsed ? 'w-10' : 'w-full'} flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-2 px-3'} h-10 text-sm font-medium text-muted-foreground ${isCollapsed ? 'hover:bg-nav-active hover:text-nav-foreground' : 'hover:bg-nav-hover hover:text-nav-foreground'} rounded-lg transition-colors group relative`}
                     title={isCollapsed ? 'User menu' : undefined}
                   >
-                    <div className="w-6 h-6 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center flex-shrink-0">
-                      {user.avatar_url ? (
-                        <img 
-                          src={user.avatar_url} 
-                          alt={user.name} 
-                          className="w-6 h-6 rounded-full"
-                        />
-                      ) : (
-                        <User size={14} className="text-gray-500" />
-                      )}
-                    </div>
+                    <Avatar
+                      src={user.avatar_url}
+                      alt={user.name}
+                      size="xs"
+                      fallback={user.name?.charAt(0)?.toUpperCase() || 'U'}
+                      className="flex-shrink-0"
+                    />
                     {!isCollapsed && (
                       <span className="truncate">{user.name}</span>
                     )}
@@ -358,6 +382,7 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
                 </div>
               ) : (
                 <button
+                  data-navigation="true"
                   onClick={(e) => {
                     e.stopPropagation()
                     handleSignIn()
