@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Suspense } from "react";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/components/auth-provider";
 import { Toaster } from "@/components/ui/sonner";
@@ -102,11 +103,13 @@ export default function RootLayout({
         >
           <ErrorBoundary>
             <AuthProvider>
-              <AnalyticsProvider>
-                <MainLayoutWrapper>
-                  {children}
-                </MainLayoutWrapper>
-              </AnalyticsProvider>
+              <Suspense fallback={<div />}>
+                <AnalyticsProvider>
+                  <MainLayoutWrapper>
+                    {children}
+                  </MainLayoutWrapper>
+                </AnalyticsProvider>
+              </Suspense>
             </AuthProvider>
           </ErrorBoundary>
           <Toaster />
