@@ -39,10 +39,12 @@ export async function GET(request: NextRequest) {
       const supabase = await createClient()
       console.log('Server client created, attempting code exchange...')
       
-      // For PKCE flow, we need to let the client handle the code exchange
-      // because the code verifier is stored in the browser
-      console.log('PKCE flow detected - redirecting to client for code exchange')
-      return NextResponse.redirect(`${origin}${next}?code=${code}`)
+      // Redirect to the callback completion URL so supabase-js can pick up the code
+      // automatically (detectSessionInUrl=true) and then we land on `next`.
+      console.log('PKCE flow detected - redirecting to client to auto-exchange code')
+      const redirectUrl = new URL(`${origin}${next}`)
+      redirectUrl.searchParams.set('code', code)
+      return NextResponse.redirect(redirectUrl.toString())
       
     } catch (err) {
       console.error('Exception during code exchange:', err)

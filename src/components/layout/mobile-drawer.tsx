@@ -85,8 +85,13 @@ export default function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
     { href: '/', label: 'Browse', icon: Compass },
     { href: '/trending', label: 'Trending', icon: TrendingUp },
     { href: '/latest', label: 'Latest', icon: Clock },
-    { href: '/me', label: 'My Prompts', icon: User },
-  ]
+    { href: '/me', label: 'My Prompts', icon: User, children: [
+      { href: '/me/created', label: 'Created' },
+      { href: '/me/liked', label: 'Liked' },
+      { href: '/me/bookmarked', label: 'Bookmarked' },
+      { href: '/me/projects', label: 'Projects' },
+    ] },
+  ] as const
 
   const handleSignOut = async () => {
     await signOut()
@@ -138,24 +143,66 @@ export default function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
           <nav className="flex-1 overflow-y-auto p-4 space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon
-              const isActive = pathname === item.href
-              
+              const isActive = pathname === item.href || (item.children && item.children.some(c => pathname?.startsWith('/me')))
+
+              if (!item.children) {
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`
+                      flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors
+                      ${isActive 
+                        ? 'bg-nav-active text-nav-foreground' 
+                        : 'text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground'
+                      }
+                    `}
+                    onClick={onClose}
+                  >
+                    <Icon size={20} />
+                    {item.label}
+                  </Link>
+                )
+              }
+
+              // Accordion item for My Prompts
+              const expanded = pathname?.startsWith('/me')
               return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`
-                    flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors
-                    ${isActive 
-                      ? 'bg-nav-active text-nav-foreground' 
-                      : 'text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground'
-                    }
-                  `}
-                  onClick={onClose}
-                >
-                  <Icon size={20} />
-                  {item.label}
-                </Link>
+                <div key={item.href} className="">
+                  <Link
+                    href={item.href}
+                    className={`
+                      flex items-center justify-between gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors
+                      ${isActive 
+                        ? 'bg-nav-active text-nav-foreground' 
+                        : 'text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground'
+                      }
+                    `}
+                    onClick={onClose}
+                  >
+                    <span className="flex items-center gap-3">
+                      <Icon size={20} />
+                      {item.label}
+                    </span>
+                  </Link>
+                  {expanded && (
+                    <div className="mt-1 ml-9 flex flex-col gap-1">
+                      {item.children.map((child) => {
+                        const childActive = pathname === child.href
+                        return (
+                          <Link
+                            key={child.href}
+                            href={child.href}
+                            className={`px-3 py-2 rounded-md text-sm transition-colors ${childActive ? 'bg-nav-active text-nav-foreground' : 'text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground'}`}
+                            onClick={onClose}
+                          >
+                            {child.label}
+                          </Link>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
               )
             })}
           </nav>

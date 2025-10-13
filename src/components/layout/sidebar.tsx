@@ -67,7 +67,7 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
   const [isInitialized, setIsInitialized] = useState(false)
   const [userButtonRect, setUserButtonRect] = useState<DOMRect | null>(null)
   const pathname = usePathname()
-  useAuth()
+  const { user: authUser } = useAuth()
   const { theme, setTheme } = useTheme()
   const [isPrivate, setIsPrivate] = useState<boolean>(false)
   const [updatingPrivacy, setUpdatingPrivacy] = useState<boolean>(false)
@@ -163,8 +163,8 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
     { href: '/trending', label: 'Trending', icon: TrendingUp },
     { href: '/latest', label: 'Latest', icon: Calendar },
     { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
-    { href: '/me', label: 'My Prompts', icon: User },
-  ]
+    authUser ? { href: '/me', label: 'My Prompts', icon: User } : null,
+  ].filter(Boolean) as Array<{ href: string; label: string; icon: any }>
 
   return (
     <>
@@ -252,7 +252,7 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
           <nav className={`flex-1 space-y-1 overflow-y-auto overflow-x-hidden p-3`}>
             {navItems.map((item) => {
               const Icon = item.icon
-              const isActive = pathname === item.href
+              const isActive = item.href === '/me' ? (pathname?.startsWith('/me')) : (pathname === item.href)
 
               return (
                 <Link

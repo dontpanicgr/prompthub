@@ -19,9 +19,10 @@ interface UserBioCardProps {
   }
   className?: string
   showStats?: boolean
+  loading?: boolean
 }
 
-export default function UserBioCard({ user, stats, className = '', showStats = true }: UserBioCardProps) {
+export default function UserBioCard({ user, stats, className = '', showStats = true, loading = false }: UserBioCardProps) {
   const getInitials = (name: string) => {
     return name?.charAt(0)?.toUpperCase() || 'U'
   }
@@ -56,15 +57,33 @@ export default function UserBioCard({ user, stats, className = '', showStats = t
               <div className="grid grid-cols-3 gap-4 w-full">
                 <div className="text-left">
                   <p className="text-sm font-medium text-muted-foreground">Prompts</p>
-                  <p className="text-xl font-semibold text-card-foreground">{stats.prompts_created}</p>
+                  <p className="text-xl font-semibold text-card-foreground">
+                    {loading ? (
+                      <div className="h-6 bg-gray-200 dark:bg-gray-800 rounded animate-pulse"></div>
+                    ) : (
+                      stats.prompts_created
+                    )}
+                  </p>
                 </div>
                 <div className="text-left">
                   <p className="text-sm font-medium text-muted-foreground">Likes</p>
-                  <p className="text-xl font-semibold text-card-foreground">{stats.likes_received}</p>
+                  <p className="text-xl font-semibold text-card-foreground">
+                    {loading ? (
+                      <div className="h-6 bg-gray-200 dark:bg-gray-800 rounded animate-pulse"></div>
+                    ) : (
+                      stats.likes_received
+                    )}
+                  </p>
                 </div>
                 <div className="text-left">
                   <p className="text-sm font-medium text-muted-foreground">Bookmarks</p>
-                  <p className="text-xl font-semibold text-card-foreground">{stats.bookmarks_received}</p>
+                  <p className="text-xl font-semibold text-card-foreground">
+                    {loading ? (
+                      <div className="h-6 bg-gray-200 dark:bg-gray-800 rounded animate-pulse"></div>
+                    ) : (
+                      stats.bookmarks_received
+                    )}
+                  </p>
                 </div>
               </div>
             )}

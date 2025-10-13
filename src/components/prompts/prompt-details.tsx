@@ -1,9 +1,10 @@
-'use client'
+"use client"
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
+import dynamic from 'next/dynamic'
 import { 
   Heart, 
   Bookmark,
@@ -13,13 +14,38 @@ import { Button } from '@/components/ui/button'
 import { ModelBadge } from '@/components/ui/model-badge'
 import { CategoryBadge } from '@/components/ui/category-badge'
 import { PrivateBadge } from '@/components/ui/private-badge'
-import UserBioCard from '@/components/ui/user-bio-card'
+const UserBioCard = dynamic(() => import('@/components/ui/user-bio-card'), {
+  ssr: false,
+  loading: () => (
+    <div className="bg-card rounded-lg border border-border p-6 animate-pulse h-40" />
+  )
+})
 import { useAuth } from '@/components/auth-provider'
 import { toggleLike, toggleBookmark, deletePrompt, getCommentCountForPrompt, getUserEngagementStats } from '@/lib/database'
 import { supabase } from '@/lib/supabase'
 import Snackbar from '@/components/ui/snackbar'
-import CommentList from '@/components/comments/comment-list'
-import MarkdownRenderer from '@/components/ui/markdown-renderer'
+const CommentList = dynamic(() => import('@/components/comments/comment-list'), {
+  ssr: false,
+  loading: () => (
+    <div className="space-y-3">
+      <div className="h-6 bg-muted rounded animate-pulse" />
+      <div className="h-6 bg-muted rounded animate-pulse" />
+      <div className="h-6 bg-muted rounded animate-pulse" />
+    </div>
+  )
+})
+
+const MarkdownRenderer = dynamic(() => import('@/components/ui/markdown-renderer'), {
+  ssr: false,
+  loading: () => (
+    <div className="bg-card rounded-lg border border-border p-4">
+      <div className="h-6 bg-muted rounded w-1/3 mb-3 animate-pulse" />
+      <div className="h-4 bg-muted rounded w-full mb-2 animate-pulse" />
+      <div className="h-4 bg-muted rounded w-5/6 mb-2 animate-pulse" />
+      <div className="h-4 bg-muted rounded w-2/3 animate-pulse" />
+    </div>
+  )
+})
 import PromptMenu from '@/components/ui/prompt-menu'
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
 

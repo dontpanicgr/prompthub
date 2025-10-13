@@ -6,7 +6,7 @@ import { getProjectsByUser, createProject, updateProject, deleteProject } from '
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { 
@@ -187,6 +187,7 @@ export default function ProjectsManagement({ userId }: ProjectsManagementProps) 
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Create New Project</DialogTitle>
+            <DialogDescription>Provide a name and optional description for your new project.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -236,13 +237,13 @@ export default function ProjectsManagement({ userId }: ProjectsManagementProps) 
           type="button"
           onClick={() => { resetForm(); setIsCreateDialogOpen(true) }}
           disabled={projects.length >= 20}
-          className="bg-card rounded-lg border border-border p-4 hover:border-foreground transition-colors duration-200 cursor-pointer text-left"
+          className="bg-card rounded-lg border border-border p-4 hover:border-foreground transition-colors duration-200 cursor-pointer text-left h-[168px] flex flex-col"
         >
           <div className="flex items-center gap-2 mb-2">
             <Plus className="w-5 h-5" />
             <span className="text-lg font-semibold">Create Project</span>
           </div>
-          <p className="text-sm text-muted-foreground">Add a new project to organize your prompts</p>
+          <p className="text-sm text-muted-foreground mt-auto">Add a new project to organize your prompts</p>
         </button>
 
         {/* Project cards */}
@@ -251,7 +252,7 @@ export default function ProjectsManagement({ userId }: ProjectsManagementProps) 
             key={project.id}
             onClick={() => router.push(`/me/project/${project.id}`)}
             role="button"
-            className="bg-card rounded-lg border border-border p-4 hover:border-foreground transition-colors duration-200 cursor-pointer"
+            className="bg-card rounded-lg border border-border p-4 hover:border-foreground transition-colors duration-200 cursor-pointer h-[168px] flex flex-col"
           >
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-2 min-w-0">
@@ -282,7 +283,7 @@ export default function ProjectsManagement({ userId }: ProjectsManagementProps) 
             </div>
 
             {project.description && (
-              <p className="text-sm text-muted-foreground mb-0 line-clamp-4">
+              <p className="text-sm text-muted-foreground mb-0 line-clamp-4 mt-auto">
                 {project.description.length > 120 ? `${project.description.slice(0, 120)}…` : project.description}
               </p>
             )}
@@ -295,6 +296,7 @@ export default function ProjectsManagement({ userId }: ProjectsManagementProps) 
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Edit Project</DialogTitle>
+            <DialogDescription>Update your project’s name or description.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>

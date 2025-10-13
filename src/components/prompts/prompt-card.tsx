@@ -7,6 +7,7 @@ import { Heart, Bookmark, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { ModelBadge } from '@/components/ui/model-badge'
 import { PrivateBadge } from '@/components/ui/private-badge'
+import { CategoryBadge } from '@/components/ui/category-badge'
 import { useAuth } from '@/components/auth-provider'
 import PromptMenu from '@/components/ui/prompt-menu'
 
@@ -15,6 +16,7 @@ interface Prompt {
   title: string
   body: string
   model: string
+  categories?: { id: string, slug: string, name: string }[]
   creator: {
     id: string
     name: string
@@ -127,13 +129,32 @@ const PromptCard = memo(function PromptCard({ prompt, onLike, onBookmark, varian
           <div className="min-w-0 flex-1">
             <h3 className="text-base font-semibold text-card-foreground truncate mb-2">{prompt.title}</h3>
             <div className="flex items-center gap-2 min-w-0">
-              <ModelBadge 
-                model={prompt.model as any} 
-                variant="outline" 
-                size="sm"
-                className="border text-foreground bg-card dark:bg-secondary dark:border-secondary dark:text-secondary-foreground"
-              />
-              {prompt.is_public === false && (
+              {Array.isArray(prompt.categories) && prompt.categories.length > 0 && (
+                <CategoryBadge
+                  category={prompt.categories[0]}
+                  size="sm"
+                  variant="outline"
+                  onClick={(e?: any) => {
+                    if (e?.preventDefault) { e.preventDefault(); e.stopPropagation() }
+                    router.push(`/?category=${encodeURIComponent(prompt.categories[0].slug)}`)
+                  }}
+                  className="border text-foreground bg-card dark:bg-secondary dark:border-secondary dark:text-secondary-foreground cursor-pointer"
+                />
+              )}
+              <div
+                className="hover:opacity-80 transition-opacity"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/?model=${encodeURIComponent(prompt.model)}`) }}
+                role="button"
+                aria-label={`Filter by model ${prompt.model}`}
+              >
+                <ModelBadge 
+                  model={prompt.model as any} 
+                  variant="outline" 
+                  size="sm"
+                  className="border text-foreground bg-card dark:bg-secondary dark:border-secondary dark:text-secondary-foreground cursor-pointer"
+                />
+              </div>
+              {user && prompt.is_public === false && (
                 <PrivateBadge size="sm" />
               )}
               <div className="flex items-center gap-1 text-xs text-muted-foreground truncate">
@@ -192,13 +213,32 @@ const PromptCard = memo(function PromptCard({ prompt, onLike, onBookmark, varian
         <>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <ModelBadge 
-                model={prompt.model as any} 
-                variant="outline" 
-                size="sm"
-                className="border text-foreground bg-card dark:bg-secondary dark:border-secondary dark:text-secondary-foreground"
-              />
-              {prompt.is_public === false && (
+              {Array.isArray(prompt.categories) && prompt.categories.length > 0 && (
+                <CategoryBadge
+                  category={prompt.categories[0]}
+                  size="sm"
+                  variant="outline"
+                  onClick={(e?: any) => {
+                    if (e?.preventDefault) { e.preventDefault(); e.stopPropagation() }
+                    router.push(`/?category=${encodeURIComponent(prompt.categories[0].slug)}`)
+                  }}
+                  className="border text-foreground bg-card dark:bg-secondary dark:border-secondary dark:text-secondary-foreground cursor-pointer"
+                />
+              )}
+              <div
+                className="hover:opacity-80 transition-opacity"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/?model=${encodeURIComponent(prompt.model)}`) }}
+                role="button"
+                aria-label={`Filter by model ${prompt.model}`}
+              >
+                <ModelBadge 
+                  model={prompt.model as any} 
+                  variant="outline" 
+                  size="sm"
+                  className="border text-foreground bg-card dark:bg-secondary dark:border-secondary dark:text-secondary-foreground cursor-pointer"
+                />
+              </div>
+              {user && prompt.is_public === false && (
                 <PrivateBadge size="sm" />
               )}
             </div>
@@ -266,7 +306,7 @@ const PromptCard = memo(function PromptCard({ prompt, onLike, onBookmark, varian
   )
 
   return (
-    <Link href={`/prompt/${prompt.id}`} className="group">
+    <Link prefetch href={`/prompt/${prompt.id}`} className="group">
       <div className={`${variant === 'row' ? 'bg-card rounded-lg border border-border p-4 hover:border-foreground transition-colors duration-200 cursor-pointer w-full' : 'bg-card rounded-lg border border-border p-4 hover:border-foreground transition-colors duration-200 cursor-pointer card-height flex flex-col'}`}>
         <CardInner />
       </div>

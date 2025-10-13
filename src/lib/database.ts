@@ -533,7 +533,10 @@ export async function getUserPrompts(userId: string, currentUserId?: string): Pr
       *,
       creator:profiles!prompts_creator_id_fkey(id, name, avatar_url),
       like_count:likes(count),
-      bookmark_count:bookmarks(count)
+      bookmark_count:bookmarks(count),
+      prompt_categories(
+        category:categories(id, slug, name, description, icon, color, sort_order)
+      )
     `)
     .eq('creator_id', userId)
 
@@ -571,8 +574,7 @@ export async function getUserPrompts(userId: string, currentUserId?: string): Pr
   return data?.map((prompt: any) => ({
     ...prompt,
     project: prompt.project || null,
-    // Categories are disabled until categories schema is installed
-    categories: [],
+    categories: (prompt.prompt_categories || []).map((pc: any) => pc.category).filter(Boolean),
     like_count: prompt.like_count?.[0]?.count || 0,
     bookmark_count: prompt.bookmark_count?.[0]?.count || 0,
     is_liked: userLikes.includes(prompt.id),
@@ -588,7 +590,10 @@ export async function getPopularPrompts(userId?: string): Promise<Prompt[]> {
       *,
       creator:profiles!prompts_creator_id_fkey(id, name, avatar_url, is_private),
       like_count:likes(count),
-      bookmark_count:bookmarks(count)
+      bookmark_count:bookmarks(count),
+      prompt_categories(
+        category:categories(id, slug, name, description, icon, color, sort_order)
+      )
     `)
     .eq('is_public', true)
     .order('created_at', { ascending: false })
@@ -637,6 +642,7 @@ export async function getPopularPrompts(userId?: string): Promise<Prompt[]> {
 
     return {
       ...prompt,
+      categories: (prompt.prompt_categories || []).map((pc: any) => pc.category).filter(Boolean),
       like_count: likeCount,
       bookmark_count: bookmarkCount,
       is_liked: userLikes.includes(prompt.id),
@@ -973,7 +979,10 @@ export async function getLikedPrompts(userId: string): Promise<Prompt[]> {
         website_url
       ),
       like_count:likes(count),
-      bookmark_count:bookmarks(count)
+      bookmark_count:bookmarks(count),
+      prompt_categories(
+        category:categories(id, slug, name, description, icon, color, sort_order)
+      )
     `)
     .in('id', promptIds)
 
@@ -990,8 +999,9 @@ export async function getLikedPrompts(userId: string): Promise<Prompt[]> {
 
   const userBookmarks = bookmarks?.map(b => b.prompt_id) || []
 
-  return prompts?.map(prompt => ({
+  return prompts?.map((prompt: any) => ({
     ...prompt,
+    categories: (prompt.prompt_categories || []).map((pc: any) => pc.category).filter(Boolean),
     like_count: prompt.like_count?.[0]?.count || 0,
     bookmark_count: prompt.bookmark_count?.[0]?.count || 0,
     is_liked: true, // User has liked this prompt
@@ -1031,7 +1041,10 @@ export async function getBookmarkedPrompts(userId: string): Promise<Prompt[]> {
         website_url
       ),
       like_count:likes(count),
-      bookmark_count:bookmarks(count)
+      bookmark_count:bookmarks(count),
+      prompt_categories(
+        category:categories(id, slug, name, description, icon, color, sort_order)
+      )
     `)
     .in('id', promptIds)
 
@@ -1048,8 +1061,9 @@ export async function getBookmarkedPrompts(userId: string): Promise<Prompt[]> {
 
   const userLikes = likes?.map(l => l.prompt_id) || []
 
-  return prompts?.map(prompt => ({
+  return prompts?.map((prompt: any) => ({
     ...prompt,
+    categories: (prompt.prompt_categories || []).map((pc: any) => pc.category).filter(Boolean),
     like_count: prompt.like_count?.[0]?.count || 0,
     bookmark_count: prompt.bookmark_count?.[0]?.count || 0,
     is_liked: userLikes.includes(prompt.id),

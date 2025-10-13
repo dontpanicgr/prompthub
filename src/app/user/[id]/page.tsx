@@ -24,7 +24,8 @@ export default function UserPage({ params }: UserPageProps) {
     likes_received: 0,
     bookmarks_received: 0
   })
-  const [loading, setLoading] = useState(true)
+  const [userLoading, setUserLoading] = useState(true)
+  const [statsLoading, setStatsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedModels, setSelectedModels] = useState<string[]>([])
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
@@ -49,15 +50,17 @@ export default function UserPage({ params }: UserPageProps) {
           notFound()
         }
 
-        // Get user's engagement stats (likes and bookmarks received)
-        const userStats = await getUserEngagementStats(id)
-
         setUser(userData)
+        setUserLoading(false)
+
+        // Fetch stats separately after user data is loaded
+        const userStats = await getUserEngagementStats(id)
         setStats(userStats)
+        setStatsLoading(false)
       } catch (error) {
         console.error('Error fetching user data:', error)
-      } finally {
-        setLoading(false)
+        setUserLoading(false)
+        setStatsLoading(false)
       }
     }
 
@@ -87,7 +90,7 @@ export default function UserPage({ params }: UserPageProps) {
     // Search is handled by the UserPromptsGrid component
   }
 
-  if (loading) {
+  if (userLoading) {
     return (
       <MainLayout>
         <div className="w-full p-6">
@@ -163,6 +166,7 @@ export default function UserPage({ params }: UserPageProps) {
               }}
               stats={stats}
               showStats={false}
+              loading={statsLoading}
             />
           </div>
         </div>

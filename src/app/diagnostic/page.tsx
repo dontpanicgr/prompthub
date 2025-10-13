@@ -59,23 +59,10 @@ export default function DiagnosticPage() {
           error: usersError?.message,
         }
 
-        // Test 6: Check auth.users table (if accessible)
-        try {
-          const { data: authUsersData, error: authUsersError } = await supabase
-            .from('auth.users')
-            .select('id')
-            .limit(1)
-          
-          results.authUsersTable = {
-            accessible: !authUsersError,
-            error: authUsersError?.message,
-            count: authUsersData?.length || 0,
-          }
-        } catch (e) {
-          results.authUsersTable = {
-            accessible: false,
-            error: 'Cannot access auth.users table (this is normal)',
-          }
+        // Test 6: auth.users is not accessible from client (avoid 404s)
+        results.authUsersTable = {
+          accessible: false,
+          error: 'auth.users is not exposed via REST for anon client; expected',
         }
 
         // Test 7: Check profiles table

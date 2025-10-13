@@ -15,7 +15,7 @@ import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
 import type { Prompt, Project } from '@/lib/database'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { updateProject } from '@/lib/database'
@@ -344,7 +344,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
               onRemoveFromProject={handleRemoveFromProject}
             />
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {filteredPrompts.map((prompt) => (
                 <PromptCard
                   key={prompt.id}
@@ -391,6 +391,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Edit Project</DialogTitle>
+            <DialogDescription>Change the project name or description and save your updates.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>

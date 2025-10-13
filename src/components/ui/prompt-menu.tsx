@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -153,6 +153,7 @@ export default function PromptMenu({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Move to project</DialogTitle>
+          <DialogDescription>Select a destination project for this prompt.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           {user ? (
@@ -177,6 +178,7 @@ export default function PromptMenu({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Report prompt</DialogTitle>
+          <DialogDescription>Tell us why this prompt should be reviewed.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">

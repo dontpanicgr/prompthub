@@ -6,7 +6,8 @@
     "dev": "set NODE_OPTIONS=--no-deprecation && next dev --turbopack",
     "build": "set NODE_OPTIONS=--no-deprecation && next build --turbopack",
     "start": "set NODE_OPTIONS=--no-deprecation && next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "backfill:avatars": "node scripts/backfill-avatars.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",

@@ -6,12 +6,10 @@ import PromptList from '@/components/prompts/prompt-list'
 import SearchFilters from '@/components/ui/search-filters'
 import { getPopularPrompts } from '@/lib/database'
 import { useAuth } from '@/components/auth-provider'
-import { useDataCache } from '@/contexts/data-cache-context'
 import { TrendingUp, Bookmark, Clock } from 'lucide-react'
 
 export default function TrendingPage() {
   const { user } = useAuth()
-  const { getCachedPrompts } = useDataCache()
   const [prompts, setPrompts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -27,11 +25,7 @@ export default function TrendingPage() {
     async function fetchPrompts() {
       try {
         setLoading(true)
-        const data = await getCachedPrompts(
-          'trending-prompts',
-          () => getPopularPrompts(user?.id),
-          2 * 60 * 1000 // 2 minutes cache
-        )
+        const data = await getPopularPrompts(user?.id)
         setPrompts(data)
       } catch (error) {
         console.error('Error fetching trending prompts:', error)
@@ -41,7 +35,7 @@ export default function TrendingPage() {
     }
 
     fetchPrompts()
-  }, [user?.id, getCachedPrompts])
+  }, [user?.id])
 
   // Listen for layout preference changes
   useEffect(() => {

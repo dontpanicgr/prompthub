@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { getPublicPrompts } from '@/lib/database'
 import type { Prompt } from '@/lib/database'
-import { useDataCache } from '@/contexts/data-cache-context'
 import BrowsePageClient from './browse-page-client'
 import SearchFilters from '@/components/ui/search-filters'
 
@@ -14,17 +13,12 @@ export default function BrowsePage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedModels, setSelectedModels] = useState<string[]>([])
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
-  const { getCachedPrompts } = useDataCache()
   const searchParams = useSearchParams()
 
   useEffect(() => {
     const fetchInitialPrompts = async () => {
       try {
-        const prompts = await getCachedPrompts(
-          'browse-prompts',
-          () => getPublicPrompts(),
-          2 * 60 * 1000 // 2 minutes cache
-        )
+        const prompts = await getPublicPrompts()
         setInitialPrompts(prompts.slice(0, 20)) // Limit initial load for faster LCP
       } catch (error) {
         console.error('Error fetching initial prompts:', error)
@@ -35,7 +29,7 @@ export default function BrowsePage() {
     }
 
     fetchInitialPrompts()
-  }, [getCachedPrompts])
+  }, [])
 
   // Initialize filters from URL query params so direct links pre-apply filters
   useEffect(() => {

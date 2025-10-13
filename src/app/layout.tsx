@@ -6,9 +6,7 @@ import { Toaster } from "@/components/ui/sonner";
 import ErrorBoundary from "@/components/ui/error-boundary";
 import { Analytics } from '@vercel/analytics/next';
 import { AnalyticsProvider, GoogleAnalytics, MixpanelAnalytics } from '@/components/analytics-provider';
-import { DataCacheProvider } from '@/contexts/data-cache-context';
 import MainLayoutWrapper from '@/components/layout/main-layout-wrapper';
-import { Suspense } from 'react';
 import '@/lib/analytics' // Import analytics to enable tracking
 
 export const metadata: Metadata = {
@@ -104,15 +102,11 @@ export default function RootLayout({
         >
           <ErrorBoundary>
             <AuthProvider>
-              <DataCacheProvider>
-                <Suspense fallback={<div />}>
-                  <AnalyticsProvider>
-                    <MainLayoutWrapper>
-                      {children}
-                    </MainLayoutWrapper>
-                  </AnalyticsProvider>
-                </Suspense>
-              </DataCacheProvider>
+              <AnalyticsProvider>
+                <MainLayoutWrapper>
+                  {children}
+                </MainLayoutWrapper>
+              </AnalyticsProvider>
             </AuthProvider>
           </ErrorBoundary>
           <Toaster />

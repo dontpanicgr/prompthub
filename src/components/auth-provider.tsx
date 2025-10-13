@@ -79,12 +79,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const refreshToken = urlParams.get('refresh_token')
 
         // Handle PKCE authorization code flow
-        // Supabase is configured with detectSessionInUrl: true, so it will
-        // automatically exchange the authorization code for a session.
-        // We avoid doing it manually here to prevent losing the PKCE verifier.
         if (code) {
-          console.log('Found authorization code in URL; letting Supabase auto-handle exchange')
-          // Do nothing; allow supabase-js to process the code on load
+          console.log('Found authorization code; attempting exchange (with fallback wait)')
+          try {
+            // Try explicit exchange first; if no verifier present, this may fail
+            const { data, error } = await supabase.auth.exchangeCodeForSession(window.location.href)
+            if (error) {
+              console.warn('Explicit code exchange failed, will wait for auto-exchange:', error)
+            } else if (data?.user) {
+              const next = urlParams.get('next') || '/'
+              window.history.replaceState({}, document.title, next)
+              return
+            }
+          } catch (e) {
+            console.warn('Explicit code exchange threw, will wait for auto-exchange:', e)
+          }
+
+          // Fallback: wait briefly for supabase-js auto exchange, then clean URL
+          const start = Date.now()
+          while (Date.now() - start < 4000) {
+            const { data } = await supabase.auth.getSession()
+            if (data?.session?.user) {
+              const next = urlParams.get('next') || '/'
+              window.history.replaceState({}, document.title, next)
+              break
+            }
+            await new Promise(r => setTimeout(r, 200))
+          }
           return
         }
 

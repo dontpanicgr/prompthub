@@ -7,11 +7,9 @@ import SearchFilters from '@/components/ui/search-filters'
 import { getPublicPrompts } from '@/lib/database'
 import type { Prompt } from '@/lib/database'
 import { useAuth } from '@/components/auth-provider'
-import { useDataCache } from '@/contexts/data-cache-context'
 
 export default function LatestPage() {
   const { user } = useAuth()
-  const { getCachedPrompts } = useDataCache()
   const [prompts, setPrompts] = useState<Prompt[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -27,11 +25,7 @@ export default function LatestPage() {
     async function fetchLatestPrompts() {
       try {
         setLoading(true)
-        const latestPrompts = await getCachedPrompts(
-          'latest-prompts',
-          () => getPublicPrompts(user?.id),
-          2 * 60 * 1000 // 2 minutes cache
-        )
+        const latestPrompts = await getPublicPrompts(user?.id)
         // Sort by created_at descending (most recent first)
         const sortedPrompts = latestPrompts.sort((a, b) => 
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -45,7 +39,7 @@ export default function LatestPage() {
     }
 
     fetchLatestPrompts()
-  }, [user, getCachedPrompts])
+  }, [user])
 
   // Listen for layout preference changes
   useEffect(() => {
