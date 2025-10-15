@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import MainLayout from '@/components/layout/main-layout'
 import { useAuth } from '@/components/auth-provider'
 import { getPromptById, updatePrompt, deletePrompt } from '@/lib/database'
@@ -44,6 +44,7 @@ interface EditPromptPageProps {
 
 export default function EditPromptPage({ params }: EditPromptPageProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { user } = useAuth()
   const [prompt, setPrompt] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -83,9 +84,11 @@ export default function EditPromptPage({ params }: EditPromptPageProps) {
         }
 
         setPrompt(promptData)
+        // Prefill with AI suggestion if provided via query param
+        const suggested = searchParams.get('suggestion')
         setFormData({
           title: promptData.title,
-          body: promptData.body,
+          body: suggested ?? promptData.body,
           model: promptData.model,
           is_public: promptData.is_public,
           category_ids: promptData.categories?.map((cat: any) => cat.id) || [],
@@ -100,7 +103,7 @@ export default function EditPromptPage({ params }: EditPromptPageProps) {
     }
 
     loadPrompt()
-  }, [params, user, router])
+  }, [params, user, router, searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

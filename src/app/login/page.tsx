@@ -67,6 +67,8 @@ function LoginContent() {
         setError(error.message)
         setLoading(false)
       }
+      // Note: Don't set loading to false on success - the redirect will happen
+      // and the auth provider will handle the loading state when user returns
     } catch (err) {
       setError('An unexpected error occurred')
       setLoading(false)

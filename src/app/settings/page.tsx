@@ -6,7 +6,7 @@ import { useAuth } from '@/components/auth-provider'
 import { useTheme } from '@/components/theme-provider'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
-import { Save, Palette, Settings as SettingsIcon, User2, Shield, Mail, Settings2, Sun, Moon, Monitor } from 'lucide-react'
+import { Save, Palette, Settings as SettingsIcon, User2, Shield, Mail, Settings2, Sun, Moon, Monitor, Key, Wand2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -45,6 +45,18 @@ export default function SettingsPage() {
   const [changingPassword, setChangingPassword] = useState(false)
   const [isPrivate, setIsPrivate] = useState(false)
   const [updatingPrivacy, setUpdatingPrivacy] = useState(false)
+  
+  // AI Providers state
+  const [aiProviders, setAiProviders] = useState<Array<{
+    provider: string
+    fingerprint: string
+    isEnabled: boolean
+    lastUsedAt: string | null
+  }>>([])
+  const [addingProvider, setAddingProvider] = useState(false)
+  const [newProviderKey, setNewProviderKey] = useState('')
+  const [newProviderType, setNewProviderType] = useState('openai')
+  const [testingConnection, setTestingConnection] = useState(false)
   
 
   const isEmailPasswordUser = useMemo(() => {
@@ -208,6 +220,7 @@ export default function SettingsPage() {
   const settingsSections: PageMenuItem[] = [
     { id: 'details', label: 'Details', icon: User2 },
     { id: 'preferences', label: 'Preferences', icon: Settings2 },
+    { id: 'ai-providers', label: 'AI Providers', icon: Wand2 },
     { id: 'communication', label: 'Communication', icon: Mail },
     { id: 'security', label: 'Security', icon: Shield },
   ]

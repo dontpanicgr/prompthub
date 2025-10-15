@@ -19,25 +19,7 @@ export default function MainLayoutWrapper({ children }: MainLayoutWrapperProps) 
   const { user, loading, signOut } = useAuth()
   const { isOnline } = useOfflineDetection()
   const pathname = usePathname()
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
-    // On server, always return true to prevent hydration mismatch
-    if (typeof window === 'undefined') {
-      return true
-    }
-    
-    // On client, try to read from localStorage immediately
-    try {
-      const saved = localStorage.getItem('sidebar-collapsed')
-      if (saved) {
-        return JSON.parse(saved) === true
-      }
-    } catch (error) {
-      console.warn('Failed to parse sidebar state from localStorage:', error)
-    }
-    
-    // Default to collapsed if no saved state
-    return true
-  })
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true) // Always start collapsed to prevent blocking
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false)
   const [isHydrated, setIsHydrated] = useState(false)
 
@@ -53,9 +35,28 @@ export default function MainLayoutWrapper({ children }: MainLayoutWrapperProps) 
     setIsMobileDrawerOpen(false)
   }, [])
 
-  // Handle hydration
+  // Handle hydration and restore sidebar state asynchronously
   useEffect(() => {
     setIsHydrated(true)
+    
+    // Restore sidebar state after hydration to avoid blocking initial render
+    const restoreSidebarState = () => {
+      try {
+        const saved = localStorage.getItem('sidebar-collapsed')
+        if (saved) {
+          setSidebarCollapsed(JSON.parse(saved) === true)
+        }
+      } catch (error) {
+        console.warn('Failed to parse sidebar state from localStorage:', error)
+      }
+    }
+    
+    // Use requestIdleCallback to restore state without blocking
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      (window as any).requestIdleCallback(restoreSidebarState)
+    } else {
+      setTimeout(restoreSidebarState, 0)
+    }
   }, [])
 
   useEffect(() => {

@@ -89,6 +89,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             } else if (data?.user) {
               const next = urlParams.get('next') || '/'
               window.history.replaceState({}, document.title, next)
+              setUser(data.user)
+              setLoading(false)
               return
             }
           } catch (e) {
@@ -102,6 +104,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (data?.session?.user) {
               const next = urlParams.get('next') || '/'
               window.history.replaceState({}, document.title, next)
+              setUser(data.session.user)
+              setLoading(false)
               break
             }
             await new Promise(r => setTimeout(r, 200))
@@ -112,13 +116,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Handle implicit flow (access_token and refresh_token in URL)
         if (accessToken && refreshToken) {
           console.log('Found OAuth tokens in URL parameters, setting session...')
-          const { error } = await supabase.auth.setSession({
+          const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken
           })
 
-          if (!error) {
+          if (!error && data?.user) {
             console.log('Session set successfully from URL parameters')
+            setUser(data.user)
+            setLoading(false)
             // Clean up the URL
             const newUrl = new URL(window.location.href)
             newUrl.searchParams.delete('access_token')
@@ -126,6 +132,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             window.history.replaceState({}, document.title, newUrl.pathname + newUrl.search)
           } else {
             console.error('Error setting session from URL parameters:', error)
+            setLoading(false)
           }
           return
         }
@@ -138,17 +145,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           if (hashAccessToken && hashRefreshToken) {
             console.log('Found OAuth tokens in hash fragment, setting session...')
-            const { error } = await supabase.auth.setSession({
+            const { data, error } = await supabase.auth.setSession({
               access_token: hashAccessToken,
               refresh_token: hashRefreshToken
             })
 
-            if (!error) {
+            if (!error && data?.user) {
               console.log('Session set successfully from hash fragment')
+              setUser(data.user)
+              setLoading(false)
               // Clean up the URL
               window.history.replaceState({}, document.title, window.location.pathname)
             } else {
               console.error('Error setting session from hash fragment:', error)
+              setLoading(false)
             }
           }
         }

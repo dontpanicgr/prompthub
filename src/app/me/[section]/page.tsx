@@ -11,6 +11,7 @@ import { useAuth } from '@/components/auth-provider'
 import { getUserPrompts, getLikedPrompts, getBookmarkedPrompts, toggleLike, toggleBookmark, getUserById, getUserEngagementStats } from '@/lib/database'
 import type { Prompt, User as ProfileUser, Project } from '@/lib/database'
 import { getProjectsByUser, createProject } from '@/lib/database'
+import { deferToIdle, debounce } from '@/lib/performance-utils'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
@@ -38,11 +39,7 @@ export default function MyPromptsSectionPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedModels, setSelectedModels] = useState<string[]>([])
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
-  const [layoutPref, setLayoutPref] = useState<'card' | 'table'>(() => {
-    if (typeof window === 'undefined') return 'card'
-    const pref = (localStorage.getItem('layout-preference') as 'card' | 'table' | null)
-    return pref === 'table' ? 'table' : 'card'
-  })
+  const [layoutPref, setLayoutPref] = useState<'card' | 'table'>('card') // Always start with card to prevent blocking
   const [userStats, setUserStats] = useState({
     prompts_created: 0,
     likes_received: 0,
@@ -108,17 +105,23 @@ export default function MyPromptsSectionPage() {
     }
   }, [user, authLoading, router])
 
-  // Filters
+  // Restore layout preference after hydration
   useEffect(() => {
-    const filtered = prompts.filter(prompt => {
-      const matchesSearch = prompt.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           prompt.body.toLowerCase().includes(searchQuery.toLowerCase())
-      const matchesModel = selectedModels.length === 0 || selectedModels.includes(prompt.model)
-      return matchesSearch && matchesModel
-    })
-    setFilteredPrompts(filtered)
-  }, [searchQuery, selectedModels, prompts])
+    const restoreLayout = () => {
+      try {
+        const pref = localStorage.getItem('layout-preference') as 'card' | 'table' | null
+        if (pref === 'table') {
+          setLayoutPref('table')
+        }
+      } catch (error) {
+        console.warn('Failed to restore layout preference:', error)
+      }
+    }
+    
+    return deferToIdle(restoreLayout, 500)
+  }, [])
 
+  // Listen for layout preference changes
   useEffect(() => {
     const handler = (e: CustomEvent) => {
       setLayoutPref(e.detail.layout === 'table' ? 'table' : 'card')
@@ -133,21 +136,38 @@ export default function MyPromptsSectionPage() {
     }
   }, [])
 
+  // Memoize filtered prompts to prevent expensive re-computation on every render
+  const memoizedFilteredPrompts = useMemo(() => {
+    if (!searchQuery && selectedModels.length === 0 && selectedCategories.length === 0) {
+      return prompts // No filtering needed
+    }
+
+    return prompts.filter(prompt => {
+      const matchesSearch = !searchQuery || 
+        prompt.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        prompt.body.toLowerCase().includes(searchQuery.toLowerCase())
+      
+      const matchesModel = selectedModels.length === 0 || 
+        selectedModels.includes(prompt.model)
+      
+      const matchesCategory = selectedCategories.length === 0 ||
+        (prompt.categories && prompt.categories.some(cat => selectedCategories.includes(cat.slug)))
+      
+      return matchesSearch && matchesModel && matchesCategory
+    })
+  }, [prompts, searchQuery, selectedModels, selectedCategories])
+
+  // Update filtered prompts when memoized result changes
+  useEffect(() => {
+    setFilteredPrompts(memoizedFilteredPrompts)
+  }, [memoizedFilteredPrompts])
+
   const handleSearch = useCallback((query: string, models: string[], categories: string[]) => {
     setSearchQuery(query)
     setSelectedModels(models)
     setSelectedCategories(categories)
-    const filtered = prompts.filter(prompt => {
-      const matchesSearch = query === '' ||
-        prompt.title.toLowerCase().includes(query.toLowerCase()) ||
-        prompt.body.toLowerCase().includes(query.toLowerCase())
-      const matchesModel = models.length === 0 || models.includes(prompt.model)
-      const matchesCategory = categories.length === 0 ||
-        (prompt.categories && prompt.categories.some(cat => categories.includes(cat.slug)))
-      return matchesSearch && matchesModel && matchesCategory
-    })
-    setFilteredPrompts(filtered)
-  }, [prompts])
+    // Filtering is now handled by memoized computation above
+  }, [])
 
   const handleLike = async (promptId: string) => {
     if (!user) return

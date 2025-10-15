@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Search, Filter, X, Settings2, LayoutGrid, List } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -11,6 +11,7 @@ import { CategoryBadge } from '@/components/ui/category-badge'
 import Tooltip from '@/components/ui/tooltip'
 import { getCategories } from '@/lib/database'
 import type { Category } from '@/lib/database'
+import { deferToIdle, debounce } from '@/lib/performance-utils'
 
 const MODELS = [
   'All Models',
@@ -60,16 +61,13 @@ export default function SearchFilters({
 }: SearchFiltersProps) {
   const [showModelBadges, setShowModelBadges] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
-  const [layout, setLayout] = useState<'card' | 'table'>(() => {
-    if (typeof window === 'undefined') return 'card'
-    const pref = (localStorage.getItem('layout-preference') as 'card' | 'table' | null)
-    return pref === 'table' ? 'table' : 'card'
-  })
+  const [layout, setLayout] = useState<'card' | 'table'>('card') // Always start with card to prevent blocking
 
-  // Load categories on mount (only when categories are shown)
+  // Load categories on mount (only when categories are shown) - optimized
   useEffect(() => {
     if (hideCategories) return
-    async function loadCategories() {
+    
+    const loadCategories = async () => {
       try {
         const cats = await getCategories()
         setCategories(cats)
@@ -77,51 +75,77 @@ export default function SearchFilters({
         console.error('Error loading categories:', error)
       }
     }
-    loadCategories()
+    
+    // Defer category loading to prevent blocking initial render
+    return deferToIdle(loadCategories, 1000)
   }, [hideCategories])
-  const handleSearch = (e: React.FormEvent) => {
+
+  // Restore layout preference after hydration
+  useEffect(() => {
+    const restoreLayout = () => {
+      try {
+        const pref = localStorage.getItem('layout-preference') as 'card' | 'table' | null
+        if (pref === 'table') {
+          setLayout('table')
+        }
+      } catch (error) {
+        console.warn('Failed to restore layout preference:', error)
+      }
+    }
+    
+    return deferToIdle(restoreLayout, 500)
+  }, [])
+  const handleSearch = useCallback((e: React.FormEvent) => {
     e.preventDefault()
     onSearch(searchQuery, selectedModels, selectedCategories)
-  }
+  }, [searchQuery, selectedModels, selectedCategories, onSearch])
 
-  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearchInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
     setSearchQuery(value)
     // Note: Search will be triggered by form submission or when user stops typing
     // This prevents too many rapid API calls
-  }
+  }, [setSearchQuery])
 
-  const handleModelToggle = (model: string) => {
+  // Debounced search handler to prevent excessive filtering
+  const debouncedSearch = useMemo(
+    () => debounce((query: string, models: string[], categories: string[]) => {
+      onSearch(query, models, categories)
+    }, 300),
+    [onSearch]
+  )
+
+  const handleModelToggle = useCallback((model: string) => {
     const newModels = selectedModels.includes(model)
       ? selectedModels.filter(m => m !== model)
       : [...selectedModels, model]
     setSelectedModels(newModels)
-    // Trigger search immediately when filters change
-    onSearch(searchQuery, newModels, selectedCategories)
-  }
+    // Use debounced search for filter changes
+    debouncedSearch(searchQuery, newModels, selectedCategories)
+  }, [selectedModels, setSelectedModels, searchQuery, selectedCategories, debouncedSearch])
 
-  const handleCategoryToggle = (category: string) => {
+  const handleCategoryToggle = useCallback((category: string) => {
     const newCategories = selectedCategories.includes(category)
       ? selectedCategories.filter(c => c !== category)
       : [...selectedCategories, category]
     setSelectedCategories(newCategories)
-    // Trigger search immediately when filters change
-    onSearch(searchQuery, selectedModels, newCategories)
-  }
+    // Use debounced search for filter changes
+    debouncedSearch(searchQuery, selectedModels, newCategories)
+  }, [selectedCategories, setSelectedCategories, searchQuery, selectedModels, debouncedSearch])
 
   // Removed old toggle functions - now using handleModelToggle and handleCategoryToggle
 
-  const clearSearchQuery = () => {
+  const clearSearchQuery = useCallback(() => {
     setSearchQuery('')
     onSearch('', selectedModels, selectedCategories)
-  }
+  }, [setSearchQuery, selectedModels, selectedCategories, onSearch])
 
-  const clearFilters = () => {
+  const clearFilters = useCallback(() => {
     setSearchQuery('')
     setSelectedModels([])
     setSelectedCategories([])
     onSearch('', [], [])
-  }
+  }, [setSearchQuery, setSelectedModels, setSelectedCategories, onSearch])
 
   // Note: Removed automatic search trigger to prevent infinite loops
   // Search is now only triggered by user interactions (form submission, filter changes)

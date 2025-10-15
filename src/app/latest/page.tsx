@@ -1,12 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import PromptGrid from '@/components/prompts/prompt-grid'
 import PromptList from '@/components/prompts/prompt-list'
 import SearchFilters from '@/components/ui/search-filters'
 import { getPublicPrompts } from '@/lib/database'
 import type { Prompt } from '@/lib/database'
 import { useAuth } from '@/components/auth-provider'
+import { deferToIdle, debounce } from '@/lib/performance-utils'
 
 export default function LatestPage() {
   const { user } = useAuth()
@@ -15,11 +16,7 @@ export default function LatestPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedModels, setSelectedModels] = useState<string[]>([])
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
-  const [layoutPref, setLayoutPref] = useState<'card' | 'table'>(() => {
-    if (typeof window === 'undefined') return 'card'
-    const pref = (localStorage.getItem('layout-preference') as 'card' | 'table' | null)
-    return pref === 'table' ? 'table' : 'card'
-  })
+  const [layoutPref, setLayoutPref] = useState<'card' | 'table'>('card') // Always start with card to prevent blocking
 
   useEffect(() => {
     async function fetchLatestPrompts() {
@@ -41,6 +38,22 @@ export default function LatestPage() {
     fetchLatestPrompts()
   }, [user])
 
+  // Restore layout preference after hydration
+  useEffect(() => {
+    const restoreLayout = () => {
+      try {
+        const pref = localStorage.getItem('layout-preference') as 'card' | 'table' | null
+        if (pref === 'table') {
+          setLayoutPref('table')
+        }
+      } catch (error) {
+        console.warn('Failed to restore layout preference:', error)
+      }
+    }
+    
+    return deferToIdle(restoreLayout, 500)
+  }, [])
+
   // Listen for layout preference changes
   useEffect(() => {
     const handler = (e: CustomEvent) => {
@@ -56,27 +69,34 @@ export default function LatestPage() {
     }
   }, [])
 
-  const handleSearch = (query: string, models: string[], categories: string[]) => {
+  const handleSearch = useCallback((query: string, models: string[], categories: string[]) => {
     console.log('Search query:', query, 'Models:', models, 'Categories:', categories)
     setSearchQuery(query)
     setSelectedModels(models)
     setSelectedCategories(categories)
     // Search is handled by filtering the prompts
-  }
+  }, [])
 
-  const filteredPrompts = prompts.filter(prompt => {
-    const matchesSearch = !searchQuery || 
-      prompt.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      prompt.body.toLowerCase().includes(searchQuery.toLowerCase())
-    
-    const matchesModel = selectedModels.length === 0 || 
-      selectedModels.includes(prompt.model)
-    
-    const matchesCategory = selectedCategories.length === 0 ||
-      (prompt.categories && prompt.categories.some(cat => selectedCategories.includes(cat.slug)))
-    
-    return matchesSearch && matchesModel && matchesCategory
-  })
+  // Memoize filtered prompts to prevent expensive re-computation on every render
+  const filteredPrompts = useMemo(() => {
+    if (!searchQuery && selectedModels.length === 0 && selectedCategories.length === 0) {
+      return prompts // No filtering needed
+    }
+
+    return prompts.filter(prompt => {
+      const matchesSearch = !searchQuery || 
+        prompt.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        prompt.body.toLowerCase().includes(searchQuery.toLowerCase())
+      
+      const matchesModel = selectedModels.length === 0 || 
+        selectedModels.includes(prompt.model)
+      
+      const matchesCategory = selectedCategories.length === 0 ||
+        (prompt.categories && prompt.categories.some(cat => selectedCategories.includes(cat.slug)))
+      
+      return matchesSearch && matchesModel && matchesCategory
+    })
+  }, [prompts, searchQuery, selectedModels, selectedCategories])
 
   return (
     <div className="w-full">

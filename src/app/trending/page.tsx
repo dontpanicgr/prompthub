@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import PromptGrid from '@/components/prompts/prompt-grid'
 import PromptList from '@/components/prompts/prompt-list'
 import SearchFilters from '@/components/ui/search-filters'
 import { getPopularPrompts } from '@/lib/database'
 import { useAuth } from '@/components/auth-provider'
 import { TrendingUp, Bookmark, Clock } from 'lucide-react'
+import { deferToIdle } from '@/lib/performance-utils'
 
 export default function TrendingPage() {
   const { user } = useAuth()
@@ -15,11 +16,7 @@ export default function TrendingPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedModels, setSelectedModels] = useState<string[]>([])
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
-  const [layoutPref, setLayoutPref] = useState<'card' | 'table'>(() => {
-    if (typeof window === 'undefined') return 'card'
-    const pref = (localStorage.getItem('layout-preference') as 'card' | 'table' | null)
-    return pref === 'table' ? 'table' : 'card'
-  })
+  const [layoutPref, setLayoutPref] = useState<'card' | 'table'>('card') // Always start with card to prevent blocking
 
   useEffect(() => {
     async function fetchPrompts() {
@@ -37,6 +34,22 @@ export default function TrendingPage() {
     fetchPrompts()
   }, [user?.id])
 
+  // Restore layout preference after hydration
+  useEffect(() => {
+    const restoreLayout = () => {
+      try {
+        const pref = localStorage.getItem('layout-preference') as 'card' | 'table' | null
+        if (pref === 'table') {
+          setLayoutPref('table')
+        }
+      } catch (error) {
+        console.warn('Failed to restore layout preference:', error)
+      }
+    }
+    
+    return deferToIdle(restoreLayout, 500)
+  }, [])
+
   // Listen for layout preference changes
   useEffect(() => {
     const handler = (e: CustomEvent) => {
@@ -52,40 +65,49 @@ export default function TrendingPage() {
     }
   }, [])
 
-  const handleSearch = (query: string, models: string[], categories: string[]) => {
+  const handleSearch = useCallback((query: string, models: string[], categories: string[]) => {
     console.log('Search query:', query, 'Models:', models, 'Categories:', categories)
     setSearchQuery(query)
     setSelectedModels(models)
     setSelectedCategories(categories)
     // Search is handled by filtering the prompts
-  }
+  }, [])
 
-  // Apply trending ranking algorithm - pure engagement based
-  const rankedPrompts = prompts.sort((a, b) => {
-    // Calculate trending score: likes * 4 + bookmarks * 6 (no time bonus)
-    const getTrendingScore = (prompt: any) => {
-      const likes = prompt.like_count || 0
-      const bookmarks = prompt.bookmark_count || 0
+  // Memoize the expensive sorting operation - only recalculate when prompts change
+  const rankedPrompts = useMemo(() => {
+    return [...prompts].sort((a, b) => {
+      // Calculate trending score: likes * 4 + bookmarks * 6 (no time bonus)
+      const getTrendingScore = (prompt: any) => {
+        const likes = prompt.like_count || 0
+        const bookmarks = prompt.bookmark_count || 0
+        
+        return (likes * 4) + (bookmarks * 6)
+      }
       
-      return (likes * 4) + (bookmarks * 6)
-    }
-    
-    return getTrendingScore(b) - getTrendingScore(a)
-  })
+      return getTrendingScore(b) - getTrendingScore(a)
+    })
+  }, [prompts])
 
-  const filteredPrompts = rankedPrompts.filter(prompt => {
-    const matchesSearch = !searchQuery || 
-      prompt.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      prompt.body.toLowerCase().includes(searchQuery.toLowerCase())
-    
-    const matchesModel = selectedModels.length === 0 || 
-      selectedModels.includes(prompt.model)
-    
-    const matchesCategory = selectedCategories.length === 0 ||
-      (prompt.categories && prompt.categories.some((cat: any) => selectedCategories.includes(cat.slug)))
-    
-    return matchesSearch && matchesModel && matchesCategory
-  })
+  // Memoize filtered prompts to prevent expensive re-computation on every render
+  const filteredPrompts = useMemo(() => {
+    if (!searchQuery && selectedModels.length === 0 && selectedCategories.length === 0) {
+      return rankedPrompts // No filtering needed, return sorted prompts
+    }
+
+    return rankedPrompts.filter(prompt => {
+      const matchesSearch = !searchQuery || 
+        prompt.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        prompt.body.toLowerCase().includes(searchQuery.toLowerCase())
+      
+      const matchesModel = selectedModels.length === 0 || 
+        selectedModels.includes(prompt.model)
+      
+      const matchesCategory = selectedCategories.length === 0 ||
+        (prompt.categories && prompt.categories.some((cat: any) => selectedCategories.includes(cat.slug)))
+      
+      return matchesSearch && matchesModel && matchesCategory
+    })
+  }, [rankedPrompts, searchQuery, selectedModels, selectedCategories])
 
   return (
     <div className="w-full">

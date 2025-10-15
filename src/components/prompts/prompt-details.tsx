@@ -8,7 +8,8 @@ import dynamic from 'next/dynamic'
 import { 
   Heart, 
   Bookmark,
-  Copy
+  Copy,
+  Wand2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ModelBadge } from '@/components/ui/model-badge'
@@ -48,6 +49,7 @@ const MarkdownRenderer = dynamic(() => import('@/components/ui/markdown-renderer
 })
 import PromptMenu from '@/components/ui/prompt-menu'
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
+import SuggestionDialog from '@/components/ui/suggestion-dialog'
 
 interface Prompt {
   id: string
@@ -424,6 +426,27 @@ export default function PromptDetails({ prompt }: PromptDetailsProps) {
                 <Copy size={16} />
                 Copy
               </Button>
+              
+              {isOwner && (
+                <SuggestionDialog
+                  initialText={prompt.body}
+                  onApply={(suggestion) => {
+                    // Navigate to edit page with prefilled suggestion
+                    const editUrl = `/prompt/${prompt.id}/edit?suggestion=${encodeURIComponent(suggestion)}`
+                    window.open(editUrl, '_blank')
+                  }}
+                  trigger={
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="h-10 gap-2 border px-6"
+                    >
+                      <Wand2 size={16} />
+                      Improve with AI
+                    </Button>
+                  }
+                />
+              )}
               
               <Button
                 onClick={handleLike}

@@ -27,45 +27,64 @@ export default function SecondaryNavMe() {
   useEffect(() => {
     const load = async () => {
       if (!user?.id) return
-      try {
-        // Fetch counts via lightweight count queries (no heavy data)
-        const [createdCountRes, likedCountRes, bookmarkedCountRes] = await Promise.all([
-          supabase.from('prompts').select('id', { count: 'exact', head: true }).eq('creator_id', user.id),
-          supabase.from('likes').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-          supabase.from('bookmarks').select('id', { count: 'exact', head: true }).eq('user_id', user.id)
-        ])
+      
+      // Use requestIdleCallback with timeout fallback for better performance
+      const loadData = async () => {
+        try {
+          // Batch all database operations to reduce round trips
+          const [countsResult, projectsResult] = await Promise.allSettled([
+            // Fetch counts via lightweight count queries (no heavy data)
+            Promise.all([
+              supabase.from('prompts').select('id', { count: 'exact', head: true }).eq('creator_id', user.id),
+              supabase.from('likes').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
+              supabase.from('bookmarks').select('id', { count: 'exact', head: true }).eq('user_id', user.id)
+            ]),
+            // Fetch first 10 projects only, minimal fields
+            supabase
+              .from('projects')
+              .select('id,name,sort_order')
+              .eq('user_id', user.id)
+              .order('sort_order', { ascending: true })
+              .range(0, 9)
+          ])
 
-        setCounts({
-          created: createdCountRes.count || 0,
-          liked: likedCountRes.count || 0,
-          bookmarked: bookmarkedCountRes.count || 0,
-        })
+          // Handle counts result
+          if (countsResult.status === 'fulfilled') {
+            const [createdCountRes, likedCountRes, bookmarkedCountRes] = countsResult.value
+            setCounts({
+              created: createdCountRes.count || 0,
+              liked: likedCountRes.count || 0,
+              bookmarked: bookmarkedCountRes.count || 0,
+            })
+          }
 
-        // Fetch first 10 projects only, minimal fields
-        const { data: proj, error } = await supabase
-          .from('projects')
-          .select('id,name,sort_order')
-          .eq('user_id', user.id)
-          .order('sort_order', { ascending: true })
-          .range(0, 9)
-
-        if (!error && proj) {
-          setProjects(proj as any)
-        } else {
-          setProjects([])
+          // Handle projects result
+          if (projectsResult.status === 'fulfilled') {
+            const { data: proj, error } = projectsResult.value
+            if (!error && proj) {
+              setProjects(proj as any)
+            } else {
+              setProjects([])
+            }
+          }
+        } catch (e) {
+          console.error('Failed loading sidebar data', e)
+        } finally {
+          setLoadingProjects(false)
         }
-      } catch (e) {
-        console.error('Failed loading sidebar data', e)
-      } finally {
-        setLoadingProjects(false)
+      }
+
+      // Use requestIdleCallback with timeout fallback for better performance
+      if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+        const id = (window as any).requestIdleCallback(loadData, { timeout: 2000 })
+        return () => (window as any).cancelIdleCallback(id)
+      } else {
+        const timeoutId = setTimeout(loadData, 100)
+        return () => clearTimeout(timeoutId)
       }
     }
-    // Defer to idle to avoid blocking first paint
-    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-      ;(window as any).requestIdleCallback(load)
-    } else {
-      setTimeout(load, 0)
-    }
+    
+    load()
   }, [user?.id])
 
   const createNewProject = async () => {

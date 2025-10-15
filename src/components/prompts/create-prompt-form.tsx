@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Save, X, Eye, EyeOff } from 'lucide-react'
+import { Save, X, Eye, EyeOff, Wand2 } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import { createPrompt } from '@/lib/database'
 import { analytics } from '@/lib/analytics'
@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { modelIcons } from '@/components/ui/model-badge'
 import { categoryIcons } from '@/components/ui/category-badge'
+import SuggestionDialog from '@/components/ui/suggestion-dialog'
 // Project selection removed per new UX
 import { getCategories, type Category } from '@/lib/database'
 
@@ -264,8 +265,18 @@ export default function CreatePromptForm() {
                 placeholder="Enter your AI prompt here. Be specific and detailed to get the best results..."
                 className={`min-h-[120px] ${errors.body ? 'border-destructive' : ''}`}
               />
-              <div className="mt-1 flex justify-between text-sm text-muted-foreground">
+              <div className="mt-1 flex justify-between items-center text-sm text-muted-foreground">
                 <span>{formData.body.length}/5000</span>
+                <SuggestionDialog
+                  initialText={formData.body}
+                  onApply={(suggestion) => setFormData(prev => ({ ...prev, body: suggestion }))}
+                  trigger={
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <Wand2 size={14} />
+                      AI Suggest
+                    </Button>
+                  }
+                />
               </div>
               {errors.body && (
                 <p className="mt-1 text-sm text-destructive">{errors.body}</p>
