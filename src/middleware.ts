@@ -34,20 +34,20 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // IMPORTANT: Avoid writing any logic between createServerClient and
-  // supabase.auth.getUser(). A simple mistake could make it very hard to debug
-  // issues with users being randomly logged out.
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  // Protect routes that require authentication
-  // Temporarily disabled to debug /me page
-  // if (request.nextUrl.pathname.startsWith('/me') && !user) {
-  //   // Redirect to home page if not authenticated
-  //   return NextResponse.redirect(new URL('/', request.url))
-  // }
+  // Only perform auth lookups for protected routes to avoid stalling all requests
+  const path = request.nextUrl.pathname
+  const isProtected = path.startsWith('/me') || path.startsWith('/settings')
+  if (isProtected) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      // Example protection (currently not enforcing redirect):
+      // if (!user) {
+      //   return NextResponse.redirect(new URL('/', request.url))
+      // }
+    } catch {
+      // Swallow SSR auth errors to avoid blocking navigation
+    }
+  }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
   // creating a new response object with NextResponse.next() make sure to:

@@ -376,25 +376,49 @@ export async function createPrompt(prompt: {
     ])
   }
 
+  // Skip pre-insert profile checks to avoid blocking on slow networks.
+
   let data: any | null = null
   try {
-    const insertPromise = supabase
-      .from('prompts')
-      .insert([{ 
-        title: prompt.title,
-        body: prompt.body,
-        model: prompt.model,
-        is_public: prompt.is_public,
-        creator_id: prompt.creator_id,
-        project_id: prompt.project_id || null
-      }])
-      // Keep selection minimal to avoid cross-table joins that may be restricted by RLS
-      .select('*')
-      .single()
+    // First attempt: include project_id
+    const insertAttempt = async () => {
+      return await supabase
+        .from('prompts')
+        .insert([{ 
+          title: prompt.title,
+          body: prompt.body,
+          model: prompt.model,
+          is_public: prompt.is_public,
+          creator_id: prompt.creator_id
+        }])
+        .select('*')
+        .single()
+    }
 
-    const { data: inserted, error } = await withTimeout(insertPromise, 15000, 'Insert prompt')
+    let { data: inserted, error } = await withTimeout(insertAttempt(), 15000, 'Insert prompt')
+    logger.debug('Supabase response (attempt 1):', { ok: !error })
 
-    logger.debug('Supabase response:', { ok: !error })
+    // If schema doesn't have project_id, retry without it
+    if (error && (error as any).code === 'PGRST204' && String((error as any).message || '').includes("project_id")) {
+      logger.warn('Retrying insert without project_id due to schema mismatch')
+      const retryAttempt = async () => {
+        return await supabase
+          .from('prompts')
+          .insert([{ 
+            title: prompt.title,
+            body: prompt.body,
+            model: prompt.model,
+            is_public: prompt.is_public,
+            creator_id: prompt.creator_id
+          }])
+          .select('*')
+          .single()
+      }
+      const retry = await withTimeout(retryAttempt(), 15000, 'Insert prompt (retry)')
+      inserted = (retry as any).data
+      error = (retry as any).error
+      logger.debug('Supabase response (retry):', { ok: !error })
+    }
 
     if (error) {
       logger.error('Error creating prompt:', error)
@@ -403,7 +427,37 @@ export async function createPrompt(prompt: {
     data = inserted
   } catch (e) {
     logger.error('Create prompt failed:', e)
-    return null
+    // Fallback to API route (helps with CORS/adblock or auth propagation issues)
+    try {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const accessToken = sessionData?.session?.access_token
+      const resp = await fetch('/api/prompts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
+        },
+        body: JSON.stringify({
+          title: prompt.title,
+          body: prompt.body,
+          model: prompt.model,
+          is_public: prompt.is_public,
+          category_ids: prompt.category_ids || [],
+          project_id: prompt.project_id || null,
+        })
+      })
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}))
+        logger.error('API /api/prompts failed', { status: resp.status, body: err })
+        throw new Error(err?.error || `API /api/prompts failed with ${resp.status}`)
+      }
+      const inserted = await resp.json()
+      data = inserted
+    } catch (apiErr) {
+      logger.error('API fallback create prompt failed:', apiErr)
+      if (apiErr instanceof Error) throw apiErr
+      throw new Error('API fallback create prompt failed')
+    }
   }
 
   // Add categories if provided

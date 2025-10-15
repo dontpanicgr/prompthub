@@ -78,8 +78,8 @@ export default function CreatePromptForm() {
       newErrors.title = 'Title is required'
     } else if (formData.title.length < 3) {
       newErrors.title = 'Title must be at least 3 characters'
-    } else if (formData.title.length > 100) {
-      newErrors.title = 'Title must be less than 100 characters'
+    } else if (formData.title.length > 48) {
+      newErrors.title = 'Title must be 48 characters or less'
     }
 
     if (!formData.body.trim()) {
@@ -189,6 +189,7 @@ export default function CreatePromptForm() {
                 value={formData.title}
                 onChange={handleInputChange}
                 placeholder="Enter a descriptive title for your prompt"
+                maxLength={48}
                 className={errors.title ? 'border-destructive' : ''}
               />
               {errors.title && (
@@ -262,7 +263,7 @@ export default function CreatePromptForm() {
                 value={formData.body}
                 onChange={handleInputChange}
                 placeholder="Enter your AI prompt here. Be specific and detailed to get the best results..."
-                className={`min-h-[120px] ${errors.body ? 'border-destructive' : ''}`}
+                className={`min-h-[120px] max-h-[600px] ${errors.body ? 'border-destructive' : ''}`}
               />
               <div className="mt-1 flex justify-between items-center text-sm text-muted-foreground">
                 <span>{formData.body.length}/5000</span>

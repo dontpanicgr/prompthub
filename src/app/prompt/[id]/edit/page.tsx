@@ -207,6 +207,7 @@ export default function EditPromptPage({ params }: EditPromptPageProps) {
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     placeholder="Enter a descriptive title for your prompt"
+                    maxLength={48}
                     required
                   />
                 </div>
