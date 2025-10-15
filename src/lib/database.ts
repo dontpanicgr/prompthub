@@ -378,60 +378,31 @@ export async function createPrompt(prompt: {
 
   // Skip pre-insert profile checks to avoid blocking on slow networks.
 
-  let data: any | null = null
-  try {
-    // First attempt: include project_id
-    const insertAttempt = async () => {
-      return await supabase
-        .from('prompts')
-        .insert([{ 
-          title: prompt.title,
-          body: prompt.body,
-          model: prompt.model,
-          is_public: prompt.is_public,
-          creator_id: prompt.creator_id
-        }])
-        .select('*')
-        .single()
-    }
+  // Race direct insert vs. API route to avoid long hangs in one path
+  const timeoutMs = 8000
+  const buildInsert = () => supabase
+    .from('prompts')
+    .insert([{ 
+      title: prompt.title,
+      body: prompt.body,
+      model: prompt.model,
+      is_public: prompt.is_public,
+      creator_id: prompt.creator_id
+    }])
+    .select('id, created_at')
+    .single()
 
-    let { data: inserted, error } = await withTimeout(insertAttempt(), 15000, 'Insert prompt')
-    logger.debug('Supabase response (attempt 1):', { ok: !error })
+  const directPromise = withTimeout(buildInsert(), timeoutMs, 'Direct insert')
+    .then((res: any) => {
+      if (res?.error) throw res.error
+      return res?.data
+    })
 
-    // If schema doesn't have project_id, retry without it
-    if (error && (error as any).code === 'PGRST204' && String((error as any).message || '').includes("project_id")) {
-      logger.warn('Retrying insert without project_id due to schema mismatch')
-      const retryAttempt = async () => {
-        return await supabase
-          .from('prompts')
-          .insert([{ 
-            title: prompt.title,
-            body: prompt.body,
-            model: prompt.model,
-            is_public: prompt.is_public,
-            creator_id: prompt.creator_id
-          }])
-          .select('*')
-          .single()
-      }
-      const retry = await withTimeout(retryAttempt(), 15000, 'Insert prompt (retry)')
-      inserted = (retry as any).data
-      error = (retry as any).error
-      logger.debug('Supabase response (retry):', { ok: !error })
-    }
-
-    if (error) {
-      logger.error('Error creating prompt:', error)
-      return null
-    }
-    data = inserted
-  } catch (e) {
-    logger.error('Create prompt failed:', e)
-    // Fallback to API route (helps with CORS/adblock or auth propagation issues)
-    try {
-      const { data: sessionData } = await supabase.auth.getSession()
-      const accessToken = sessionData?.session?.access_token
-      const resp = await fetch('/api/prompts', {
+  const apiPromise = (async () => {
+    const { data: sessionData } = await supabase.auth.getSession()
+    const accessToken = sessionData?.session?.access_token
+    const resp = await withTimeout(
+      fetch('/api/prompts', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -442,21 +413,33 @@ export async function createPrompt(prompt: {
           body: prompt.body,
           model: prompt.model,
           is_public: prompt.is_public,
-          category_ids: prompt.category_ids || [],
-          project_id: prompt.project_id || null,
+          category_ids: prompt.category_ids || []
         })
-      })
-      if (!resp.ok) {
-        const err = await resp.json().catch(() => ({}))
-        logger.error('API /api/prompts failed', { status: resp.status, body: err })
-        throw new Error(err?.error || `API /api/prompts failed with ${resp.status}`)
+      }),
+      timeoutMs,
+      'API insert'
+    )
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}))
+      throw new Error(err?.error || `API /api/prompts failed with ${resp.status}`)
+    }
+    return await resp.json()
+  })()
+
+  let data: any | null = null
+  try {
+    data = await Promise.any([directPromise, apiPromise])
+  } catch (err) {
+    // Promise.any aggregate error; attempt last-resort: whichever fulfilled or throw first error
+    try {
+      data = await directPromise
+    } catch (e1) {
+      try {
+        data = await apiPromise
+      } catch (e2) {
+        logger.error('Create prompt failed (both paths):', e1, e2)
+        return null
       }
-      const inserted = await resp.json()
-      data = inserted
-    } catch (apiErr) {
-      logger.error('API fallback create prompt failed:', apiErr)
-      if (apiErr instanceof Error) throw apiErr
-      throw new Error('API fallback create prompt failed')
     }
   }
 
