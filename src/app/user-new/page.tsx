@@ -1,33 +1,15 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { notFound } from 'next/navigation'
 import MainLayout from '@/components/layout/main-layout'
-import UserPromptsGrid from '@/components/prompts/user-prompts-grid'
-import PromptList from '@/components/prompts/prompt-list'
 import SearchFilters from '@/components/ui/search-filters'
-import { getUserEngagementStats } from '@/lib/database'
-import { supabase } from '@/lib/supabase'
+import PromptGrid from '@/components/prompts/prompt-grid'
 import { Button } from '@/components/ui/button'
 import { FloatingMenu } from '@/components/ui/dropdown-menu'
 import { MoreVertical, Share2, Link as LinkIcon, Flag } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 
-interface UserPageProps {
-  params: Promise<{
-    id: string
-  }>
-}
-
-export default function UserPage({ params }: UserPageProps) {
-  const [user, setUser] = useState<any>(null)
-  const [stats, setStats] = useState({
-    prompts_created: 0,
-    likes_received: 0,
-    bookmarks_received: 0
-  })
-  const [userLoading, setUserLoading] = useState(true)
-  const [statsLoading, setStatsLoading] = useState(true)
+export default function UserNewTestPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedModels, setSelectedModels] = useState<string[]>([])
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
@@ -37,39 +19,6 @@ export default function UserPage({ params }: UserPageProps) {
     return pref === 'table' ? 'table' : 'card'
   })
 
-  useEffect(() => {
-    async function fetchUserData() {
-      try {
-        const { id } = await params
-        
-        const { data: userData, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', id)
-          .single()
-
-        if (error || !userData) {
-          notFound()
-        }
-
-        setUser(userData)
-        setUserLoading(false)
-
-        // Fetch stats separately after user data is loaded
-        const userStats = await getUserEngagementStats(id)
-        setStats(userStats)
-        setStatsLoading(false)
-      } catch (error) {
-        console.error('Error fetching user data:', error)
-        setUserLoading(false)
-        setStatsLoading(false)
-      }
-    }
-
-    fetchUserData()
-  }, [params])
-
-  // Listen for layout preference changes
   useEffect(() => {
     const handler = (e: CustomEvent) => {
       setLayoutPref(e.detail.layout === 'table' ? 'table' : 'card')
@@ -85,49 +34,28 @@ export default function UserPage({ params }: UserPageProps) {
   }, [])
 
   const handleSearch = (query: string, models: string[], categories: string[]) => {
-    console.log('Search query:', query, 'Models:', models, 'Categories:', categories)
     setSearchQuery(query)
     setSelectedModels(models)
     setSelectedCategories(categories)
-    // Search is handled by the UserPromptsGrid component
-  }
-
-  if (userLoading) {
-    return (
-      <MainLayout>
-        <div className="w-full p-6">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 dark:bg-gray-800 rounded w-32 mb-6"></div>
-            <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-64 mb-6"></div>
-          </div>
-        </div>
-      </MainLayout>
-    )
-  }
-
-  if (!user) {
-    notFound()
   }
 
   return (
     <MainLayout>
       <div className="w-full">
-        {/* Header: avatar, details, actions */}
+        {/* Custom header replacing user title */}
         <div className="mb-6">
           <div className="flex items-start justify-between gap-4">
             {/* Left: Avatar + details */}
             <div className="flex items-start gap-4">
               <div className="rounded-[20px] bg-muted flex items-center justify-center text-muted-foreground w-14 h-16 text-xl shrink-0">
-                <span className="font-semibold">{user?.name?.[0]?.toUpperCase() || 'U'}</span>
+                <span className="font-semibold">P</span>
               </div>
               <div>
-                <h1 className="mb-2">{user.name}</h1>
-                {user.bio && (
-                  <p className="text-sm text-muted-foreground mb-2">{user.bio}</p>
-                )}
-                {user.website_url && (
-                  <a href={user.website_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline block">{user.website_url}</a>
-                )}
+                <h1 className="mb-2">Publika _</h1>
+                <p className="text-sm text-muted-foreground mb-2">
+                  I went to the woods because I wished to live deliberately, to front only the essential facts of life, and see if I could not learn what it had to teach, and not, when I came to die, discover that I had not lived. I did not wish to live what was not life, living is so dear; nor did I wish to practise resignation, unless it was quite necessary.
+                </p>
+                <a href="https://prompthub.com" target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline block">https://prompthub.com</a>
               </div>
             </div>
             {/* Right: actions */}
@@ -179,29 +107,17 @@ export default function UserPage({ params }: UserPageProps) {
             selectedCategories={selectedCategories}
             setSelectedCategories={setSelectedCategories}
             onSearch={handleSearch}
-            placeholder="Search user's prompts..."
+            placeholder="Search prompts..."
           />
         </div>
 
-        {/* Prompts Grid/List based on preference */}
+        {/* Prompts grid - 4 columns */}
         <div>
-          {layoutPref === 'table' ? (
-            <PromptList />
-          ) : (
-            <UserPromptsGrid 
-              userId={user.id} 
-              maxColumns={4} 
-              searchQuery={searchQuery}
-              selectedModels={selectedModels}
-              user={{
-                id: user.id,
-                name: user.name,
-                is_private: user.is_private
-              }}
-            />
-          )}
+          <PromptGrid maxColumns={4} />
         </div>
       </div>
     </MainLayout>
   )
 }
+
+

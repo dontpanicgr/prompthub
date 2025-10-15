@@ -102,13 +102,33 @@ export class HttpClient {
       clearTimeout(timeoutId)
 
       if (!response.ok) {
-        const errorText = await response.text()
-        const isRetryable = response.status >= 500 || response.status === 429
-        
+        const statusCode = response.status
+        const isRetryable = statusCode >= 500 || statusCode === 429
+        let safeMessage = `HTTP ${statusCode}`
+        try {
+          // Try to parse JSON and extract a safe error message
+          const textBody = await response.text()
+          // Avoid echoing secrets/tokens from provider error bodies
+          if (statusCode === 401 || statusCode === 403) {
+            safeMessage = statusCode === 401 ? 'Invalid API credentials' : 'Forbidden'
+          } else if (textBody) {
+            // Best-effort parse
+            try {
+              const parsed = JSON.parse(textBody)
+              const msg = parsed?.error?.message || parsed?.message
+              safeMessage = msg ? `${safeMessage}: ${msg}` : `${safeMessage}: ${textBody.slice(0, 200)}`
+            } catch {
+              safeMessage = `${safeMessage}: ${textBody.slice(0, 200)}`
+            }
+          }
+        } catch {
+          // ignore parsing errors, keep generic message
+        }
+
         throw new ProviderError(
-          `HTTP ${response.status}: ${errorText}`,
+          safeMessage,
           'unknown',
-          response.status,
+          statusCode,
           isRetryable
         )
       }

@@ -189,13 +189,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    // Run initialization
-    const initialize = async () => {
-      if (process.env.NODE_ENV === 'development') {
-        await testConnection()
-      }
-      await getInitialSession()
-    }
+		// Run initialization
+		const initialize = async () => {
+			// Always get session first so UI isn't blocked
+			await getInitialSession()
+
+			// In development, run the DB connection test in the background with a short timeout
+			if (process.env.NODE_ENV === 'development') {
+				const TIMEOUT_MS = 2000
+				const timeout = new Promise<void>((resolve) => setTimeout(resolve, TIMEOUT_MS))
+				// Fire-and-forget; do not block initialization
+				void Promise.race([testConnection(), timeout]).catch((e) => {
+					console.warn('Background Supabase connection test warning:', e)
+				})
+			}
+		}
 
     initialize()
 
@@ -214,10 +222,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const signIn = async () => {
+    const currentPath = typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/'
+    const nextParam = encodeURIComponent(currentPath || '/')
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback?next=${nextParam}`,
         scopes: 'openid email profile'
       }
     })

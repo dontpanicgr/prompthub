@@ -33,18 +33,48 @@ export const logger = {
         return { name: val.name, message: val.message, stack: val.stack }
       }
       if (val && typeof val === 'object') {
-        const { message, code, details, hint, status } = val as any
-        // Some libraries (like Postgrest/Supabase) can return objects that appear empty
-        // when spread due to non-enumerable properties. Fall back to toString if needed.
-        const safeSpread = Object.keys(val).length > 0 ? (val as any) : { raw: String(val) }
-        // Spread to capture enumerable props too
+        // Capture both enumerable and non-enumerable props (e.g., Supabase/PostgREST errors)
+        const ownProps: Record<string, any> = {}
+        try {
+          for (const key of Object.getOwnPropertyNames(val)) {
+            // Avoid pulling huge circular structures
+            const descriptor = (val as any)[key]
+            if (typeof descriptor !== 'function') ownProps[key] = descriptor
+          }
+        } catch {
+          // ignore reflection failures
+        }
+
+        const message = (ownProps as any).message ?? (val as any).message
+        const code = (ownProps as any).code ?? (val as any).code
+        const details = (ownProps as any).details ?? (val as any).details
+        const hint = (ownProps as any).hint ?? (val as any).hint
+        const status = (ownProps as any).status ?? (val as any).status
+
+        // Fallback string forms
+        const stringForms = {
+          toString: (() => {
+            try { return String(val) } catch { return undefined }
+          })(),
+          json: (() => {
+            try { return JSON.stringify(val) } catch { return undefined }
+          })(),
+        }
+
+        const hasEnumerable = Object.keys(val).length > 0
+        const base = hasEnumerable ? (val as any) : {}
+
         return {
-          ...safeSpread,
+          ...base,
+          ...ownProps,
           ...(message ? { message } : {}),
           ...(code ? { code } : {}),
           ...(details ? { details } : {}),
           ...(hint ? { hint } : {}),
           ...(status ? { status } : {}),
+          // Include safe fallbacks to avoid empty {}
+          ...(stringForms.toString ? { raw: stringForms.toString } : {}),
+          ...(stringForms.json ? { rawJson: stringForms.json } : {}),
         }
       }
       return val

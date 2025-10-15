@@ -155,13 +155,25 @@ export async function POST(request: NextRequest) {
     }
 
     // Make suggestion request
-    const result = await provider.suggest({
-      text,
-      variant,
-      model,
-      temperature: 0.3,
-      maxTokens: 1000
-    })
+    let result
+    try {
+      result = await provider.suggest({
+        text,
+        variant,
+        model,
+        temperature: 0.3,
+        maxTokens: 1000
+      })
+    } catch (e) {
+      const err = e as Error
+      const message = err.message || 'Upstream provider error'
+      const isAuthError = /Invalid API credentials|401|invalid_api_key/i.test(message)
+      const safeMessage = isAuthError
+        ? 'AI provider authentication failed. Check configured API key.'
+        : message
+      const status = isAuthError ? 401 : 502
+      return NextResponse.json({ error: safeMessage }, { status })
+    }
 
     // Log usage
     await keyResolver.logUsage(

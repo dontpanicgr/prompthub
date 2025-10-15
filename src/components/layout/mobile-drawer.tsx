@@ -18,7 +18,6 @@ import {
   Settings,
   LogOut,
   LogIn,
-  Clock,
   Compass,
   HatGlasses,
   Eye
@@ -84,7 +83,6 @@ export default function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
     { href: '/create', label: 'New Prompt', icon: Plus },
     { href: '/', label: 'Browse', icon: Compass },
     { href: '/trending', label: 'Trending', icon: TrendingUp },
-    { href: '/latest', label: 'Latest', icon: Clock },
     { href: '/me', label: 'My Prompts', icon: User, children: [
       { href: '/me/created', label: 'Created' },
       { href: '/me/liked', label: 'Liked' },

@@ -9,6 +9,7 @@ import MobileTopHeader from './mobile-top-header'
 import MobileBottomNav from './mobile-bottom-nav'
 import MobileDrawer from './mobile-drawer'
 import SecondaryNavMe from './secondary-nav-me'
+import SecondaryNavMeTabs from './secondary-nav-me-tabs'
 import EmailVerificationBanner from '@/components/ui/email-verification-banner'
 
 interface MainLayoutWrapperProps {
@@ -101,6 +102,10 @@ export default function MainLayoutWrapper({ children }: MainLayoutWrapperProps) 
       
       {/* Mobile Top Header */}
       <MobileTopHeader onMenuClick={handleMobileMenuClick} />
+      {/* Mobile My Prompts Tabs (below top nav) */}
+      {pathname?.startsWith('/me') && (
+        <SecondaryNavMeTabs />
+      )}
       
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav />

@@ -1,10 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
 import PromptGrid from '@/components/prompts/prompt-grid'
 import PromptList from '@/components/prompts/prompt-list'
-import { getPublicPrompts } from '@/lib/database'
+import { getPublicPromptsPage } from '@/lib/database'
 import type { Prompt } from '@/lib/database'
 import { useAuth } from '@/components/auth-provider'
 
@@ -22,10 +21,11 @@ export default function BrowsePageClient({
   selectedCategories 
 }: BrowsePageClientProps) {
   const { user } = useAuth()
-  const searchParams = useSearchParams()
   const [prompts, setPrompts] = useState<Prompt[]>(initialPrompts)
   const [loading, setLoading] = useState(false)
-  const [sortBy, setSortBy] = useState<'recent' | 'popular' | 'bookmarked'>('recent')
+  const [offset, setOffset] = useState(initialPrompts.length)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const pageSize = 20
   const [layoutPref, setLayoutPref] = useState<'card' | 'table'>('card')
 
 
@@ -45,74 +45,25 @@ export default function BrowsePageClient({
 
   const fetchPrompts = async () => {
     try {
-      console.log('🔄 Starting to fetch prompts...')
-      console.log('User ID:', user?.id)
-      console.log('Sort by:', sortBy)
-      
       setLoading(true)
-      let fetchedPrompts: any[] = []
-      
-      switch (sortBy) {
-        case 'popular':
-          console.log('📊 Fetching popular prompts...')
-          fetchedPrompts = await getPublicPrompts(user?.id)
-          console.log('📊 Raw prompts from database:', fetchedPrompts.length)
-          
-          // Apply popularity ranking algorithm: likes * 3 + bookmarks * 5 + reduced time bonus
-          fetchedPrompts = fetchedPrompts.sort((a, b) => {
-            const getPopularityScore = (prompt: any) => {
-              const likes = prompt.like_count || 0
-              const bookmarks = prompt.bookmark_count || 0
-              const daysSinceCreated = (Date.now() - new Date(prompt.created_at).getTime()) / (1000 * 60 * 60 * 24)
-              const timeBonus = Math.max(0, 10 - daysSinceCreated) * 0.5 // Reduced time bonus
-              
-              return (likes * 3) + (bookmarks * 5) + timeBonus
-            }
-            
-            return getPopularityScore(b) - getPopularityScore(a)
-          })
-          break
-        case 'bookmarked':
-          console.log('🔖 Fetching bookmarked prompts...')
-          const allPrompts = await getPublicPrompts(user?.id)
-          console.log('🔖 All prompts:', allPrompts.length)
-          fetchedPrompts = allPrompts.filter(p => p.is_bookmarked)
-          console.log('🔖 Bookmarked prompts:', fetchedPrompts.length)
-          break
-        case 'recent':
-        default:
-          console.log('🕒 Fetching recent prompts...')
-          fetchedPrompts = await getPublicPrompts(user?.id)
-          console.log('🕒 Raw prompts from database:', fetchedPrompts.length)
-          
-          // Sort by created_at descending (most recent first)
-          fetchedPrompts = fetchedPrompts.sort((a, b) => 
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-          )
-          break
-      }
-      
-      console.log('✅ Final prompts to display:', fetchedPrompts.length)
-      console.log('📝 Sample prompt:', fetchedPrompts[0])
-      setPrompts(fetchedPrompts)
+      const fetchedPrompts = await getPublicPromptsPage({ userId: user?.id, limit: pageSize, offset: 0 })
+      const sorted = fetchedPrompts.sort((a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      )
+      setPrompts(sorted)
+      setOffset(sorted.length)
     } catch (error) {
-      console.error('❌ Error fetching prompts:', error)
-      console.error('❌ Error details:', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-      })
+      console.error('Error fetching prompts:', error)
     } finally {
       setLoading(false)
     }
   }
 
-  // Only fetch if sortBy changes (not on initial load since we have initialPrompts)
+  // Fetch full recent list on mount to replace initial limited results
   useEffect(() => {
-    if (sortBy !== 'recent') {
-      fetchPrompts()
-    }
-  }, [sortBy])
+    fetchPrompts()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
 
   const filteredPrompts = prompts.filter(prompt => {
@@ -136,6 +87,28 @@ export default function BrowsePageClient({
       ) : (
         <PromptGrid prompts={filteredPrompts} loading={loading} />
       )}
+      <div className="flex justify-center mt-6">
+        <button
+          onClick={async () => {
+            try {
+              setIsLoadingMore(true)
+              const more = await getPublicPromptsPage({ userId: user?.id, limit: pageSize, offset })
+              const combined = [...prompts, ...more]
+              combined.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+              setPrompts(combined)
+              setOffset(prev => prev + more.length)
+            } catch (e) {
+              console.error('Error loading more prompts:', e)
+            } finally {
+              setIsLoadingMore(false)
+            }
+          }}
+          disabled={isLoadingMore}
+          className="px-4 py-2 border rounded"
+        >
+          {isLoadingMore ? 'Loading…' : 'Load more'}
+        </button>
+      </div>
     </>
   )
 }

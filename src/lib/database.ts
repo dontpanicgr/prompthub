@@ -227,6 +227,65 @@ export async function getPublicPrompts(userId?: string): Promise<Prompt[]> {
   }
 }
 
+// Paginated public prompts
+export async function getPublicPromptsPage(params: {
+  userId?: string
+  limit?: number
+  offset?: number
+}): Promise<Prompt[]> {
+  const { userId, limit = 20, offset = 0 } = params
+  try {
+    if (!checkOnlineStatus()) {
+      logger.warn('⚠️ [getPublicPromptsPage] Offline - skipping request')
+      return []
+    }
+
+    const { data: promptsWithData, error } = await supabase
+      .from('prompts')
+      .select(`
+        id, title, body, model, created_at, creator_id, is_public,
+        creator:profiles!prompts_creator_id_fkey(id, name, avatar_url, is_private),
+        prompt_categories(
+          category:categories(id, slug, name, color)
+        )
+      `)
+      .eq('is_public', true)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1)
+
+    if (error) {
+      logger.error('❌ [getPublicPromptsPage] Error fetching prompts:', error)
+      return []
+    }
+
+    // Likes/bookmarks for current user (batch once)
+    let userLikes: string[] = []
+    let userBookmarks: string[] = []
+    if (userId && promptsWithData && promptsWithData.length > 0) {
+      const promptIds = promptsWithData.map((p: any) => p.id)
+      const [likesRes, bookmarksRes] = await Promise.all([
+        supabase.from('likes').select('prompt_id').eq('user_id', userId).in('prompt_id', promptIds),
+        supabase.from('bookmarks').select('prompt_id').eq('user_id', userId).in('prompt_id', promptIds)
+      ])
+      userLikes = likesRes.data?.map(l => l.prompt_id) || []
+      userBookmarks = bookmarksRes.data?.map(b => b.prompt_id) || []
+    }
+
+    const visible = (promptsWithData || []).filter((p: any) => !p.creator?.is_private || p.creator_id === userId)
+    return visible.map((p: any) => ({
+      ...p,
+      categories: (p.prompt_categories || []).map((pc: any) => pc.category).filter(Boolean),
+      like_count: p.like_count ?? 0,
+      bookmark_count: p.bookmark_count ?? 0,
+      is_liked: userLikes.includes(p.id),
+      is_bookmarked: userBookmarks.includes(p.id)
+    }))
+  } catch (e) {
+    logger.error('Exception in getPublicPromptsPage:', e)
+    return []
+  }
+}
+
 // Get a single prompt by ID
 export async function getPromptById(id: string, userId?: string): Promise<Prompt | null> {
   // Build query - allow public prompts or private prompts owned by current user
@@ -308,27 +367,42 @@ export async function createPrompt(prompt: {
   project_id?: string | null
 }): Promise<Prompt | null> {
   logger.debug('createPrompt called')
-  
-  const { data, error } = await supabase
-    .from('prompts')
-    .insert([{
-      title: prompt.title,
-      body: prompt.body,
-      model: prompt.model,
-      is_public: prompt.is_public,
-      creator_id: prompt.creator_id,
-      project_id: prompt.project_id || null
-    }])
-    .select(`
-      *,
-      creator:profiles!prompts_creator_id_fkey(id, name, avatar_url)
-    `)
-    .single()
 
-  logger.debug('Supabase response:', { ok: !error })
+  // Helper to prevent indefinite hangs
+  const withTimeout = async <T>(p: Promise<T>, ms: number, label: string): Promise<T> => {
+    return await Promise.race<T>([
+      p,
+      new Promise<T>((_, reject) => setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms))
+    ])
+  }
 
-  if (error) {
-    logger.error('Error creating prompt:', error)
+  let data: any | null = null
+  try {
+    const insertPromise = supabase
+      .from('prompts')
+      .insert([{ 
+        title: prompt.title,
+        body: prompt.body,
+        model: prompt.model,
+        is_public: prompt.is_public,
+        creator_id: prompt.creator_id,
+        project_id: prompt.project_id || null
+      }])
+      // Keep selection minimal to avoid cross-table joins that may be restricted by RLS
+      .select('*')
+      .single()
+
+    const { data: inserted, error } = await withTimeout(insertPromise, 15000, 'Insert prompt')
+
+    logger.debug('Supabase response:', { ok: !error })
+
+    if (error) {
+      logger.error('Error creating prompt:', error)
+      return null
+    }
+    data = inserted
+  } catch (e) {
+    logger.error('Create prompt failed:', e)
     return null
   }
 
@@ -339,13 +413,18 @@ export async function createPrompt(prompt: {
       category_id: categoryId
     }))
 
-    const { error: categoryError } = await supabase
-      .from('prompt_categories')
-      .insert(categoryInserts)
+    try {
+      const catPromise = supabase
+        .from('prompt_categories')
+        .insert(categoryInserts)
 
-    if (categoryError) {
-      logger.error('Error adding categories to prompt:', categoryError)
-      // Don't fail the entire operation, just log the error
+      // Do not let category linking block prompt creation for long
+      const { error: categoryError } = await withTimeout(catPromise, 7000, 'Insert prompt categories') as any
+      if (categoryError) {
+        logger.error('Error adding categories to prompt:', categoryError)
+      }
+    } catch (e) {
+      logger.error('Category insert failed (non-fatal):', e)
     }
   }
 

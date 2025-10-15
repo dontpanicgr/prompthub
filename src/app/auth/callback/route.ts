@@ -39,12 +39,16 @@ export async function GET(request: NextRequest) {
       const supabase = await createClient()
       console.log('Server client created, attempting code exchange...')
       
-      // Redirect to the callback completion URL so supabase-js can pick up the code
-      // automatically (detectSessionInUrl=true) and then we land on `next`.
-      console.log('PKCE flow detected - redirecting to client to auto-exchange code')
-      const redirectUrl = new URL(`${origin}${next}`)
-      redirectUrl.searchParams.set('code', code)
-      return NextResponse.redirect(redirectUrl.toString())
+      // Perform server-side code exchange so we can redirect cleanly without the code param
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+      if (error) {
+        console.error('Code exchange failed:', error)
+        return NextResponse.redirect(`${origin}/auth/auth-code-error?error=exchange_failed&description=${encodeURIComponent(error.message || 'Unknown error')}`)
+      }
+
+      console.log('Code exchange successful, user set:', !!data?.user)
+      // Redirect to the intended destination without query params
+      return NextResponse.redirect(`${origin}${next}`)
       
     } catch (err) {
       console.error('Exception during code exchange:', err)

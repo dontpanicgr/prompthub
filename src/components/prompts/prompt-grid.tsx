@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import PromptCard from './prompt-card'
-import { getPublicPrompts, toggleLike, toggleBookmark } from '@/lib/database'
+import { getPublicPromptsPage, toggleLike, toggleBookmark } from '@/lib/database'
 import { useAuth } from '@/components/auth-provider'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
@@ -26,6 +26,9 @@ export default function PromptGrid({
   const [prompts, setPrompts] = useState<Prompt[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const { user } = useAuth()
+  const [offset, setOffset] = useState(0)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const pageSize = 20
   const router = useRouter()
 
   // Use external props if provided, otherwise fetch data
@@ -38,8 +41,9 @@ export default function PromptGrid({
 
     const fetchPrompts = async () => {
       try {
-        const data = await getPublicPrompts(user?.id)
+        const data = await getPublicPromptsPage({ userId: user?.id, limit: pageSize, offset: 0 })
         setPrompts(data)
+        setOffset(data.length)
       } catch (error) {
         console.error('Error fetching prompts:', error)
       } finally {
@@ -57,6 +61,19 @@ export default function PromptGrid({
       router.prefetch(`/prompt/${p.id}`)
     })
   }, [router, externalPrompts, prompts])
+
+  const loadMore = async () => {
+    try {
+      setIsLoadingMore(true)
+      const more = await getPublicPromptsPage({ userId: user?.id, limit: pageSize, offset })
+      setPrompts(prev => [...prev, ...more])
+      setOffset(prev => prev + more.length)
+    } catch (e) {
+      console.error('Error loading more prompts:', e)
+    } finally {
+      setIsLoadingMore(false)
+    }
+  }
 
   const handleLike = async (promptId: string) => {
     if (!user) {
@@ -186,15 +203,24 @@ export default function PromptGrid({
     : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
 
   return (
-    <div className={gridClasses}>
-      {displayPrompts.map((prompt) => (
-        <PromptCard
-          key={prompt.id}
-          prompt={prompt}
-          onLike={handleLike}
-          onBookmark={handleBookmark}
-        />
-      ))}
-    </div>
+    <>
+      <div className={gridClasses}>
+        {displayPrompts.map((prompt) => (
+          <PromptCard
+            key={prompt.id}
+            prompt={prompt}
+            onLike={handleLike}
+            onBookmark={handleBookmark}
+          />
+        ))}
+      </div>
+      {!externalPrompts && (
+        <div className="flex justify-center mt-6">
+          <button onClick={loadMore} disabled={isLoadingMore} className="px-4 py-2 border rounded">
+            {isLoadingMore ? 'Loading…' : 'Load more'}
+          </button>
+        </div>
+      )}
+    </>
   )
 }

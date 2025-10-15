@@ -48,13 +48,7 @@ export default function BrowsePage() {
     setSelectedCategories(categories)
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-muted-foreground"></div>
-      </div>
-    )
-  }
+  // Render immediately; downstream components can show their own skeletons while loading
 
   return (
     <div className="w-full">

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { useAuth } from '@/components/auth-provider'
-import { getPublicPrompts, toggleLike, toggleBookmark } from '@/lib/database'
+import { getPublicPromptsPage, toggleLike, toggleBookmark } from '@/lib/database'
 import type { Prompt } from '@/lib/database'
 
 interface PromptTableProps {
@@ -17,6 +17,9 @@ export default function PromptTable({ prompts: externalPrompts, loading: externa
   const [prompts, setPrompts] = useState<Prompt[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const { user } = useAuth()
+  const [offset, setOffset] = useState(0)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const pageSize = 20
   const router = useRouter()
 
   const displayPrompts = externalPrompts || prompts
@@ -27,8 +30,9 @@ export default function PromptTable({ prompts: externalPrompts, loading: externa
 
     const fetchPrompts = async () => {
       try {
-        const data = await getPublicPrompts(user?.id)
+        const data = await getPublicPromptsPage({ userId: user?.id, limit: pageSize, offset: 0 })
         setPrompts(data)
+        setOffset(data.length)
       } catch (error) {
         console.error('Error fetching prompts:', error)
       } finally {
@@ -44,6 +48,19 @@ export default function PromptTable({ prompts: externalPrompts, loading: externa
     const itemsToPrefetch = (externalPrompts || prompts).slice(0, 30)
     itemsToPrefetch.forEach((p) => router.prefetch(`/prompt/${p.id}`))
   }, [router, externalPrompts, prompts])
+
+  const loadMore = async () => {
+    try {
+      setIsLoadingMore(true)
+      const more = await getPublicPromptsPage({ userId: user?.id, limit: pageSize, offset })
+      setPrompts(prev => [...prev, ...more])
+      setOffset(prev => prev + more.length)
+    } catch (e) {
+      console.error('Error loading more prompts:', e)
+    } finally {
+      setIsLoadingMore(false)
+    }
+  }
 
   const ensureAuthed = (action: string) => {
     if (!user) {
@@ -139,6 +156,13 @@ export default function PromptTable({ prompts: externalPrompts, loading: externa
           <button onClick={() => handleBookmark(p.id)} className={`justify-self-start text-left ${p.is_bookmarked ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}>{p.bookmark_count ?? 0}</button>
         </div>
       ))}
+      {!externalPrompts && (
+        <div className="px-4 py-3 border-t flex justify-center">
+          <button onClick={loadMore} disabled={isLoadingMore} className="px-4 py-2 border rounded">
+            {isLoadingMore ? 'Loading…' : 'Load more'}
+          </button>
+        </div>
+      )}
     </div>
   )
 }

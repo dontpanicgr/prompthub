@@ -5,7 +5,6 @@ import { usePathname } from 'next/navigation'
 import { 
   Compass, 
   TrendingUp, 
-  Clock, 
   Plus,
   Trophy
 } from 'lucide-react'
@@ -16,7 +15,6 @@ export default function MobileBottomNav() {
   const navItems = [
     { href: '/', label: 'Browse', icon: Compass },
     { href: '/trending', label: 'Trending', icon: TrendingUp },
-    { href: '/latest', label: 'Latest', icon: Clock },
     { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
     { href: '/create', label: 'Create', icon: Plus },
   ]

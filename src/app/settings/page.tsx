@@ -6,7 +6,7 @@ import { useAuth } from '@/components/auth-provider'
 import { useTheme } from '@/components/theme-provider'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
-import { Save, Palette, Settings as SettingsIcon, User2, Shield, Mail, Settings2, Sun, Moon, Monitor, Key, Wand2 } from 'lucide-react'
+import { Save, Palette, Settings as SettingsIcon, User2, Shield, Mail, Settings2, Sun, Moon, Monitor, Key, Wand2, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -57,6 +57,7 @@ export default function SettingsPage() {
   const [newProviderKey, setNewProviderKey] = useState('')
   const [newProviderType, setNewProviderType] = useState('openai')
   const [testingConnection, setTestingConnection] = useState(false)
+  const [loadingProviders, setLoadingProviders] = useState(false)
   
 
   const isEmailPasswordUser = useMemo(() => {
@@ -126,6 +127,7 @@ export default function SettingsPage() {
     // Load user profile data and preferences
     loadUserData()
     loadPreferences()
+    void loadAiProviders()
   }, [user, authLoading, loadUserData])
 
   // Listen for sidebar state changes from other sources
@@ -175,6 +177,135 @@ export default function SettingsPage() {
       } catch (error) {
         console.warn('Failed to save sidebar state to localStorage:', error)
       }
+    }
+  }
+
+  const loadAiProviders = useCallback(async () => {
+    if (!user) return
+    try {
+      setLoadingProviders(true)
+      const { data: sessionData } = await supabase.auth.getSession()
+      const token = sessionData.session?.access_token
+      if (!token) {
+        setAiProviders([])
+        return
+      }
+      const res = await fetch('/api/ai/list-keys', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      if (!res.ok) {
+        setAiProviders([])
+        return
+      }
+      const json = await res.json()
+      setAiProviders(Array.isArray(json.keys) ? json.keys : [])
+    } catch (e) {
+      console.error('Failed to load AI providers', e)
+      setAiProviders([])
+    } finally {
+      setLoadingProviders(false)
+    }
+  }, [user])
+
+  const handleTestKey = async () => {
+    if (!newProviderKey) {
+      toast.error('Enter an API key to test')
+      return
+    }
+    try {
+      setTestingConnection(true)
+      toast.message('Testing connection…')
+      const { data: sessionData } = await supabase.auth.getSession()
+      const token = sessionData.session?.access_token
+      if (!token) {
+        toast.error('Not authenticated')
+        return
+      }
+      const res = await fetch('/api/ai/test-key', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ provider: newProviderType, apiKey: newProviderKey })
+      })
+      if (res.ok) {
+        toast.success('Connection successful')
+      } else {
+        const j = await res.json().catch(() => ({}))
+        toast.error(j?.error || 'Connection failed')
+      }
+    } catch (e) {
+      console.error(e)
+      toast.error('Connection failed')
+    } finally {
+      setTestingConnection(false)
+    }
+  }
+
+  const handleSaveKey = async () => {
+    if (!newProviderKey) {
+      toast.error('Enter an API key to save')
+      return
+    }
+    try {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const token = sessionData.session?.access_token
+      if (!token) {
+        toast.error('Not authenticated')
+        return
+      }
+      const res = await fetch('/api/ai/store-key', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ provider: newProviderType, apiKey: newProviderKey })
+      })
+      if (res.ok) {
+        toast.success('Key saved')
+        setNewProviderKey('')
+        await loadAiProviders()
+      } else {
+        const j = await res.json().catch(() => ({}))
+        toast.error(j?.error || 'Failed to save key')
+      }
+    } catch (e) {
+      console.error(e)
+      toast.error('Failed to save key')
+    }
+  }
+
+  const handleRemoveKey = async (provider: string) => {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const token = sessionData.session?.access_token
+      if (!token) {
+        toast.error('Not authenticated')
+        return
+      }
+      const res = await fetch('/api/ai/remove-key', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ provider })
+      })
+      if (res.ok) {
+        toast.success('Key removed')
+        await loadAiProviders()
+      } else {
+        const j = await res.json().catch(() => ({}))
+        toast.error(j?.error || 'Failed to remove key')
+      }
+    } catch (e) {
+      console.error(e)
+      toast.error('Failed to remove key')
     }
   }
 
@@ -423,6 +554,86 @@ export default function SettingsPage() {
                     disabled
                     onChange={() => {}}
                   />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )
+
+      case 'ai-providers':
+        return (
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Bring Your Own Key</CardTitle>
+                <CardDescription>
+                  Connect API keys for providers to unlock higher limits and more models.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex flex-col gap-2">
+                  <div className="flex flex-col md:flex-row items-stretch md:items-end gap-2">
+                    <div className="w-full md:w-48">
+                      <label className="text-sm font-medium">Provider</label>
+                      <Select value={newProviderType} onValueChange={setNewProviderType}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a provider" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="openai">OpenAI</SelectItem>
+                          <SelectItem value="anthropic">Anthropic</SelectItem>
+                          <SelectItem value="deepseek">DeepSeek</SelectItem>
+                          <SelectItem value="openai_compatible">OpenAI-Compatible</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex-1">
+                      <label className="text-sm font-medium">API Key</label>
+                      <Input
+                        type="password"
+                        value={newProviderKey}
+                        onChange={(e) => setNewProviderKey(e.target.value)}
+                        placeholder="Paste your API key"
+                      />
+                    </div>
+                    <div className="flex gap-2 md:pb-[2px]">
+                      <Button variant="outline" size="sm" onClick={handleTestKey} disabled={testingConnection}>
+                        {testingConnection ? 'Testing…' : 'Test'}
+                      </Button>
+                      <Button size="sm" onClick={handleSaveKey}>
+                        Add
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4">
+                  <label className="text-sm font-medium">Your connected providers</label>
+                  <div className="mt-2 divide-y rounded-md border">
+                    {loadingProviders ? (
+                      <div className="p-3 text-sm text-muted-foreground">Loading…</div>
+                    ) : aiProviders.length === 0 ? (
+                      <div className="p-3 text-sm text-muted-foreground">No providers connected yet.</div>
+                    ) : (
+                      aiProviders.map((p) => (
+                        <div key={p.provider} className="flex items-center justify-between p-3">
+                          <div className="flex items-center gap-3">
+                            <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                            <div>
+                              <div className="text-sm font-medium capitalize">{p.provider.replace('_', ' ')}</div>
+                              <div className="text-xs text-muted-foreground">Fingerprint: {p.fingerprint}</div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground">{p.isEnabled ? 'Enabled' : 'Disabled'}</span>
+                            <Button variant="outline" size="sm" onClick={() => handleRemoveKey(p.provider)}>
+                              Remove
+                            </Button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>

@@ -11,7 +11,6 @@ import {
   LogIn,
   Menu,
   X,
-  Calendar,
   Sun,
   Moon,
   LogOut,
@@ -161,7 +160,6 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
     { href: '/create', label: 'New Prompt', icon: Plus },
     { href: '/', label: 'Browse', icon: Compass },
     { href: '/trending', label: 'Trending', icon: TrendingUp },
-    { href: '/latest', label: 'Latest', icon: Calendar },
     { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
     authUser ? { href: '/me', label: 'My Prompts', icon: User } : null,
   ].filter(Boolean) as Array<{ href: string; label: string; icon: any }>

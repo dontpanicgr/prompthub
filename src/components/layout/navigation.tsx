@@ -16,7 +16,6 @@ import {
   X,
   ChevronDown,
   Compass,
-  Clock,
   Trophy,
   LogIn,
   Wrench
@@ -36,7 +35,6 @@ export default function Navigation() {
     { href: '/create', label: 'New Prompt', icon: Plus, highlight: true },
     { href: '/', label: 'Browse', icon: Compass },
     { href: '/trending', label: 'Trending', icon: TrendingUp },
-    { href: '/latest', label: 'Latest', icon: Clock },
     { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
     { href: '/me', label: 'My Prompts', icon: User },
   ]

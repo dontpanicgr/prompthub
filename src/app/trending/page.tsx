@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import PromptGrid from '@/components/prompts/prompt-grid'
 import PromptList from '@/components/prompts/prompt-list'
 import SearchFilters from '@/components/ui/search-filters'
-import { getPopularPrompts } from '@/lib/database'
+import { getPublicPromptsPage } from '@/lib/database'
 import { useAuth } from '@/components/auth-provider'
 import { TrendingUp, Bookmark, Clock } from 'lucide-react'
 import { deferToIdle } from '@/lib/performance-utils'
@@ -17,13 +17,17 @@ export default function TrendingPage() {
   const [selectedModels, setSelectedModels] = useState<string[]>([])
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [layoutPref, setLayoutPref] = useState<'card' | 'table'>('card') // Always start with card to prevent blocking
+  const [offset, setOffset] = useState(0)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const pageSize = 20
 
   useEffect(() => {
     async function fetchPrompts() {
       try {
         setLoading(true)
-        const data = await getPopularPrompts(user?.id)
+        const data = await getPublicPromptsPage({ userId: user?.id, limit: pageSize, offset: 0 })
         setPrompts(data)
+        setOffset(data.length)
       } catch (error) {
         console.error('Error fetching trending prompts:', error)
       } finally {
@@ -138,6 +142,27 @@ export default function TrendingPage() {
       ) : (
         <PromptGrid prompts={filteredPrompts} loading={loading} />
       )}
+      <div className="flex justify-center mt-6">
+        <button
+          onClick={async () => {
+            try {
+              setIsLoadingMore(true)
+              const more = await getPublicPromptsPage({ userId: user?.id, limit: pageSize, offset })
+              const combined = [...prompts, ...more]
+              setPrompts(combined)
+              setOffset(prev => prev + more.length)
+            } catch (e) {
+              console.error('Error loading more trending prompts:', e)
+            } finally {
+              setIsLoadingMore(false)
+            }
+          }}
+          disabled={isLoadingMore}
+          className="px-4 py-2 border rounded"
+        >
+          {isLoadingMore ? 'Loading…' : 'Load more'}
+        </button>
+      </div>
     </div>
   )
 }
