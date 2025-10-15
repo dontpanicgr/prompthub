@@ -21,7 +21,7 @@ export async function GET(
         is_public,
         created_at,
         updated_at,
-        creator:profiles!prompts_creator_id_fkey(id, name, avatar_url, bio, website_url, is_private),
+        creator:profiles(id, name, avatar_url, bio, website_url, is_private),
         prompt_categories(
           category:categories(id, slug, name, description, icon, color, sort_order)
         )

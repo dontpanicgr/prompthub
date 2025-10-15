@@ -165,7 +165,7 @@ export async function getPublicPrompts(userId?: string): Promise<Prompt[]> {
       .from('prompts')
       .select(`
         *,
-        creator:profiles!prompts_creator_id_fkey(id, name, avatar_url, is_private),
+        creator:profiles(id, name, avatar_url, is_private),
         prompt_categories(
           category:categories(id, slug, name, description, icon, color, sort_order)
         ),
@@ -244,7 +244,7 @@ export async function getPublicPromptsPage(params: {
       .from('prompts')
       .select(`
         id, title, body, model, created_at, creator_id, is_public,
-        creator:profiles!prompts_creator_id_fkey(id, name, avatar_url, is_private),
+        creator:profiles(id, name, avatar_url, is_private),
         prompt_categories(
           category:categories(id, slug, name, color)
         )
@@ -293,7 +293,7 @@ export async function getPromptById(id: string, userId?: string): Promise<Prompt
     .from('prompts')
     .select(`
       *,
-      creator:profiles!prompts_creator_id_fkey(id, name, avatar_url, bio, website_url, is_private),
+      creator:profiles(id, name, avatar_url, bio, website_url, is_private),
       like_count:likes(count),
       bookmark_count:bookmarks(count),
       prompt_categories(
@@ -499,7 +499,7 @@ export async function updatePrompt(id: string, updates: {
     .eq('id', id)
     .select(`
       *,
-      creator:profiles!prompts_creator_id_fkey(id, name, avatar_url)
+      creator:profiles(id, name, avatar_url)
     `)
     .single()
 
@@ -647,7 +647,7 @@ export async function getUserPrompts(userId: string, currentUserId?: string): Pr
     .from('prompts')
     .select(`
       *,
-      creator:profiles!prompts_creator_id_fkey(id, name, avatar_url),
+      creator:profiles(id, name, avatar_url),
       like_count:likes(count),
       bookmark_count:bookmarks(count),
       prompt_categories(
@@ -704,7 +704,7 @@ export async function getPopularPrompts(userId?: string): Promise<Prompt[]> {
     .from('prompts')
     .select(`
       *,
-      creator:profiles!prompts_creator_id_fkey(id, name, avatar_url, is_private),
+      creator:profiles(id, name, avatar_url, is_private),
       like_count:likes(count),
       bookmark_count:bookmarks(count),
       prompt_categories(
@@ -777,7 +777,7 @@ export async function searchPrompts(query: string, userId?: string): Promise<Pro
     .from('prompts')
     .select(`
       *,
-      creator:profiles!prompts_creator_id_fkey(id, name, avatar_url, is_private),
+      creator:profiles(id, name, avatar_url, is_private),
       like_count:likes(count),
       bookmark_count:bookmarks(count),
       prompt_categories(
@@ -928,7 +928,7 @@ export async function getPublicPromptsByCategorySlug(slug: string, userId?: stri
     .from('prompts')
     .select(`
       *,
-      creator:profiles!prompts_creator_id_fkey(id, name, avatar_url, is_private),
+      creator:profiles(id, name, avatar_url, is_private),
       like_count:likes(count),
       bookmark_count:bookmarks(count),
       prompt_categories(
@@ -976,7 +976,7 @@ export async function getCreatorsLeaderboard(): Promise<LeaderboardCreator[]> {
       .select(`
         id,
         creator_id,
-        creator:profiles!prompts_creator_id_fkey(id, name, avatar_url, is_private, created_at)
+        creator:profiles(id, name, avatar_url, is_private, created_at)
       `)
       .eq('is_public', true)
 
@@ -1087,7 +1087,7 @@ export async function getLikedPrompts(userId: string): Promise<Prompt[]> {
     .from('prompts')
     .select(`
       *,
-      creator:profiles!prompts_creator_id_fkey(
+      creator:profiles(
         id,
         name,
         avatar_url,
@@ -1149,7 +1149,7 @@ export async function getBookmarkedPrompts(userId: string): Promise<Prompt[]> {
     .from('prompts')
     .select(`
       *,
-      creator:profiles!prompts_creator_id_fkey(
+      creator:profiles(
         id,
         name,
         avatar_url,
@@ -1487,7 +1487,7 @@ export async function getPromptsByProject(projectId: string, userId?: string): P
     .from('prompts')
     .select(`
       *,
-      creator:profiles!prompts_creator_id_fkey(id, name, avatar_url, is_private),
+      creator:profiles(id, name, avatar_url, is_private),
       prompt_categories(
         category:categories(id, slug, name, description, icon, color, sort_order)
       ),
