@@ -36,7 +36,7 @@ export async function middleware(request: NextRequest) {
 
   // Only perform auth lookups for protected routes to avoid stalling all requests
   const path = request.nextUrl.pathname
-  const isProtected = path.startsWith('/me') || path.startsWith('/settings')
+  const isProtected = path.startsWith('/settings') || path.startsWith('/project/')
   if (isProtected) {
     try {
       const { data: { user } } = await supabase.auth.getUser()

@@ -87,7 +87,7 @@ export default function PromptPage({ params }: PromptPageProps) {
 
   return (
     <MainLayout>
-      <div className="w-full">
+      <div className="w-full max-w-6xl mx-auto">
         <PromptDetails prompt={prompt} />
       </div>
     </MainLayout>

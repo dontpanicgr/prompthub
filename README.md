@@ -45,6 +45,23 @@ npm install
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+
+# Optional: Managed AI provider keys
+OPENAI_API_KEY=sk-your-openai-key-here
+ANTHROPIC_API_KEY=sk-ant-your-anthropic-key-here
+DEEPSEEK_API_KEY=sk-your-deepseek-key-here
+GOOGLE_AI_STUDIO_API_KEY=your-google-ai-studio-key
+GROQ_API_KEY=gsk_your-groq-key
+OPENROUTER_API_KEY=sk-or-v1-your-openrouter-key
+
+# BYOK encryption (required for storing user keys securely)
+BYOK_ENC_KEY=your-32-character-encryption-key-here
+
+# OpenAI-compatible endpoints (Ollama/OpenRouter/Groq etc.)
+OPENAI_COMPAT_BASE_URL=http://localhost:11434/v1
+# OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+# GROQ_BASE_URL=https://api.groq.com/openai/v1
+# GOOGLE_AI_STUDIO_BASE_URL=https://generativelanguage.googleapis.com/v1beta
 ```
 
 ### 3. Set up Database

@@ -33,7 +33,8 @@ export default function AITestPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`
         },
-        body: JSON.stringify({ text, variant, model: 'gpt-4o-mini' })
+        // Switch to OpenRouter-compatible model id
+        body: JSON.stringify({ text, variant, model: 'qwen-2.5-7b-instruct' })
       })
 
       const body = await res.json()
@@ -68,7 +69,8 @@ export default function AITestPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`
         },
-        body: JSON.stringify({ messages, model: 'gpt-4o-mini', temperature: 0.3, stream: false })
+        // Switch to OpenRouter-compatible model id
+        body: JSON.stringify({ messages, model: 'qwen-2.5-7b-instruct', temperature: 0.3, stream: false })
       })
 
       const body = await res.json()
@@ -127,7 +129,7 @@ export default function AITestPage() {
         {/* Chat Test */}
         <Card>
           <CardContent className="px-6 py-6 space-y-4">
-            <h2 className="text-lg font-medium">OpenAI Chat (via API)</h2>
+            <h2 className="text-lg font-medium">Chat (OpenRouter via OpenAI-compatible)</h2>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-start">
               <div className="md:col-span-3 space-y-2">
                 <label className="text-sm font-medium">Prompt</label>

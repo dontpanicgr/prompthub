@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { 
@@ -18,14 +18,21 @@ import {
   Compass,
   Trophy,
   LogIn,
-  Wrench
+  Wrench,
+  Eye,
+  EyeOff
 } from 'lucide-react'
 import { useTheme } from '@/components/theme-provider'
 import { useAuth } from '@/components/auth-provider'
+import { Avatar } from '@/components/ui/avatar'
+import { supabase } from '@/lib/supabase'
+import { toast } from 'sonner'
 
 export default function Navigation() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isPrivate, setIsPrivate] = useState(false)
+  const [updatingPrivacy, setUpdatingPrivacy] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
   const { theme, setTheme } = useTheme()
@@ -36,7 +43,7 @@ export default function Navigation() {
     { href: '/', label: 'Browse', icon: Compass },
     { href: '/trending', label: 'Trending', icon: TrendingUp },
     { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
-    { href: '/me', label: 'My Prompts', icon: User },
+    { href: user ? `/user/${user.id}` : '/login', label: 'My Prompts', icon: User },
   ]
 
   const adminItems = [
@@ -52,6 +59,39 @@ export default function Navigation() {
     setTheme(theme === 'dark' ? 'light' : 'dark')
   }
 
+  // Load privacy status
+  useEffect(() => {
+    const loadPrivacy = async () => {
+      try {
+        if (!user?.id) return
+        const { data } = await supabase.from('profiles').select('is_private').eq('id', user.id).single()
+        if (data) setIsPrivate(!!data.is_private)
+      } catch {}
+    }
+    loadPrivacy()
+  }, [user?.id])
+
+  const togglePrivacy = async () => {
+    if (!user?.id || updatingPrivacy) return
+    try {
+      setUpdatingPrivacy(true)
+      const next = !isPrivate
+      const { error } = await supabase.from('profiles').update({ is_private: next, updated_at: new Date().toISOString() }).eq('id', user.id)
+      if (!error) {
+        setIsPrivate(next)
+        const message = next ? 'Profile set to private' : 'Profile set to public'
+        toast.success(message)
+      } else {
+        toast.error('Failed to update privacy')
+      }
+    } catch (e) {
+      console.error(e)
+      toast.error('Failed to update privacy')
+    } finally {
+      setUpdatingPrivacy(false)
+    }
+  }
+
   return (
     <>
       {/* Mobile menu button */}
@@ -64,7 +104,7 @@ export default function Navigation() {
 
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-b border-border transition-colors">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2">
@@ -80,7 +120,7 @@ export default function Navigation() {
             <div className="hidden lg:flex items-center gap-1">
               {navItems.map((item) => {
                 const Icon = item.icon
-                const isActive = pathname === item.href
+                const isActive = item.href.includes('/user/') ? pathname?.startsWith('/user/') : pathname === item.href
                 
                 return (
                   <Link
@@ -157,6 +197,21 @@ export default function Navigation() {
                   {/* User Dropdown Menu */}
                   {isUserMenuOpen && (
                     <div className="absolute right-0 mt-2 w-48 bg-nav-active text-nav-foreground rounded-lg border border-border py-1">
+                      <button
+                        onClick={toggleTheme}
+                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground"
+                      >
+                        {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+                        {theme === 'dark' ? 'Lights on' : 'Lights off'}
+                      </button>
+                      <button
+                        onClick={togglePrivacy}
+                        disabled={updatingPrivacy}
+                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground disabled:opacity-50"
+                      >
+                        {isPrivate ? <EyeOff size={16} /> : <Eye size={16} />}
+                        {isPrivate ? 'Public on' : 'Private on'}
+                      </button>
                       <Link
                         href="/settings"
                         className="w-full flex items-center gap-3 px-4 py-2 text-sm text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground"
@@ -167,7 +222,7 @@ export default function Navigation() {
                       </Link>
                       <button
                         onClick={handleSignOut}
-                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-nav-hover"
+                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground"
                       >
                         <LogOut size={16} />
                         Sign Out
@@ -194,7 +249,7 @@ export default function Navigation() {
             <div className="px-4 py-2 space-y-1">
               {navItems.map((item) => {
                 const Icon = item.icon
-                const isActive = pathname === item.href
+                const isActive = item.href.includes('/user/') ? pathname?.startsWith('/user/') : pathname === item.href
                 
                 return (
                   <Link

@@ -25,6 +25,26 @@ if (Test-Path ".env.local") {
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url_here
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key_here
 
+# Server-side (optional)
+# SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
+
+# Managed AI Provider Keys (optional)
+OPENAI_API_KEY=sk-your-openai-key-here
+ANTHROPIC_API_KEY=sk-ant-your-anthropic-key-here
+DEEPSEEK_API_KEY=sk-your-deepseek-key-here
+GOOGLE_AI_STUDIO_API_KEY=your-google-ai-studio-key
+GROQ_API_KEY=gsk_your-groq-key
+OPENROUTER_API_KEY=sk-or-v1-your-openrouter-key
+
+# BYOK encryption key
+BYOK_ENC_KEY=your-32-character-encryption-key-here
+
+# OpenAI-compatible base URL overrides
+OPENAI_COMPAT_BASE_URL=http://localhost:11434/v1
+# OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+# GROQ_BASE_URL=https://api.groq.com/openai/v1
+# GOOGLE_AI_STUDIO_BASE_URL=https://generativelanguage.googleapis.com/v1beta
+
 # Example:
 # NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
 # NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here

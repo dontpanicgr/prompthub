@@ -19,8 +19,7 @@ import {
   LogOut,
   LogIn,
   Compass,
-  HatGlasses,
-  Eye
+  Trophy
 } from 'lucide-react'
 
 interface MobileDrawerProps {
@@ -34,61 +33,19 @@ export default function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
   const router = useRouter()
   const { user, signOut } = useAuth()
   const { theme, setTheme } = useTheme()
-  const [isPrivate, setIsPrivate] = useState(false)
-  const [updatingPrivacy, setUpdatingPrivacy] = useState(false)
 
-  useEffect(() => {
-    const loadPrivacy = async () => {
-      try {
-        if (!user?.id) return
-        const { data } = await supabase.from('profiles').select('is_private').eq('id', user.id).single()
-        if (data) setIsPrivate(!!data.is_private)
-      } catch {}
-    }
-    loadPrivacy()
-  }, [user?.id])
-
-  const togglePrivacy = async () => {
-    if (!user?.id || updatingPrivacy) return
-    try {
-      setUpdatingPrivacy(true)
-      const next = !isPrivate
-      const { error } = await supabase.from('profiles').update({ is_private: next, updated_at: new Date().toISOString() }).eq('id', user.id)
-      if (!error) {
-        setIsPrivate(next)
-        try {
-          window.dispatchEvent(new CustomEvent('privacy-mode-change', { detail: { isPrivate: next } }))
-        } catch {}
-        try {
-          const message = next ? 'Private mode enabled' : 'Public mode enabled'
-          const isMobile = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(max-width: 1024px)').matches
-          if (isMobile) {
-            toast.success(message, {
-              action: {
-                label: 'Refresh',
-                onClick: () => window.location.reload()
-              }
-            })
-          } else {
-            toast.success(message)
-          }
-        } catch {}
-      }
-    } finally {
-      setUpdatingPrivacy(false)
-    }
-  }
 
   const navItems = [
     { href: '/create', label: 'New Prompt', icon: Plus },
     { href: '/', label: 'Browse', icon: Compass },
     { href: '/trending', label: 'Trending', icon: TrendingUp },
-    { href: '/me', label: 'My Prompts', icon: User, children: [
-      { href: '/me/created', label: 'Created' },
-      { href: '/me/liked', label: 'Liked' },
-      { href: '/me/bookmarked', label: 'Bookmarked' },
-      { href: '/me/projects', label: 'Projects' },
-    ] },
+    { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
+    { href: user ? `/user/${user.id}` : '/login', label: 'My Prompts', icon: User, children: user ? [
+      { href: `/user/${user.id}?tab=created`, label: 'Created' },
+      { href: `/user/${user.id}?tab=liked`, label: 'Liked' },
+      { href: `/user/${user.id}?tab=bookmarked`, label: 'Bookmarked' },
+      { href: `/user/${user.id}?tab=projects`, label: 'Projects' },
+    ] : [] },
   ] as const
 
   const handleSignOut = async () => {
@@ -141,7 +98,7 @@ export default function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
           <nav className="flex-1 overflow-y-auto p-4 space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon
-              const isActive = pathname === item.href || (item.children && item.children.some(c => pathname?.startsWith('/me')))
+              const isActive = pathname === item.href || (item.children && item.children.some(c => pathname?.startsWith('/user/')))
 
               if (!item.children) {
                 return (
@@ -164,7 +121,7 @@ export default function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
               }
 
               // Accordion item for My Prompts
-              const expanded = pathname?.startsWith('/me')
+              const expanded = pathname?.startsWith('/user/')
               return (
                 <div key={item.href} className="">
                   <Link
@@ -207,18 +164,6 @@ export default function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
 
           {/* Footer */}
           <div className="p-4 border-t border-border space-y-2 transition-colors">
-            {/* Privacy Mode Button */}
-            {user && (
-              <button
-                onClick={togglePrivacy}
-                disabled={updatingPrivacy}
-                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground transition-colors"
-              >
-                {isPrivate ? <HatGlasses size={18} /> : <Eye size={18} />}
-                {isPrivate ? 'Private on' : 'Public on'}
-              </button>
-            )}
-
             {/* Theme Button */}
             <button
               onClick={toggleTheme}

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import {
+import { 
   Plus,
   Search,
   TrendingUp,
@@ -23,8 +23,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import { supabase } from '@/lib/supabase'
-import { HatGlasses, Eye } from 'lucide-react'
-import Tooltip from '@/components/ui/tooltip'
+import { Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTheme } from '@/components/theme-provider'
 import Avatar from '@/components/ui/avatar'
@@ -67,9 +66,9 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
   const [userButtonRect, setUserButtonRect] = useState<DOMRect | null>(null)
   const pathname = usePathname()
   const { user: authUser } = useAuth()
-  const { theme, setTheme } = useTheme()
   const [isPrivate, setIsPrivate] = useState<boolean>(false)
   const [updatingPrivacy, setUpdatingPrivacy] = useState<boolean>(false)
+  const { theme, setTheme } = useTheme()
 
   // Initialize the sidebar after hydration
   useEffect(() => {
@@ -118,8 +117,7 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
   }
 
   const toggleTheme = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark'
-    setTheme(newTheme)
+    setTheme(theme === 'dark' ? 'light' : 'dark')
   }
 
   const handleSignIn = () => {
@@ -161,7 +159,7 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
     { href: '/', label: 'Browse', icon: Compass },
     { href: '/trending', label: 'Trending', icon: TrendingUp },
     { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
-    authUser ? { href: '/me', label: 'My Prompts', icon: User } : null,
+    authUser ? { href: `/user/${authUser.id}`, label: 'My Prompts', icon: User } : null,
   ].filter(Boolean) as Array<{ href: string; label: string; icon: any }>
 
   return (
@@ -250,7 +248,7 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
           <nav className={`flex-1 space-y-1 overflow-y-auto overflow-x-hidden p-3`}>
             {navItems.map((item) => {
               const Icon = item.icon
-              const isActive = item.href === '/me' ? (pathname?.startsWith('/me')) : (pathname === item.href)
+              const isActive = item.href.includes('/user/') ? pathname?.startsWith('/user/') : (pathname === item.href)
 
               return (
                 <Link
@@ -313,38 +311,6 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
                 )}
               </button>
 
-              {/* Privacy Mode Button */}
-              {user && (
-                <Tooltip
-                  wrapperClassName={isCollapsed ? undefined : 'w-full'}
-                  content={
-                    <div className="max-w-[240px] p-1">
-                      <div className="text-xs font-medium mb-1">Privacy mode</div>
-                      <div className="text-xs">
-                        <div>👁️ Public: Your profile is visible; your public prompts are visible to all.</div>
-                        <div>🥸 Private: Your profile is visible; your prompts are hidden.</div>
-                        <div>💡 You can also make individual prompts private and keep your profile public.</div>
-                      </div>
-                    </div>
-                  }
-                >
-                  <button
-                    data-navigation="true"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      togglePrivacy()
-                    }}
-                    disabled={updatingPrivacy}
-                    className={`${isCollapsed ? 'w-10' : 'w-full'} flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-3 px-3'} h-10 text-sm font-medium ${isPrivate ? 'bg-privacy text-privacy-foreground' : ''} ${isCollapsed ? `${isPrivate ? '' : 'hover:bg-nav-active hover:text-nav-foreground text-muted-foreground'}` : `${isPrivate ? '' : 'text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground'}`} rounded-lg transition-colors group relative`}
-                    title={isCollapsed ? (isPrivate ? 'Switch to Public mode' : 'Switch to Private mode') : undefined}
-                  >
-                    {isPrivate ? <HatGlasses size={18} /> : <Eye size={18} />}
-                    {!isCollapsed && (
-                      <span>{isPrivate ? 'Private on' : 'Public on'}</span>
-                    )}
-                  </button>
-                </Tooltip>
-              )}
 
               {/* User Button or Sign In */}
               {user ? (
@@ -427,6 +393,21 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
             bottom: `${window.innerHeight - userButtonRect.top + 8}px`
           }}
         >
+          <button
+            onClick={toggleTheme}
+            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground"
+          >
+            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+            {theme === 'dark' ? 'Lights on' : 'Lights off'}
+          </button>
+          <button
+            onClick={togglePrivacy}
+            disabled={updatingPrivacy}
+            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground disabled:opacity-50"
+          >
+            {isPrivate ? <EyeOff size={16} /> : <Eye size={16} />}
+            {isPrivate ? 'Profile is private' : 'Profile is public'}
+          </button>
           <Link
             href="/settings"
             className="w-full flex items-center gap-3 px-4 py-2 text-sm text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground"
@@ -440,7 +421,7 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
               setIsUserMenuOpen(false)
               onSignOut?.()
             }}
-            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-nav-hover"
+            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground"
           >
             <LogOut size={16} />
             Sign Out

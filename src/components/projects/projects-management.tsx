@@ -250,7 +250,7 @@ export default function ProjectsManagement({ userId }: ProjectsManagementProps) 
         {projects.map((project) => (
           <div
             key={project.id}
-            onClick={() => router.push(`/me/project/${project.id}`)}
+            onClick={() => router.push(`/project/${project.id}`)}
             role="button"
             className="bg-card rounded-lg border border-border p-4 hover:border-foreground transition-colors duration-200 cursor-pointer h-[168px] flex flex-col"
           >

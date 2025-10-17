@@ -35,14 +35,19 @@ export class KeyResolver {
     this.managedKeys = {
       openai: process.env.OPENAI_API_KEY || '',
       anthropic: process.env.ANTHROPIC_API_KEY || '',
-      deepseek: process.env.DEEPSEEK_API_KEY || ''
+      deepseek: process.env.DEEPSEEK_API_KEY || '',
+      // Treat OpenRouter as the managed key for openai-compatible endpoints (optional)
+      openai_compatible: process.env.OPENROUTER_API_KEY || ''
     }
 
     this.managedBaseUrls = {
       openai: 'https://api.openai.com/v1',
       anthropic: 'https://api.anthropic.com/v1',
       deepseek: 'https://api.deepseek.com/v1',
-      openai_compatible: process.env.OPENAI_COMPAT_BASE_URL || 'http://localhost:11434/v1'
+      // Prefer explicit OpenRouter base URL, then generic compat URL, then OpenRouter default
+      openai_compatible: process.env.OPENROUTER_BASE_URL 
+        || process.env.OPENAI_COMPAT_BASE_URL 
+        || 'https://openrouter.ai/api/v1'
     }
   }
 

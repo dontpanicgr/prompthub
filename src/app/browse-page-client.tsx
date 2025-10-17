@@ -87,28 +87,30 @@ export default function BrowsePageClient({
       ) : (
         <PromptGrid prompts={filteredPrompts} loading={loading} />
       )}
-      <div className="flex justify-center mt-6">
-        <button
-          onClick={async () => {
-            try {
-              setIsLoadingMore(true)
-              const more = await getPublicPromptsPage({ userId: user?.id, limit: pageSize, offset })
-              const combined = [...prompts, ...more]
-              combined.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-              setPrompts(combined)
-              setOffset(prev => prev + more.length)
-            } catch (e) {
-              console.error('Error loading more prompts:', e)
-            } finally {
-              setIsLoadingMore(false)
-            }
-          }}
-          disabled={isLoadingMore}
-          className="px-4 py-2 border rounded"
-        >
-          {isLoadingMore ? 'Loading…' : 'Load more'}
-        </button>
-      </div>
+      {!loading && filteredPrompts.length > 0 && (
+        <div className="flex justify-center mt-6">
+          <button
+            onClick={async () => {
+              try {
+                setIsLoadingMore(true)
+                const more = await getPublicPromptsPage({ userId: user?.id, limit: pageSize, offset })
+                const combined = [...prompts, ...more]
+                combined.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                setPrompts(combined)
+                setOffset(prev => prev + more.length)
+              } catch (e) {
+                console.error('Error loading more prompts:', e)
+              } finally {
+                setIsLoadingMore(false)
+              }
+            }}
+            disabled={isLoadingMore}
+            className="px-4 py-2 border rounded"
+          >
+            {isLoadingMore ? 'Loading…' : 'Load more'}
+          </button>
+        </div>
+      )}
     </>
   )
 }

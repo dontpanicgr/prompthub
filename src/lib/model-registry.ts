@@ -147,6 +147,18 @@ export const MODEL_REGISTRY: Record<string, ModelInfo> = {
     description: 'Open source model via Ollama/OpenRouter',
     isManaged: false
   },
+  // OpenRouter free-tier friendly models
+  'qwen-2.5-7b-instruct': {
+    id: 'qwen-2.5-7b-instruct',
+    name: 'Qwen 2.5 7B Instruct (OpenRouter)',
+    provider: 'openai_compatible',
+    capabilities: { suggest: true, chat: true },
+    maxTokens: 8192,
+    inputFormat: 'text',
+    outputFormat: 'text',
+    description: 'Free/low-cost model via OpenRouter',
+    isManaged: false
+  },
   'codellama': {
     id: 'codellama',
     name: 'Code Llama',

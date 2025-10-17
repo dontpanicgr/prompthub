@@ -17,6 +17,15 @@ ANTHROPIC_API_KEY=sk-ant-your-anthropic-key-here
 # DeepSeek API Key (for managed DeepSeek models)
 DEEPSEEK_API_KEY=sk-your-deepseek-key-here
 
+# Google AI Studio (Gemini) API Key (optional managed)
+GOOGLE_AI_STUDIO_API_KEY=your-google-ai-studio-key
+
+# Groq API Key (optional managed)
+GROQ_API_KEY=gsk_your-groq-key
+
+# OpenRouter API Key (optional managed via OpenAI-compatible)
+OPENROUTER_API_KEY=sk-or-v1-your-openrouter-key
+
 # Master key for encrypting user-provided API keys
 BYOK_ENC_KEY=your-32-character-encryption-key-here
 ```
@@ -25,6 +34,11 @@ BYOK_ENC_KEY=your-32-character-encryption-key-here
 ```bash
 # Base URL for OpenAI-compatible endpoints (Ollama, OpenRouter, etc.)
 OPENAI_COMPAT_BASE_URL=http://localhost:11434/v1
+
+# Override base URLs per provider (optional)
+# OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+# GROQ_BASE_URL=https://api.groq.com/openai/v1
+# GOOGLE_AI_STUDIO_BASE_URL=https://generativelanguage.googleapis.com/v1beta
 
 # Supabase Service Role Key (for server-side operations)
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key

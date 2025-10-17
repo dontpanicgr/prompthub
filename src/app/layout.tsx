@@ -12,8 +12,8 @@ import '@/lib/analytics' // Import analytics to enable tracking
 
 export const metadata: Metadata = {
   title: {
-    default: "Lexee - AI Prompt Sharing Community",
-    template: "%s | Lexee"
+    default: "Lexee - Prompt Repository and Community",
+    template: "%s - Lexee - Prompt Repository and Community"
   },
   description: "Discover, share, and collaborate on AI prompts with the Lexee community. Find the perfect prompts for your AI projects.",
   keywords: ["AI", "prompts", "artificial intelligence", "machine learning", "prompt engineering", "chatgpt", "claude", "ai tools"],
@@ -24,13 +24,13 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "https://lexee.com",
-    title: "Lexee - AI Prompt Sharing Community",
+    title: "Lexee - Prompt Repository and Community",
     description: "Discover, share, and collaborate on AI prompts with the Lexee community.",
     siteName: "Lexee",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Lexee - AI Prompt Sharing Community",
+    title: "Lexee - Prompt Repository and Community",
     description: "Discover, share, and collaborate on AI prompts with the Lexee community.",
     creator: "@lexee",
   },

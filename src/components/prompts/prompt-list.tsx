@@ -144,7 +144,7 @@ export default function PromptList({ prompts: externalPrompts, loading: external
           />
         ))}
       </div>
-      {!externalPrompts && (
+      {!externalPrompts && !displayLoading && displayPrompts.length > 0 && (
         <div className="flex justify-center mt-6">
           <button onClick={loadMore} disabled={isLoadingMore} className="px-4 py-2 border rounded">
             {isLoadingMore ? 'Loading…' : 'Load more'}

@@ -59,7 +59,7 @@ const categories = [
 export default function AdminPage() {
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto p-8">
+      <div className="max-w-6xl mx-auto p-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-4">

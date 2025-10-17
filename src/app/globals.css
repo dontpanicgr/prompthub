@@ -317,6 +317,15 @@
   .text-privacy-foreground {
     color: var(--privacy-foreground);
   }
+
+  /* Custom max-width utilities */
+  .max-w-5xl {
+    max-width: 64rem; /* 1024px */
+  }
+  
+  .max-w-6xl {
+    max-width: 72rem; /* 1152px */
+  }
 }
 
 /* Override highlight.js default background to be transparent */
