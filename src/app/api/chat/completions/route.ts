@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
       // TODO: Implement proper streaming for supported providers
       const result = await provider.chat({
         messages,
-        model,
+        model: modelInfo.id,
         temperature,
         maxTokens,
         stream: false
@@ -195,7 +195,7 @@ export async function POST(request: NextRequest) {
       // Non-streaming response
       const result = await provider.chat({
         messages,
-        model,
+        model: modelInfo.id,
         temperature,
         maxTokens,
         stream: false

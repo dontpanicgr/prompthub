@@ -10,6 +10,16 @@ import { AnalyticsProvider, GoogleAnalytics, MixpanelAnalytics } from '@/compone
 import MainLayoutWrapper from '@/components/layout/main-layout-wrapper';
 import '@/lib/analytics' // Import analytics to enable tracking
 
+// Wrapper component to handle Vercel Analytics errors gracefully
+function AnalyticsWrapper() {
+  try {
+    return <Analytics />;
+  } catch (error) {
+    console.warn('Vercel Analytics failed to load:', error);
+    return null;
+  }
+}
+
 export const metadata: Metadata = {
   title: {
     default: "Lexee - Prompt Repository and Community",
@@ -118,7 +128,7 @@ export default function RootLayout({
           <>
             <GoogleAnalytics />
             <MixpanelAnalytics />
-            <Analytics />
+            <AnalyticsWrapper />
           </>
         )}
       </body>

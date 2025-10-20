@@ -9,16 +9,20 @@ interface AuthContextType {
   user: User | null
   loading: boolean
   signingOut: boolean
-  signIn: () => Promise<void>
+  signInWithGoogle: () => Promise<void>
+  signInWithGitHub: () => Promise<void>
   signOut: () => Promise<void>
+  clearAuthState: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   signingOut: false,
-  signIn: async () => {},
+  signInWithGoogle: async () => {},
+  signInWithGitHub: async () => {},
   signOut: async () => {},
+  clearAuthState: async () => {},
 })
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -31,10 +35,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const avatarFromAuth = (authUser as any)?.user_metadata?.avatar_url
         || (authUser as any)?.user_metadata?.picture
         || (authUser as any)?.identities?.find((i: any) => i?.provider === 'google')?.identity_data?.picture
+        || (authUser as any)?.identities?.find((i: any) => i?.provider === 'github')?.identity_data?.avatar_url
         || null
       const nameFromAuth = (authUser as any)?.user_metadata?.name
         || (authUser as any)?.user_metadata?.full_name
         || (authUser as any)?.identities?.find((i: any) => i?.provider === 'google')?.identity_data?.name
+        || (authUser as any)?.identities?.find((i: any) => i?.provider === 'github')?.identity_data?.name
         || null
 
       const { data: profile } = await supabase
@@ -58,184 +64,153 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    // Test Supabase connection first
-    const testConnection = async () => {
+    let mounted = true
+
+    // Simple initialization that always completes
+    const initialize = async () => {
       try {
-        console.log('Testing Supabase connection...')
-        const dbConnected = await testDatabaseConnection()
-        if (dbConnected) {
-          console.log('Database connection test successful')
-        } else {
-          console.error('Database connection test failed')
+        
+        // Check for OAuth tokens in URL first
+        if (typeof window !== 'undefined') {
+          const url = window.location.href
+          if (url.includes('access_token=') || url.includes('code=')) {
+            // Let Supabase handle the OAuth flow
+            try {
+              const { data: { session }, error } = await supabase.auth.getSession()
+              if (mounted && session?.user) {
+                setUser(session.user)
+                await syncProfileFromAuth(session.user)
+                
+                // Clean up the URL and redirect immediately
+                const cleanUrl = window.location.pathname
+                window.history.replaceState({}, document.title, cleanUrl)
+                
+                // Redirect immediately if on login page
+                if (window.location.pathname === '/login') {
+                  const urlParams = new URLSearchParams(window.location.search)
+                  const redirectParam = urlParams.get('redirect')
+                  const cleanRedirect = redirectParam ? redirectParam.replace(/#.*$/, '') : '/discover'
+                  window.location.href = cleanRedirect
+                  return
+                }
+              }
+            } catch (oauthError) {
+            }
+          }
         }
-      } catch (error) {
-        console.error('Supabase connection failed:', error)
-      }
-    }
-
-    // Handle OAuth redirects (both hash fragments and URL parameters)
-    const handleOAuthRedirect = async () => {
-      if (typeof window !== 'undefined') {
-        const urlParams = new URLSearchParams(window.location.search)
-        const code = urlParams.get('code')
-        const accessToken = urlParams.get('access_token')
-        const refreshToken = urlParams.get('refresh_token')
-
-        // Handle PKCE authorization code flow
-        if (code) {
-          console.log('Found authorization code; attempting exchange (with fallback wait)')
-          try {
-            // Try explicit exchange first; if no verifier present, this may fail
-            const { data, error } = await supabase.auth.exchangeCodeForSession(window.location.href)
+        
+        // Get session with timeout protection
+        const sessionPromise = supabase.auth.getSession()
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Session timeout')), 5000)
+        )
+        
+        try {
+          const { data: { session }, error } = await Promise.race([sessionPromise, timeoutPromise]) as any
+          
+          if (mounted) {
             if (error) {
-              console.warn('Explicit code exchange failed, will wait for auto-exchange:', error)
-            } else if (data?.user) {
-              const next = urlParams.get('next') || '/'
-              window.history.replaceState({}, document.title, next)
-              setUser(data.user)
-              setLoading(false)
-              return
-            }
-          } catch (e) {
-            console.warn('Explicit code exchange threw, will wait for auto-exchange:', e)
-          }
-
-          // Fallback: wait briefly for supabase-js auto exchange, then clean URL
-          const start = Date.now()
-          while (Date.now() - start < 4000) {
-            const { data } = await supabase.auth.getSession()
-            if (data?.session?.user) {
-              const next = urlParams.get('next') || '/'
-              window.history.replaceState({}, document.title, next)
-              setUser(data.session.user)
-              setLoading(false)
-              break
-            }
-            await new Promise(r => setTimeout(r, 200))
-          }
-          return
-        }
-
-        // Handle implicit flow (access_token and refresh_token in URL)
-        if (accessToken && refreshToken) {
-          console.log('Found OAuth tokens in URL parameters, setting session...')
-          const { data, error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken
-          })
-
-          if (!error && data?.user) {
-            console.log('Session set successfully from URL parameters')
-            setUser(data.user)
-            setLoading(false)
-            // Clean up the URL
-            const newUrl = new URL(window.location.href)
-            newUrl.searchParams.delete('access_token')
-            newUrl.searchParams.delete('refresh_token')
-            window.history.replaceState({}, document.title, newUrl.pathname + newUrl.search)
-          } else {
-            console.error('Error setting session from URL parameters:', error)
-            setLoading(false)
-          }
-          return
-        }
-
-        // Check hash fragment (fallback)
-        if (window.location.hash) {
-          const hashParams = new URLSearchParams(window.location.hash.substring(1))
-          const hashAccessToken = hashParams.get('access_token')
-          const hashRefreshToken = hashParams.get('refresh_token')
-
-          if (hashAccessToken && hashRefreshToken) {
-            console.log('Found OAuth tokens in hash fragment, setting session...')
-            const { data, error } = await supabase.auth.setSession({
-              access_token: hashAccessToken,
-              refresh_token: hashRefreshToken
-            })
-
-            if (!error && data?.user) {
-              console.log('Session set successfully from hash fragment')
-              setUser(data.user)
-              setLoading(false)
-              // Clean up the URL
-              window.history.replaceState({}, document.title, window.location.pathname)
-            } else {
-              console.error('Error setting session from hash fragment:', error)
-              setLoading(false)
+              // Session error - continue without session
+            } else if (session?.user) {
+              setUser(session.user)
+              await syncProfileFromAuth(session.user)
             }
           }
-        }
-      }
-    }
-
-    // Get initial session
-    const getInitialSession = async () => {
-      try {
-        await handleOAuthRedirect()
-        console.log('Getting initial session...')
-        const { data: { session }, error } = await supabase.auth.getSession()
-        
-        if (error) {
-          console.error('Error getting session:', error)
-        } else {
-          console.log('Session retrieved successfully:', !!session)
+        } catch (timeoutError) {
+          // Session check timed out, continuing without session
         }
         
-        setUser(session?.user ?? null)
-        if (session?.user) {
-          await syncProfileFromAuth(session.user)
+        if (mounted) {
+          setLoading(false)
         }
       } catch (error) {
-        console.error('Failed to get initial session:', error)
-      } finally {
-        setLoading(false)
+        // Auth initialization failed - continue without session
+        if (mounted) {
+          setLoading(false)
+        }
       }
     }
-
-		// Run initialization
-		const initialize = async () => {
-			// Always get session first so UI isn't blocked
-			await getInitialSession()
-
-			// In development, run the DB connection test in the background with a short timeout
-			if (process.env.NODE_ENV === 'development') {
-				const TIMEOUT_MS = 2000
-				const timeout = new Promise<void>((resolve) => setTimeout(resolve, TIMEOUT_MS))
-				// Fire-and-forget; do not block initialization
-				void Promise.race([testConnection(), timeout]).catch((e) => {
-					console.warn('Background Supabase connection test warning:', e)
-				})
-			}
-		}
 
     initialize()
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        setUser(session?.user ?? null)
-        setLoading(false)
-        if (session?.user) {
-          await syncProfileFromAuth(session.user)
+        if (mounted) {
+          setUser(session?.user ?? null)
+          setLoading(false)
+          if (session?.user) {
+            await syncProfileFromAuth(session.user)
+          }
         }
       }
     )
 
-    return () => subscription.unsubscribe()
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
   }, [])
 
-  const signIn = async () => {
+  const signInWithGoogle = async () => {
     const currentPath = typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/'
     const nextParam = encodeURIComponent(currentPath || '/')
+    
+    // Get the appropriate redirect URL based on environment
+    const getRedirectUrl = () => {
+      if (typeof window === 'undefined') return 'http://localhost:3000'
+      
+      const origin = window.location.origin
+      // For localhost development
+      if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+        return origin
+      }
+      // For production
+      return origin
+    }
+    
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=${nextParam}`,
-        scopes: 'openid email profile'
+        redirectTo: `${getRedirectUrl()}/auth/callback?next=${nextParam}`,
+        scopes: 'openid email profile',
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent'
+        }
       }
     })
     if (error) {
-      console.error('Error signing in:', error)
+      console.error('Error signing in with Google:', error)
+    }
+  }
+
+  const signInWithGitHub = async () => {
+    const currentPath = typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/'
+    const nextParam = encodeURIComponent(currentPath || '/')
+    
+    // Get the appropriate redirect URL based on environment
+    const getRedirectUrl = () => {
+      if (typeof window === 'undefined') return 'http://localhost:3000'
+      
+      const origin = window.location.origin
+      // For localhost development
+      if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+        return origin
+      }
+      // For production
+      return origin
+    }
+    
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'github',
+      options: {
+        redirectTo: `${getRedirectUrl()}/auth/callback?next=${nextParam}`,
+        scopes: 'user:email'
+      }
+    })
+    if (error) {
+      console.error('Error signing in with GitHub:', error)
     }
   }
 
@@ -256,8 +231,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  // Development helper to clear all auth state
+  const clearAuthState = async () => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Clearing all auth state for development...')
+      setUser(null)
+      setLoading(false)
+      await supabase.auth.signOut()
+      
+      // Clear any stored session data
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('sb-' + supabase.supabaseUrl.split('//')[1].split('.')[0] + '-auth-token')
+        sessionStorage.clear()
+      }
+      
+      console.log('Auth state cleared')
+    }
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signingOut, signInWithGoogle, signInWithGitHub, signOut, clearAuthState }}>
       {children}
     </AuthContext.Provider>
   )

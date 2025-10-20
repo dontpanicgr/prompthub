@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import MainLayout from '@/components/layout/main-layout'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
@@ -8,8 +9,11 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/components/auth-provider'
 
 export default function AITestPage() {
+  const { user, loading } = useAuth()
+  const router = useRouter()
   const [text, setText] = useState('Write a friendly welcome email to a new user named Alex. Keep it concise.')
   const [variant, setVariant] = useState<'rewrite' | 'clarify' | 'shorten' | 'expand' | 'variables'>('rewrite')
   const [suggestion, setSuggestion] = useState('')
@@ -18,13 +22,38 @@ export default function AITestPage() {
   const [loadingSuggest, setLoadingSuggest] = useState(false)
   const [loadingChat, setLoadingChat] = useState(false)
 
+  // Handle authentication redirect
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push(`/login?redirect=${encodeURIComponent('/ai-test')}`)
+    }
+  }, [user, loading, router])
+
+  // Show loading state while checking authentication
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-muted-foreground"></div>
+        </div>
+      </MainLayout>
+    )
+  }
+
+  // Don't render anything if not authenticated (will redirect)
+  if (!user) {
+    return null
+  }
+
   const callSuggest = useCallback(async () => {
     try {
       setLoadingSuggest(true)
       setSuggestion('')
       const { data: sessionData } = await supabase.auth.getSession()
       const accessToken = sessionData.session?.access_token
-      if (!accessToken) throw new Error('No access token; are you signed in?')
+      if (!accessToken) {
+        throw new Error('Authentication expired. Please sign in again.')
+      }
 
       console.log('[ai-test] calling /api/ai/suggest', { variant, textLen: text.length })
       const res = await fetch('/api/ai/suggest', {
@@ -33,7 +62,7 @@ export default function AITestPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`
         },
-        // Switch to OpenRouter-compatible model id
+        // Use model registry key - API will map to correct model ID
         body: JSON.stringify({ text, variant, model: 'qwen-2.5-7b-instruct' })
       })
 
@@ -43,7 +72,13 @@ export default function AITestPage() {
       setSuggestion(body.suggestion || '')
     } catch (e) {
       console.error('[ai-test] suggest error:', e)
-      alert((e as Error).message)
+      const errorMessage = (e as Error).message
+      if (errorMessage.includes('Authentication expired')) {
+        // Redirect to login if authentication expired
+        router.push(`/login?redirect=${encodeURIComponent('/ai-test')}`)
+      } else {
+        alert(errorMessage)
+      }
     } finally {
       setLoadingSuggest(false)
     }
@@ -55,7 +90,9 @@ export default function AITestPage() {
       setChatResponse('')
       const { data: sessionData } = await supabase.auth.getSession()
       const accessToken = sessionData.session?.access_token
-      if (!accessToken) throw new Error('No access token; are you signed in?')
+      if (!accessToken) {
+        throw new Error('Authentication expired. Please sign in again.')
+      }
 
       const messages = [
         { role: 'system', content: 'You are a helpful assistant.' },
@@ -69,7 +106,7 @@ export default function AITestPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`
         },
-        // Switch to OpenRouter-compatible model id
+        // Use model registry key - API will map to correct model ID
         body: JSON.stringify({ messages, model: 'qwen-2.5-7b-instruct', temperature: 0.3, stream: false })
       })
 
@@ -79,7 +116,13 @@ export default function AITestPage() {
       setChatResponse(body.content || '')
     } catch (e) {
       console.error('[ai-test] chat error:', e)
-      alert((e as Error).message)
+      const errorMessage = (e as Error).message
+      if (errorMessage.includes('Authentication expired')) {
+        // Redirect to login if authentication expired
+        router.push(`/login?redirect=${encodeURIComponent('/ai-test')}`)
+      } else {
+        alert(errorMessage)
+      }
     } finally {
       setLoadingChat(false)
     }

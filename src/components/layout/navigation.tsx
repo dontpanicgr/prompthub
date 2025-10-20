@@ -36,7 +36,7 @@ export default function Navigation() {
   const pathname = usePathname()
   const router = useRouter()
   const { theme, setTheme } = useTheme()
-  const { user, signOut } = useAuth()
+  const { user, signOut, signingOut } = useAuth()
 
   const navItems = [
     { href: '/add', label: 'Add Prompt', icon: Plus, highlight: true },
@@ -219,10 +219,11 @@ export default function Navigation() {
                       </Link>
                       <button
                         onClick={handleSignOut}
-                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground"
+                        disabled={signingOut}
+                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground disabled:opacity-50"
                       >
                         <LogOut size={16} />
-                        Sign Out
+                        {signingOut ? 'Signing Out...' : 'Sign Out'}
                       </button>
                     </div>
                   )}

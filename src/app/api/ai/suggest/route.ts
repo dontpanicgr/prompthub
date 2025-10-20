@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
       result = await provider.suggest({
         text,
         variant,
-        model,
+        model: modelInfo.id,
         temperature: 0.3,
         maxTokens: 1000
       })

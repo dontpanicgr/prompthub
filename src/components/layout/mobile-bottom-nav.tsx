@@ -62,7 +62,7 @@ export default function MobileBottomNav() {
   const pathname = usePathname()
   const router = useRouter()
   const { theme, setTheme } = useTheme()
-  const { user, signOut } = useAuth()
+  const { user, signOut, signingOut } = useAuth()
   const [isSheetOpen, setIsSheetOpen] = useState(false)
 
   // Close menu when pathname changes (navigation occurs)
@@ -175,7 +175,8 @@ export default function MobileBottomNav() {
                 </button>
                 {user ? (
                   <button
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-base text-red-600 dark:text-red-400 hover:bg-muted/60 transition-colors"
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-base text-red-600 dark:text-red-400 hover:bg-muted/60 transition-colors disabled:opacity-50"
+                    disabled={signingOut}
                     onClick={async () => {
                       await signOut()
                       setIsSheetOpen(false)
@@ -183,7 +184,7 @@ export default function MobileBottomNav() {
                     }}
                   >
                     <LogOut size={18} />
-                    Sign Out
+                    {signingOut ? 'Signing Out...' : 'Sign Out'}
                   </button>
                 ) : (
                   <button

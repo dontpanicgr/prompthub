@@ -149,7 +149,7 @@ export const MODEL_REGISTRY: Record<string, ModelInfo> = {
   },
   // OpenRouter free-tier friendly models
   'qwen-2.5-7b-instruct': {
-    id: 'qwen-2.5-7b-instruct',
+    id: 'qwen/qwen-2.5-7b-instruct',
     name: 'Qwen 2.5 7B Instruct (OpenRouter)',
     provider: 'openai_compatible',
     capabilities: { suggest: true, chat: true },

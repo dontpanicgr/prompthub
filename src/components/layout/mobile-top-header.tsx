@@ -42,8 +42,6 @@ export default function MobileTopHeader({}: MobileTopHeaderProps) {
   const router = useRouter()
   const [isSearchMode, setIsSearchMode] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedModels, setSelectedModels] = useState<string[]>([])
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [categories, setCategories] = useState<Category[]>([])
 
   // Load categories on mount
@@ -60,50 +58,35 @@ export default function MobileTopHeader({}: MobileTopHeaderProps) {
   }, [])
 
   const handleSearch = () => {
-    if (!searchQuery.trim() && selectedModels.length === 0 && selectedCategories.length === 0) {
+    if (!searchQuery.trim()) {
       return
     }
 
-    // Build query parameters
-    const params = new URLSearchParams()
-    if (searchQuery.trim()) {
-      params.set('q', searchQuery.trim())
-    }
-    selectedModels.forEach(model => params.append('model', model))
-    selectedCategories.forEach(category => params.append('category', category))
-
-    // Navigate to browse page with search parameters
-    const queryString = params.toString()
-    router.push(`/?${queryString}`)
+    // Navigate to browse page with search query
+    router.push(`/?q=${encodeURIComponent(searchQuery.trim())}`)
     
     // Reset search mode
     setIsSearchMode(false)
     setSearchQuery('')
-    setSelectedModels([])
-    setSelectedCategories([])
   }
 
-  const handleModelToggle = (model: string) => {
-    setSelectedModels(prev => 
-      prev.includes(model) 
-        ? prev.filter(m => m !== model)
-        : [...prev, model]
-    )
+  const handleModelClick = (model: string) => {
+    // Navigate to discover page with model filter
+    router.push(`/discover?model=${encodeURIComponent(model)}`)
+    setIsSearchMode(false)
+    setSearchQuery('')
   }
 
-  const handleCategoryToggle = (category: string) => {
-    setSelectedCategories(prev => 
-      prev.includes(category) 
-        ? prev.filter(c => c !== category)
-        : [...prev, category]
-    )
+  const handleCategoryClick = (categorySlug: string) => {
+    // Navigate to discover page with category filter
+    router.push(`/discover?category=${encodeURIComponent(categorySlug)}`)
+    setIsSearchMode(false)
+    setSearchQuery('')
   }
 
   const exitSearchMode = () => {
     setIsSearchMode(false)
     setSearchQuery('')
-    setSelectedModels([])
-    setSelectedCategories([])
   }
 
   if (isSearchMode) {
@@ -159,7 +142,7 @@ export default function MobileTopHeader({}: MobileTopHeaderProps) {
           <div className="flex-1 overflow-y-auto p-4 space-y-6">
             {/* Models Section */}
             <div>
-              <div className="text-sm font-medium text-muted-foreground mb-3">Models</div>
+              <div className="text-sm font-medium text-muted-foreground mb-3">Browse by Model</div>
               <div className="flex flex-wrap gap-2">
                 {MODELS.map((model) => (
                   <ModelBadge
@@ -167,12 +150,8 @@ export default function MobileTopHeader({}: MobileTopHeaderProps) {
                     model={model as any}
                     variant="outline"
                     size="sm"
-                    className={`cursor-pointer transition-colors ${
-                      selectedModels.includes(model) 
-                        ? "bg-primary text-primary-foreground" 
-                        : "border text-foreground bg-card"
-                    }`}
-                    onClick={() => handleModelToggle(model)}
+                    className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors border text-foreground bg-card"
+                    onClick={() => handleModelClick(model)}
                   />
                 ))}
               </div>
@@ -180,7 +159,7 @@ export default function MobileTopHeader({}: MobileTopHeaderProps) {
 
             {/* Categories Section */}
             <div>
-              <div className="text-sm font-medium text-muted-foreground mb-3">Categories</div>
+              <div className="text-sm font-medium text-muted-foreground mb-3">Browse by Category</div>
               <div className="flex flex-wrap gap-2">
                 {categories.map((category) => (
                   <CategoryBadge
@@ -188,12 +167,8 @@ export default function MobileTopHeader({}: MobileTopHeaderProps) {
                     category={category}
                     variant="outline"
                     size="sm"
-                    className={`cursor-pointer transition-colors ${
-                      selectedCategories.includes(category.slug) 
-                        ? "bg-primary text-primary-foreground" 
-                        : "border text-foreground bg-card"
-                    }`}
-                    onClick={() => handleCategoryToggle(category.slug)}
+                    className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors border text-foreground bg-card"
+                    onClick={() => handleCategoryClick(category.slug)}
                   />
                 ))}
               </div>

@@ -65,7 +65,7 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
   const [isInitialized, setIsInitialized] = useState(false)
   const [userButtonRect, setUserButtonRect] = useState<DOMRect | null>(null)
   const pathname = usePathname()
-  const { user: authUser } = useAuth()
+  const { user: authUser, signingOut } = useAuth()
   const [isPrivate, setIsPrivate] = useState<boolean>(false)
   const [updatingPrivacy, setUpdatingPrivacy] = useState<boolean>(false)
   const { theme, setTheme } = useTheme()
@@ -424,10 +424,11 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
               setIsUserMenuOpen(false)
               onSignOut?.()
             }}
-            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground"
+            disabled={signingOut}
+            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground disabled:opacity-50"
           >
             <LogOut size={16} />
-            Sign Out
+            {signingOut ? 'Signing Out...' : 'Sign Out'}
           </button>
         </div>
       )}

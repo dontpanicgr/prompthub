@@ -17,6 +17,11 @@ export async function middleware(request: NextRequest) {
     supabaseUrl,
     supabaseAnonKey,
     {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true
+      },
       cookies: {
         getAll() {
           return request.cookies.getAll()
@@ -34,8 +39,37 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Only perform auth lookups for protected routes to avoid stalling all requests
+  // Handle OAuth redirects to prevent login page flash
   const path = request.nextUrl.pathname
+  const url = request.nextUrl
+  
+  // Check if this is a login page with OAuth tokens (only redirect on OAuth success)
+  if (path === '/login' && (url.href.includes('access_token=') || url.href.includes('code='))) {
+    console.log('🔍 MIDDLEWARE: OAuth redirect detected')
+    console.log('🔍 URL:', url.href)
+    
+    try {
+      // Let Supabase process the OAuth tokens and get session
+      const { data: { session }, error } = await supabase.auth.getSession()
+      
+      console.log('🔍 Session result:', { hasSession: !!session, hasUser: !!session?.user, error })
+      
+      if (session?.user) {
+        // Extract redirect parameter
+        const redirectParam = url.searchParams.get('redirect')
+        const cleanRedirect = redirectParam ? redirectParam.replace(/#.*$/, '') : '/'
+        
+        console.log('🔍 Redirecting to:', cleanRedirect)
+        
+        // Redirect immediately without rendering login page
+        return NextResponse.redirect(new URL(cleanRedirect, request.url))
+      }
+    } catch (error) {
+      console.log('🔍 OAuth processing failed:', error)
+    }
+  }
+
+  // Only perform auth lookups for protected routes to avoid stalling all requests
   const isProtected = path.startsWith('/settings') || path.startsWith('/project/')
   if (isProtected) {
     try {
@@ -49,31 +83,11 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
-  // creating a new response object with NextResponse.next() make sure to:
-  // 1. Pass the request in it, like so:
-  //    const myNewResponse = NextResponse.next({ request })
-  // 2. Copy over the cookies, like so:
-  //    myNewResponse.cookies.setAll(supabaseResponse.cookies.getAll())
-  // 3. Change the myNewResponse object to fit your needs, but avoid changing
-  //    the cookies!
-  // 4. Finally:
-  //    return myNewResponse
-  // If this is not done, you may be causing the browser and server to go out
-  // of sync and terminate the user's session prematurely!
-
   return supabaseResponse
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * Feel free to modify this pattern to include more paths.
-     */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

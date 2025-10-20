@@ -38,10 +38,13 @@ export function GoogleAnalytics() {
       return
     }
 
-    // Load Google Analytics script
+    // Load Google Analytics script with error handling
     const script = document.createElement('script')
     script.async = true
     script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`
+    script.onerror = () => {
+      console.warn('Google Analytics script failed to load - likely blocked by ad blocker')
+    }
     document.head.appendChild(script)
 
     // Initialize gtag
@@ -97,14 +100,19 @@ export function MixpanelAnalytics() {
         // Determine API host (explicit env has priority, then region hint)
         const apiHost = MIXPANEL_API_HOST || (MIXPANEL_REGION === 'EU' ? 'https://api-eu.mixpanel.com' : undefined)
 
-        // Initialize Mixpanel
-        mixpanel.default.init(MIXPANEL_TOKEN, {
-          debug: process.env.NODE_ENV === 'development',
-          track_pageview: false, // We'll handle this manually
-          ignore_dnt: true,
-          batch_requests: true,
-          api_host: apiHost,
-        })
+        // Initialize Mixpanel with error handling
+        try {
+          mixpanel.default.init(MIXPANEL_TOKEN, {
+            debug: process.env.NODE_ENV === 'development',
+            track_pageview: false, // We'll handle this manually
+            ignore_dnt: true,
+            batch_requests: true,
+            api_host: apiHost,
+          })
+        } catch (initError) {
+          console.warn('Mixpanel initialization failed - likely blocked by ad blocker:', initError)
+          return
+        }
 
         // Make it available globally for the analytics library
         window.mixpanel = mixpanel.default

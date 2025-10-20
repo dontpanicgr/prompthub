@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import { useAuth } from '@/components/auth-provider'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useOfflineDetection } from '@/hooks/use-offline-detection'
 import Sidebar from './sidebar'
 import MobileTopHeader from './mobile-top-header'
@@ -17,6 +17,7 @@ export default function MainLayoutWrapper({ children }: MainLayoutWrapperProps) 
   const { user, loading, signOut } = useAuth()
   const { isOnline } = useOfflineDetection()
   const pathname = usePathname()
+  const router = useRouter()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true) // Always start collapsed to prevent blocking
   const [isHydrated, setIsHydrated] = useState(false)
 

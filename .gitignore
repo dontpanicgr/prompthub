@@ -54,3 +54,6 @@ scripts/
 
 # build artifacts
 tsconfig.tsbuildinfo
+
+# archive folder (not tracked)
+.archive/
