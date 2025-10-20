@@ -8,6 +8,7 @@ import { testDatabaseConnection } from '@/lib/database'
 interface AuthContextType {
   user: User | null
   loading: boolean
+  signingOut: boolean
   signIn: () => Promise<void>
   signOut: () => Promise<void>
 }
@@ -15,6 +16,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
+  signingOut: false,
   signIn: async () => {},
   signOut: async () => {},
 })
@@ -22,6 +24,7 @@ const AuthContext = createContext<AuthContextType>({
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [signingOut, setSigningOut] = useState(false)
 
   const syncProfileFromAuth = async (authUser: User) => {
     try {
@@ -237,9 +240,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut()
-    if (error) {
-      console.error('Error signing out:', error)
+    try {
+      setSigningOut(true)
+      // Immediately clear user state for instant UI feedback
+      setUser(null)
+      
+      const { error } = await supabase.auth.signOut()
+      if (error) {
+        console.error('Error signing out:', error)
+        // If signout failed, we might need to restore the user state
+        // But for now, we'll keep it cleared since the user intended to sign out
+      }
+    } finally {
+      setSigningOut(false)
     }
   }
 
