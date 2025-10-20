@@ -147,16 +147,39 @@ export const MODEL_REGISTRY: Record<string, ModelInfo> = {
     description: 'Open source model via Ollama/OpenRouter',
     isManaged: false
   },
-  // OpenRouter free-tier friendly models
-  'qwen-2.5-7b-instruct': {
-    id: 'qwen/qwen-2.5-7b-instruct',
-    name: 'Qwen 2.5 7B Instruct (OpenRouter)',
+  // OpenRouter Models - Easy switching between free and paid
+  'deepseek-v3-free': {
+    id: 'deepseek/deepseek-chat-v3.1:free',
+    name: 'DeepSeek V3.1 (Free)',
     provider: 'openai_compatible',
     capabilities: { suggest: true, chat: true },
-    maxTokens: 8192,
+    maxTokens: 128000,
     inputFormat: 'text',
     outputFormat: 'text',
-    description: 'Free/low-cost model via OpenRouter',
+    description: 'FREE DeepSeek V3.1 model - 671B parameters, hybrid reasoning, $0 cost',
+    isManaged: false
+  },
+  'gpt-35-turbo-paid': {
+    id: 'openai/gpt-3.5-turbo',
+    name: 'GPT-3.5 Turbo (Paid)',
+    provider: 'openai_compatible',
+    capabilities: { suggest: true, chat: true },
+    maxTokens: 16385,
+    inputFormat: 'text',
+    outputFormat: 'text',
+    description: 'GPT-3.5 Turbo via OpenRouter - reliable, ~$0.50/1M tokens',
+    isManaged: false
+  },
+  // Default model (can be easily changed)
+  'qwen-2.5-7b-instruct': {
+    id: 'deepseek/deepseek-chat-v3.1:free',
+    name: 'DeepSeek V3.1 (Free)',
+    provider: 'openai_compatible',
+    capabilities: { suggest: true, chat: true },
+    maxTokens: 128000,
+    inputFormat: 'text',
+    outputFormat: 'text',
+    description: 'FREE DeepSeek V3.1 model - 671B parameters, hybrid reasoning, $0 cost',
     isManaged: false
   },
   'codellama': {
@@ -233,4 +256,31 @@ export function validateModel(modelId: string, capability: 'suggest' | 'chat'): 
 export function getModelDisplayName(modelId: string): string {
   const model = getModelInfo(modelId)
   return model ? model.name : modelId
+}
+
+// Model Configuration System - Easy switching between models
+export const MODEL_CONFIG = {
+  // Current active model (change this to switch models)
+  ACTIVE_MODEL: 'qwen-2.5-7b-instruct', // Points to DeepSeek V3.1 (Free)
+  
+  // Available model presets
+  PRESETS: {
+    FREE: 'deepseek-v3-free',
+    PAID: 'gpt-35-turbo-paid',
+    DEFAULT: 'qwen-2.5-7b-instruct'
+  },
+  
+  // Quick switching functions
+  switchToFree: () => MODEL_CONFIG.ACTIVE_MODEL = MODEL_CONFIG.PRESETS.FREE,
+  switchToPaid: () => MODEL_CONFIG.ACTIVE_MODEL = MODEL_CONFIG.PRESETS.PAID,
+  switchToDefault: () => MODEL_CONFIG.ACTIVE_MODEL = MODEL_CONFIG.PRESETS.DEFAULT,
+  
+  // Get current active model info
+  getActiveModel: () => getModelInfo(MODEL_CONFIG.ACTIVE_MODEL),
+  
+  // List all available models
+  getAllModels: () => Object.keys(MODEL_REGISTRY).map(key => ({
+    key,
+    ...MODEL_REGISTRY[key]
+  }))
 }

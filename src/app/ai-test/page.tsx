@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/components/auth-provider'
+import { MODEL_CONFIG, getModelDisplayName } from '@/lib/model-registry'
 
 export default function AITestPage() {
   const { user, loading } = useAuth()
@@ -21,6 +22,7 @@ export default function AITestPage() {
   const [chatResponse, setChatResponse] = useState('')
   const [loadingSuggest, setLoadingSuggest] = useState(false)
   const [loadingChat, setLoadingChat] = useState(false)
+  const [currentModel, setCurrentModel] = useState(MODEL_CONFIG.ACTIVE_MODEL)
 
   // Handle authentication redirect
   useEffect(() => {
@@ -28,6 +30,12 @@ export default function AITestPage() {
       router.push(`/login?redirect=${encodeURIComponent('/ai-test')}`)
     }
   }, [user, loading, router])
+
+  // Model switching function
+  const switchModel = (modelKey: string) => {
+    setCurrentModel(modelKey)
+    MODEL_CONFIG.ACTIVE_MODEL = modelKey
+  }
 
   // Show loading state while checking authentication
   if (loading) {
@@ -62,13 +70,18 @@ export default function AITestPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`
         },
-        // Use model registry key - API will map to correct model ID
-        body: JSON.stringify({ text, variant, model: 'qwen-2.5-7b-instruct' })
+        // Use current selected model - API will map to correct model ID
+        body: JSON.stringify({ text, variant, model: currentModel })
       })
 
       const body = await res.json()
       console.log('[ai-test] suggest status:', res.status, 'body:', body)
-      if (!res.ok) throw new Error(body?.error || 'Suggest failed')
+      if (!res.ok) {
+        if (res.status === 429) {
+          throw new Error('Rate limit exceeded. Please wait a moment and try again.')
+        }
+        throw new Error(body?.error || 'Suggest failed')
+      }
       setSuggestion(body.suggestion || '')
     } catch (e) {
       console.error('[ai-test] suggest error:', e)
@@ -82,7 +95,7 @@ export default function AITestPage() {
     } finally {
       setLoadingSuggest(false)
     }
-  }, [text, variant])
+  }, [text, variant, currentModel])
 
   const callChat = useCallback(async () => {
     try {
@@ -106,13 +119,18 @@ export default function AITestPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`
         },
-        // Use model registry key - API will map to correct model ID
-        body: JSON.stringify({ messages, model: 'qwen-2.5-7b-instruct', temperature: 0.3, stream: false })
+        // Use current selected model - API will map to correct model ID
+        body: JSON.stringify({ messages, model: currentModel, temperature: 0.3, stream: false })
       })
 
       const body = await res.json()
       console.log('[ai-test] chat status:', res.status, 'body:', body)
-      if (!res.ok) throw new Error(body?.error || 'Chat failed')
+      if (!res.ok) {
+        if (res.status === 429) {
+          throw new Error('Rate limit exceeded. Please wait a moment and try again.')
+        }
+        throw new Error(body?.error || 'Chat failed')
+      }
       setChatResponse(body.content || '')
     } catch (e) {
       console.error('[ai-test] chat error:', e)
@@ -126,7 +144,7 @@ export default function AITestPage() {
     } finally {
       setLoadingChat(false)
     }
-  }, [chatPrompt])
+  }, [chatPrompt, currentModel])
 
   return (
     <MainLayout>
@@ -135,6 +153,32 @@ export default function AITestPage() {
           <h1 className="mb-2 text-xl lg:text-2xl">AI Test</h1>
           <p className="text-muted-foreground">Use this page to test AI Suggest and Chat endpoints with detailed logs. Open DevTools to view logs.</p>
         </div>
+
+        {/* Model Switcher */}
+        <Card>
+          <CardContent className="px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-medium">Choose your model</h3>
+              </div>
+              <div className="w-48">
+                <Select value={currentModel} onValueChange={switchModel}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select model" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={MODEL_CONFIG.PRESETS.FREE}>
+                      DeepSeek V3.1 (Free)
+                    </SelectItem>
+                    <SelectItem value={MODEL_CONFIG.PRESETS.PAID}>
+                      GPT-3.5 Turbo (Paid)
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Suggest Test */}
         <Card>
