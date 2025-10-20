@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Comment } from '@/lib/database'
 import { getCommentsForPrompt } from '@/lib/database'
 import { supabase } from '@/lib/supabase'
@@ -10,9 +10,16 @@ export function useComments(promptId: string) {
   const [isInitialLoading, setIsInitialLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const fetchInProgressRef = useRef(false)
 
   const fetchComments = async (options: { initial?: boolean } = {}) => {
+    // Prevent duplicate fetches
+    if (fetchInProgressRef.current) {
+      return
+    }
+    
     try {
+      fetchInProgressRef.current = true
       const isInitial = options.initial === true
       if (isInitial) {
         setIsInitialLoading(true)
@@ -39,6 +46,7 @@ export function useComments(promptId: string) {
     } finally {
       setIsInitialLoading(false)
       setIsRefreshing(false)
+      fetchInProgressRef.current = false
     }
   }
 
@@ -59,8 +67,10 @@ export function useComments(promptId: string) {
         (payload) => {
           console.log('Comment change received:', payload)
           
-          // Refetch comments in background when any change occurs
-          fetchComments()
+          // Only refetch if it's not the initial load and we're not already refreshing
+          if (!isInitialLoading && !isRefreshing) {
+            fetchComments()
+          }
         }
       )
       .subscribe()
@@ -68,7 +78,7 @@ export function useComments(promptId: string) {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [promptId])
+  }, [promptId]) // Remove isInitialLoading and isRefreshing from dependencies to prevent re-subscription
 
   return {
     comments,

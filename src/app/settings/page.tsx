@@ -6,7 +6,7 @@ import { useAuth } from '@/components/auth-provider'
 import { useTheme } from '@/components/theme-provider'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
-import { Save, Palette, Settings as SettingsIcon, User2, Shield, Mail, Settings2, Sun, Moon, Monitor, Key, Wand2, AlertTriangle } from 'lucide-react'
+import { Save, Palette, Settings as SettingsIcon, User2, Shield, Mail, Settings2, Sun, Moon, Monitor, Key, Wand2, AlertTriangle, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -58,6 +58,9 @@ export default function SettingsPage() {
   const [newProviderType, setNewProviderType] = useState('openai')
   const [testingConnection, setTestingConnection] = useState(false)
   const [loadingProviders, setLoadingProviders] = useState(false)
+  
+  // Mobile dropdown state
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   
 
   const isEmailPasswordUser = useMemo(() => {
@@ -355,6 +358,9 @@ export default function SettingsPage() {
     { id: 'communication', label: 'Communication', icon: Mail },
     { id: 'security', label: 'Security', icon: Shield },
   ]
+
+  // Get current section info for mobile dropdown
+  const currentSection = settingsSections.find(section => section.id === activeSection)
 
   const renderSection = () => {
     switch (activeSection) {
@@ -895,7 +901,7 @@ export default function SettingsPage() {
     <MainLayout>
       <div className="w-full">
         <div className="mb-6">
-          <h1 className="mb-2">
+          <h1 className="mb-2 text-xl lg:text-2xl">
             Settings
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
@@ -903,13 +909,73 @@ export default function SettingsPage() {
           </p>
         </div>
 
+        {/* Mobile Dropdown Menu */}
+        <div className="lg:hidden mb-6">
+          <div className="relative">
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="w-full flex items-center justify-between px-4 py-3 bg-card border border-border rounded-lg text-left"
+            >
+              <div className="flex items-center gap-3">
+                {currentSection && (
+                  <>
+                    <currentSection.icon className="w-4 h-4" />
+                    <span className="font-medium">{currentSection.label}</span>
+                  </>
+                )}
+              </div>
+              <ChevronDown 
+                className={`w-4 h-4 transition-transform ${isMobileMenuOpen ? 'rotate-180' : ''}`} 
+              />
+            </button>
+            
+            {isMobileMenuOpen && (
+              <>
+                {/* Click outside to close overlay */}
+                <div 
+                  className="fixed inset-0 z-40"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                />
+                <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-card border border-border rounded-lg shadow-lg">
+                  <div className="p-2">
+                    {settingsSections.map((section) => {
+                      const Icon = section.icon
+                      const isActive = activeSection === section.id
+                      
+                      return (
+                        <button
+                          key={section.id}
+                          onClick={() => {
+                            setActiveSection(section.id)
+                            setIsMobileMenuOpen(false)
+                          }}
+                          className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                            isActive
+                              ? 'bg-nav-active text-nav-foreground'
+                              : 'text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground'
+                          }`}
+                        >
+                          <Icon className="w-4 h-4" />
+                          {section.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Settings Navigation */}
-          <PageMenu
-            items={settingsSections}
-            activeItem={activeSection}
-            onItemClick={setActiveSection}
-          />
+          {/* Desktop Settings Navigation */}
+          <div className="hidden lg:block">
+            <PageMenu
+              items={settingsSections}
+              activeItem={activeSection}
+              onItemClick={setActiveSection}
+            />
+          </div>
 
           {/* Settings Content */}
           <div className="lg:col-span-3">

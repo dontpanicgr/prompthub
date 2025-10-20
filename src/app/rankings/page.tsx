@@ -55,7 +55,7 @@ export default function RankingsPage() {
     <MainLayout>
       <div className="w-full">
         <div className="mb-6">
-          <h1 className="mb-2">Rankings</h1>
+          <h1 className="mb-2 text-xl lg:text-2xl">Rankings</h1>
           <p className="text-gray-600 dark:text-gray-400 mb-6">Top creators by likes and bookmarks</p>
         </div>
 
@@ -77,13 +77,16 @@ export default function RankingsPage() {
               >
                 {/* Left: rank badge + avatar + user name */}
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-8 h-8 rounded-lg bg-foreground text-background text-sm font-semibold grid place-items-center">
+                  <div className="w-8 h-8 rounded-lg bg-foreground text-background text-sm font-semibold flex items-center justify-center">
                     {idx + 1}
                   </div>
                   {/* User Avatar */}
-                  <div className="rounded-full bg-muted flex items-center justify-center text-muted-foreground w-16 h-16 text-xl shrink-0">
-                    <span className="font-semibold">{(row.creator.name || 'U').charAt(0).toUpperCase()}</span>
-                  </div>
+                  <Avatar 
+                    src={row.creator.avatar_url} 
+                    alt={row.creator.name || 'Unknown'} 
+                    size="md"
+                    className="shrink-0"
+                  />
                   <div className="min-w-0">
                     <div className="truncate font-medium text-card-foreground flex items-center">
                       <span className="truncate">{row.creator.name || 'Unknown'}</span>

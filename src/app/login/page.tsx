@@ -83,7 +83,7 @@ function LoginContent() {
         <div className="bg-card text-card-foreground rounded-2xl p-8 border border-border">
           {/* Header */}
           <div className="text-center mb-6">
-            <h1 className="mb-2">
+            <h1 className="mb-2 text-xl lg:text-2xl">
               Welcome back
             </h1>
             <p className="text-gray-600 dark:text-gray-400">

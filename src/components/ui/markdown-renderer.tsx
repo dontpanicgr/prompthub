@@ -89,7 +89,7 @@ export default function MarkdownRenderer({ content, className = '' }: MarkdownRe
                     {copied ? 'Copied' : 'Copy'}
                   </button>
                 </Tooltip>
-                <pre ref={preRef} className="bg-secondary rounded-sm" {...props}>
+                <pre ref={preRef} className="bg-secondary rounded-sm overflow-x-auto whitespace-pre" {...props}>
                   {children}
                 </pre>
               </div>

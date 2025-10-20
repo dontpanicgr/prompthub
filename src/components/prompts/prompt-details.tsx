@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { ModelBadge } from '@/components/ui/model-badge'
 import { CategoryBadge } from '@/components/ui/category-badge'
 import { PrivateBadge } from '@/components/ui/private-badge'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -18,6 +18,32 @@ const MarkdownRenderer = dynamic(() => import('@/components/ui/markdown-renderer
   ssr: false,
   // Avoid a second loading state; the page-level loader already handles initial load
   loading: () => null
+})
+
+const CommentList = dynamic(() => import('@/components/comments/comment-list'), {
+  ssr: false,
+  loading: () => (
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold">Comments</h3>
+      <div className="space-y-3">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="bg-card rounded-lg border border-border p-4 animate-pulse">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 rounded-full bg-muted"></div>
+              <div className="space-y-1">
+                <div className="h-4 w-24 bg-muted rounded"></div>
+                <div className="h-3 w-16 bg-muted rounded"></div>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="h-4 w-full bg-muted rounded"></div>
+              <div className="h-4 w-3/4 bg-muted rounded"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 })
 
 interface Prompt {
@@ -55,6 +81,15 @@ export default function PromptDetails({ prompt }: PromptDetailsProps) {
   const [isBookmarked, setIsBookmarked] = useState(Boolean(prompt.is_bookmarked))
   const [likeCount, setLikeCount] = useState(prompt.like_count || 0)
   const [bookmarkCount, setBookmarkCount] = useState(prompt.bookmark_count || 0)
+  const [showComments, setShowComments] = useState(false)
+
+  // Show comments after a short delay to ensure main content is rendered
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowComments(true)
+    }, 100)
+    return () => clearTimeout(timer)
+  }, [])
   const formatDateShort = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
@@ -193,7 +228,7 @@ export default function PromptDetails({ prompt }: PromptDetailsProps) {
           onCopy={handleCopy}
           onShare={handleShare}
           onDelete={handleDelete}
-          triggerClassName="w-9 h-9 inline-flex items-center justify-center rounded-md bg-card"
+          triggerClassName="w-9 h-9 inline-flex items-center justify-center rounded-md bg-card border border-border"
         />
       </div>
       <div className="bg-card rounded-lg border border-border p-4 mb-6">
@@ -201,13 +236,9 @@ export default function PromptDetails({ prompt }: PromptDetailsProps) {
       </div>
 
       <div className="mt-6">
-        {/* Client-only comments */}
-        {typeof window !== 'undefined' && (
-          // Dynamically import to keep this client-only
-          (() => {
-            const DynamicCommentList = dynamic(() => import('@/components/comments/comment-list'), { ssr: false })
-            return <DynamicCommentList promptId={prompt.id} currentUserId={user?.id} />
-          })()
+        {/* Client-only comments - only load after main content is ready */}
+        {showComments && (
+          <CommentList promptId={prompt.id} currentUserId={user?.id} />
         )}
       </div>
     </div>

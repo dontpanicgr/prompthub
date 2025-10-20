@@ -432,7 +432,7 @@ export default function UserPage({ params }: UserPageProps) {
         <div className="mb-0">
           <div className="-mx-4 lg:mx-0">
             <div className="bg-background lg:bg-transparent">
-              <div className="flex items-start justify-between p-4 gap-4">
+              <div className="flex items-start justify-between mb-4 gap-4">
             {/* Left: Avatar + details */}
             <div className="flex items-start gap-4">
               <div className="rounded-full bg-muted flex items-center justify-center text-muted-foreground w-16 h-16 text-xl shrink-0">

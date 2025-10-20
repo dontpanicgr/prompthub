@@ -51,7 +51,7 @@ export default function UserNewTestPage() {
                 <span className="font-semibold">P</span>
               </div>
               <div>
-                <h1 className="mb-2">Publika _</h1>
+                <h1 className="mb-2 text-xl lg:text-2xl">Publika _</h1>
                 <p className="text-sm text-muted-foreground mb-2">
                   I went to the woods because I wished to live deliberately, to front only the essential facts of life, and see if I could not learn what it had to teach, and not, when I came to die, discover that I had not lived. I did not wish to live what was not life, living is so dear; nor did I wish to practise resignation, unless it was quite necessary.
                 </p>

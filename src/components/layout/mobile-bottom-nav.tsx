@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTheme } from '@/components/theme-provider'
 import { useAuth } from '@/components/auth-provider'
 import { 
@@ -14,8 +14,49 @@ import {
   Settings as SettingsIcon,
   Moon,
   Sun,
-  LogOut
+  LogOut,
+  User
 } from 'lucide-react'
+
+// Configuration constants
+const NAV_CONFIG = {
+  // Dimensions
+  height: '56px', // Updated height
+  containerHeight: 'h-14', // Tailwind class for container
+  
+  // Spacing
+  margin: 'm-3',
+  padding: 'p-2',
+  itemPadding: 'py-2', // Reduced padding for better centering
+  
+  // Visual styling
+  borderRadius: 'rounded-xl',
+  backdropBlur: 'backdrop-blur-md',
+  shadow: 'shadow-md',
+  
+  // Z-index layers
+  navZIndex: 'z-50',
+  overlayZIndex: 'z-[60]',
+  sheetZIndex: 'z-[61]',
+  
+  // Icon size
+  iconSize: 20,
+  
+  // Gradient colors (you can customize these)
+  gradientColors: {
+    primary: 'rgb(61 3 3)',
+    secondary: 'rgb(27 17 56)',
+    angle: '45deg'
+  }
+} as const
+
+// Navigation items configuration
+const NAV_ITEMS = [
+  { href: '/', label: 'Discover', icon: Compass },
+  { href: '/trending', label: 'Trending', icon: TrendingUp },
+  { href: '/add', label: 'Add', icon: Plus },
+  { href: '/rankings', label: 'Rankings', icon: Award },
+] as const
 
 export default function MobileBottomNav() {
   const pathname = usePathname()
@@ -24,17 +65,21 @@ export default function MobileBottomNav() {
   const { user, signOut } = useAuth()
   const [isSheetOpen, setIsSheetOpen] = useState(false)
 
-  const navItems = [
-    { href: '/', label: 'Discover', icon: Compass },
-    { href: '/trending', label: 'Trending', icon: TrendingUp },
-    { href: '/add', label: 'Add', icon: Plus },
-    { href: '/rankings', label: 'Rankings', icon: Award },
-  ]
+  // Close menu when pathname changes (navigation occurs)
+  useEffect(() => {
+    setIsSheetOpen(false)
+  }, [pathname])
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-card backdrop-blur-md border border-border rounded-xl m-3 shadow-md transition-colors">
-      <div className="flex items-center justify-around h-16 py-1 px-2">
-        {navItems.map((item) => {
+    <nav 
+      className={`lg:hidden fixed bottom-0 left-0 right-0 ${NAV_CONFIG.navZIndex} bg-card ${NAV_CONFIG.backdropBlur} border border-border ${NAV_CONFIG.borderRadius} ${NAV_CONFIG.margin} ${NAV_CONFIG.shadow} transition-colors`}
+      style={{
+        background: `linear-gradient(${NAV_CONFIG.gradientColors.angle}, ${NAV_CONFIG.gradientColors.primary}, ${NAV_CONFIG.gradientColors.secondary})`,
+        height: NAV_CONFIG.height
+      }}
+    >
+      <div className={`flex items-center ${NAV_CONFIG.containerHeight} ${NAV_CONFIG.padding}`}>
+        {NAV_ITEMS.map((item) => {
           const Icon = item.icon
           const isActive = item.href === '/' 
             ? (pathname === '/' || pathname === '/discover')
@@ -45,46 +90,79 @@ export default function MobileBottomNav() {
               key={item.href}
               href={item.href}
               className={`
-                flex flex-col items-center justify-center gap-1 px-3 py-1 rounded-lg text-xs font-medium transition-colors min-w-0 flex-1
+                flex items-center justify-center ${NAV_CONFIG.itemPadding} rounded-lg text-xs font-medium transition-colors flex-1 h-full
                 ${isActive 
-                  ? 'bg-nav-active text-nav-foreground' 
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'bg-white/15 text-white' 
+                  : 'text-white/70 hover:bg-white/10 hover:text-white'
                 }
               `}
             >
-              <Icon size={20} className="flex-shrink-0" />
-              <span className="truncate">{item.label}</span>
+              <Icon size={NAV_CONFIG.iconSize} className="flex-shrink-0" />
             </Link>
           )
         })}
-        {/* Ellipsis menu trigger */}
+        {/* Avatar or More menu trigger */}
         <button
-          aria-label="More options"
-          className="flex flex-col items-center justify-center gap-1 px-3 py-1 rounded-lg text-xs font-medium transition-colors min-w-0 flex-1 text-muted-foreground hover:text-foreground"
+          aria-label={user ? "User menu" : "More options"}
+          className={`flex items-center justify-center ${NAV_CONFIG.itemPadding} rounded-lg text-xs font-medium transition-colors flex-1 h-full ${
+            user && (pathname === `/user/${user.id}` || pathname.startsWith('/me'))
+              ? 'bg-white/15 text-white'
+              : 'text-white/70 hover:bg-white/10 hover:text-white'
+          }`}
           onClick={() => setIsSheetOpen(prev => !prev)}
           aria-pressed={isSheetOpen}
         >
-          <MoreHorizontal size={20} className="flex-shrink-0" />
-          <span className="truncate">More</span>
+          {user ? (
+            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground text-sm shrink-0">
+              <span className="font-semibold">
+                {(() => {
+                  const displayName = (user as any)?.user_metadata?.name || user.email || 'User'
+                  return displayName?.charAt(0)?.toUpperCase() || 'U'
+                })()}
+              </span>
+            </div>
+          ) : (
+            <MoreHorizontal size={NAV_CONFIG.iconSize} className="flex-shrink-0" />
+          )}
         </button>
       </div>
 
       {/* Bottom sheet */}
       {isSheetOpen && (
         <>
-          <div className="fixed inset-x-0 bottom-16 z-[61]">
-            <div className="mx-2 mb-2 rounded-xl border border-border bg-background">
+          {/* Click outside to close overlay */}
+          <div 
+            className={`fixed inset-0 ${NAV_CONFIG.overlayZIndex}`}
+            onClick={() => setIsSheetOpen(false)}
+          />
+          <div className={`fixed inset-x-0 bottom-16 ${NAV_CONFIG.sheetZIndex}`}>
+            <div className={`${NAV_CONFIG.borderRadius} border border-border bg-background`}>
               <div className="p-2">
-                <button
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-base text-foreground hover:bg-muted transition-colors"
-                  onClick={() => {
-                    setIsSheetOpen(false)
-                    router.push('/settings')
-                  }}
-                >
-                  <SettingsIcon size={18} />
-                  Settings
-                </button>
+                {/* Only show Settings and Profile for logged in users */}
+                {user && (
+                  <>
+                    <button
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-base text-foreground hover:bg-muted transition-colors"
+                      onClick={() => {
+                        setIsSheetOpen(false)
+                        router.push(`/user/${user.id}`)
+                      }}
+                    >
+                      <User size={18} />
+                      Profile
+                    </button>
+                    <button
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-base text-foreground hover:bg-muted transition-colors"
+                      onClick={() => {
+                        setIsSheetOpen(false)
+                        router.push('/settings')
+                      }}
+                    >
+                      <SettingsIcon size={18} />
+                      Settings
+                    </button>
+                  </>
+                )}
                 <button
                   className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-base text-foreground hover:bg-muted transition-colors"
                   onClick={() => {
@@ -107,7 +185,18 @@ export default function MobileBottomNav() {
                     <LogOut size={18} />
                     Sign Out
                   </button>
-                ) : null}
+                ) : (
+                  <button
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-base text-foreground hover:bg-muted transition-colors"
+                    onClick={() => {
+                      setIsSheetOpen(false)
+                      router.push('/login?redirect=/')
+                    }}
+                  >
+                    <LogOut size={18} />
+                    Sign In
+                  </button>
+                )}
               </div>
             </div>
           </div>

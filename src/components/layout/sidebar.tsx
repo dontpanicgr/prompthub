@@ -174,12 +174,17 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
 
       {/* Sidebar - collapsible - Hidden on mobile */}
       <aside className={`
-        hidden lg:block fixed inset-y-0 left-0 z-40 bg-background text-foreground border-r border-border
-        h-screen overflow-hidden
+        hidden lg:block fixed left-0 z-40 text-foreground
+        overflow-hidden m-3 rounded-xl
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         ${isCollapsed ? 'w-16 max-w-16 min-w-16 cursor-pointer' : 'w-64 max-w-64 min-w-64'}
-        ${isInitialized ? 'transform transition-[width,transform] duration-200 ease-in-out' : ''}
+        transition-all duration-300 ease-in-out
       `}
+        style={{
+          background: 'linear-gradient(45deg, rgb(61 3 3), rgb(27 17 56))',
+          backdropFilter: 'blur(12px)',
+          height: 'calc(-24px + 100vh)'
+        }}
         onClick={(e) => {
           // Only expand if clicking on empty areas (not on interactive elements)
           if (isCollapsed && !isOpen) {
@@ -197,13 +202,13 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
           }
         }}
       >
-        <div className="flex flex-col h-screen">
+        <div className="flex flex-col h-full">
           {/* Brand - Fixed at top */}
-          <div className="flex-shrink-0 p-4 border-b border-border flex items-center justify-between transition-colors">
+          <div className="flex-shrink-0 p-4 flex items-center justify-between transition-colors">
             <Link 
               href="/" 
               data-navigation="true"
-              className={`flex items-center ${isCollapsed ? 'gap-0' : 'gap-3'} group relative`}
+              className={`flex items-center ${isCollapsed ? 'gap-0' : 'gap-3'} group relative transition-all duration-300 ease-in-out`}
               onClick={(e) => {
                 if (isCollapsed) {
                   e.preventDefault()
@@ -216,15 +221,15 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
               aria-label="Go to home"
             >
               <div className="relative w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                <span className={`text-white font-bold text-sm ${isCollapsed ? 'opacity-100 group-hover:opacity-0 transition-opacity' : ''}`}>Lx</span>
+                <span className={`text-white font-bold text-sm transition-all duration-300 ease-in-out ${isCollapsed ? 'opacity-100 group-hover:opacity-0' : ''}`}>Lx</span>
                 {isCollapsed && (
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out">
                     <PanelRightClose size={16} className="text-white" />
                   </div>
                 )}
               </div>
               {!isCollapsed && (
-                <span className="text-xl font-bold text-gray-900 dark:text-white">
+                <span className="text-xl font-bold text-white transition-all duration-300 ease-in-out">
                   Lexee
                 </span>
               )}
@@ -239,16 +244,18 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
                 title="Collapse sidebar"
                 aria-label="Collapse sidebar"
               >
-                <PanelLeftClose size={16} className="text-gray-500 dark:text-gray-400" />
+                <PanelLeftClose size={16} className="text-white/70" />
               </button>
             )}
           </div>
 
           {/* Navigation - Flexible content */}
-          <nav className={`flex-1 space-y-1 overflow-y-auto overflow-x-hidden p-3`}>
+          <nav className={`flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-3 py-0 min-h-0`}>
             {navItems.map((item) => {
               const Icon = item.icon
-              const isActive = item.href.includes('/user/') ? pathname?.startsWith('/user/') : (pathname === item.href)
+              const isActive = item.href.includes('/user/') 
+                ? (pathname === `/user/${authUser?.id}`) 
+                : (pathname === item.href)
 
               return (
                 <Link
@@ -256,12 +263,12 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
                   href={item.href}
                   data-navigation="true"
                   className={`
-                    flex items-center ${isCollapsed ? 'justify-center px-1 w-10' : 'gap-3 px-3 w-full'} h-10 rounded-lg text-sm font-medium transition-colors group relative
+                    flex items-center ${isCollapsed ? 'justify-center px-1 w-10' : 'gap-3 px-3 w-full'} h-10 rounded-lg text-sm font-medium transition-all duration-300 ease-in-out group relative
                     ${isActive
-                      ? 'bg-nav-active text-nav-foreground'
+                      ? 'bg-white/15 text-white'
                       : isCollapsed 
-                        ? 'text-muted-foreground hover:bg-nav-active hover:text-nav-foreground'
-                        : 'text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground'
+                        ? 'text-white/70 hover:bg-white/15 hover:text-white'
+                        : 'text-white/70 hover:bg-white/10 hover:text-white'
                     }
                   `}
                   onClick={(e) => {
@@ -273,7 +280,7 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
                 >
                   <Icon size={20} className="flex-shrink-0" />
                   {!isCollapsed && (
-                    <span className="truncate">{item.label}</span>
+                    <span className="truncate transition-all duration-300 ease-in-out">{item.label}</span>
                   )}
                   {isCollapsed && (
                     <div className="absolute left-full ml-3 px-3 py-1.5 bg-gray-900 text-white text-sm rounded-md  opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 dark:bg-gray-700">
@@ -286,7 +293,7 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
           </nav>
 
           {/* Sidebar Footer - Fixed at bottom */}
-          <div className="flex-shrink-0 p-3 border-t border-border transition-colors">
+          <div className="flex-shrink-0 p-3 transition-colors">
             <div className="space-y-2">
               {/* Theme Button */}
               <button
@@ -295,12 +302,12 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
                   e.stopPropagation()
                   toggleTheme()
                 }}
-                className={`${isCollapsed ? 'w-10' : 'w-full'} flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-3 px-3'} h-10 text-sm font-medium text-muted-foreground ${isCollapsed ? 'hover:bg-nav-active hover:text-nav-foreground' : 'hover:bg-nav-hover hover:text-nav-foreground'} rounded-lg transition-colors group relative`}
+                className={`${isCollapsed ? 'w-10' : 'w-full'} flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-3 px-3'} h-10 text-sm font-medium text-white/70 ${isCollapsed ? 'hover:bg-white/15 hover:text-white' : 'hover:bg-white/10 hover:text-white'} rounded-lg transition-all duration-300 ease-in-out group relative`}
                 title={isCollapsed ? (theme === 'dark' ? 'Turn lights on' : 'Turn lights off') : undefined}
               >
                 {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
                 {!isCollapsed && (
-                  <span>{theme === 'dark' ? 'Lights on' : 'Lights off'}</span>
+                  <span className="transition-all duration-300 ease-in-out">{theme === 'dark' ? 'Lights on' : 'Lights off'}</span>
                 )}
                 {isCollapsed && (
                   <div className="absolute left-full ml-3">
@@ -323,14 +330,14 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
                       setUserButtonRect(rect)
                       setIsUserMenuOpen(!isUserMenuOpen)
                     }}
-                    className={`${isCollapsed ? 'w-10' : 'w-full'} flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-2 px-1'} h-10 text-sm font-medium text-muted-foreground ${isCollapsed ? 'hover:bg-nav-active hover:text-nav-foreground' : 'hover:bg-nav-hover hover:text-nav-foreground'} rounded-lg transition-colors group relative`}
+                    className={`${isCollapsed ? 'w-10' : 'w-full'} flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-2 px-1'} h-10 text-sm font-medium text-white/70 ${isCollapsed ? 'hover:bg-white/15 hover:text-white' : 'hover:bg-white/10 hover:text-white'} rounded-lg transition-all duration-300 ease-in-out group relative`}
                     title={isCollapsed ? 'User menu' : undefined}
                   >
-                    <div className="rounded-full bg-muted flex items-center justify-center text-muted-foreground w-8 h-8 text-sm shrink-0">
+                    <div className="rounded-full bg-white/20 flex items-center justify-center text-white w-8 h-8 text-sm shrink-0">
                       <span className="font-semibold">{user.name?.charAt(0)?.toUpperCase() || 'U'}</span>
                     </div>
                     {!isCollapsed && (
-                      <span className="truncate">{user.name}</span>
+                      <span className="truncate transition-all duration-300 ease-in-out">{user.name}</span>
                     )}
                     {isCollapsed && (
                       <div className="absolute left-full ml-3 px-3 py-1.5 bg-gray-900 text-white text-sm rounded-md  opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 dark:bg-gray-700">
@@ -347,11 +354,11 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
                     e.stopPropagation()
                     handleSignIn()
                   }}
-                  className={`${isCollapsed ? 'w-10' : 'w-full'} flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-2 px-3'} h-10 text-sm font-medium text-muted-foreground ${isCollapsed ? 'hover:bg-nav-active hover:text-nav-foreground' : 'hover:bg-nav-hover hover:text-nav-foreground'} rounded-lg transition-colors group relative`}
+                  className={`${isCollapsed ? 'w-10' : 'w-full'} flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-2 px-3'} h-10 text-sm font-medium text-white/70 ${isCollapsed ? 'hover:bg-white/15 hover:text-white' : 'hover:bg-white/10 hover:text-white'} rounded-lg transition-all duration-300 ease-in-out group relative`}
                   title={isCollapsed ? 'Sign in' : undefined}
                 >
                   <LogIn size={18} />
-                  {!isCollapsed && <span>Sign In</span>}
+                  {!isCollapsed && <span className="transition-all duration-300 ease-in-out">Sign In</span>}
                   {isCollapsed && (
                     <div className="absolute left-full ml-3 px-3 py-1.5 bg-gray-900 text-white text-sm rounded-md  opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 dark:bg-gray-700">
                       Sign In

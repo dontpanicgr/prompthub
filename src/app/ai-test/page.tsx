@@ -89,7 +89,7 @@ export default function AITestPage() {
     <MainLayout>
       <div className="max-w-4xl mx-auto py-6 space-y-8">
         <div>
-          <h1 className="mb-2">AI Test</h1>
+          <h1 className="mb-2 text-xl lg:text-2xl">AI Test</h1>
           <p className="text-muted-foreground">Use this page to test AI Suggest and Chat endpoints with detailed logs. Open DevTools to view logs.</p>
         </div>
 

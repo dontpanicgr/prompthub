@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  devIndicators: false,
   eslint: {
     // Disable ESLint during build to focus on functionality
     ignoreDuringBuilds: true,

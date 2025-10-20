@@ -18,8 +18,7 @@ export default function PromptPage({ params }: PromptPageProps) {
   const [prompt, setPrompt] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const { user } = useAuth()
-  const fetchedPublicRef = useRef<string | null>(null)
-  const initialLoadCompleteRef = useRef(false)
+  const fetchInProgressRef = useRef(false)
 
   const PromptDetails = dynamic(() => import('@/components/prompts/prompt-details'), {
     ssr: false,
@@ -29,63 +28,83 @@ export default function PromptPage({ params }: PromptPageProps) {
   // Fetch immediately using route param; then refresh auth flags in background when user loads
   useEffect(() => {
     let isActive = true
-    // Guard against StrictMode double-invoke and subsequent re-renders
-    if (fetchedPublicRef.current === id && initialLoadCompleteRef.current) {
+    
+    // Prevent duplicate fetches in StrictMode
+    if (fetchInProgressRef.current) {
       return () => { isActive = false }
     }
-    fetchedPublicRef.current = id
+    fetchInProgressRef.current = true
 
-    const fetchPublicFirst = async () => {
+    const fetchPromptData = async () => {
       try {
-        // Fetch minimal, cached prompt data for fast first paint
-        const res = await fetch(`/api/prompts/${id}`, { cache: 'force-cache' })
-        if (!res.ok) {
+        // Fetch prompt data with user context if available
+        const promptData = user 
+          ? await getPromptById(id, user.id)
+          : await getPromptById(id)
+        
+        if (!promptData) {
           notFound()
           return
         }
-        const minimal = await res.json()
-        if (isActive) setPrompt(minimal)
-        // Fetch counts in background and merge
-        fetch(`/api/prompts/${id}/counts`, { cache: 'force-cache' })
-          .then(r => r.ok ? r.json() : null)
-          .then(counts => {
-            if (!counts) return
-            if (isActive) setPrompt((prev: any) => prev ? { ...prev, like_count: counts.like_count, bookmark_count: counts.bookmark_count } : prev)
-          })
+        
+        if (isActive) {
+          setPrompt(promptData)
+          setLoading(false)
+        }
       } catch (error) {
         console.error('Error fetching prompt:', error)
-        notFound()
+        if (isActive) {
+          notFound()
+        }
       } finally {
         if (isActive) {
-          setLoading(false)
-          initialLoadCompleteRef.current = true
+          fetchInProgressRef.current = false
         }
       }
     }
 
-    fetchPublicFirst()
+    fetchPromptData()
 
-    return () => { isActive = false }
-  }, [id])
-
-  // When user becomes available, refresh like/bookmark visibility in background
-  useEffect(() => {
-    let cancelled = false
-    const refreshWithAuth = async () => {
-      if (!user) return
-      getPromptById(id, user.id).then((data) => {
-        if (!cancelled && data) setPrompt(data)
-      }).catch(() => {})
+    return () => { 
+      isActive = false
+      fetchInProgressRef.current = false
     }
-    refreshWithAuth()
-    return () => { cancelled = true }
-  }, [user, id])
+  }, [id, user]) // Include user in dependencies to refetch when user changes
 
   if (loading) {
     return (
       <MainLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-muted-foreground"></div>
+        <div className="w-full max-w-4xl mx-auto">
+          {/* Skeleton for prompt details */}
+          <div className="space-y-4">
+            {/* Categories and metadata skeleton */}
+            <div className="flex items-center gap-2">
+              <div className="h-6 w-20 bg-muted rounded animate-pulse"></div>
+              <div className="h-6 w-16 bg-muted rounded animate-pulse"></div>
+              <div className="h-6 w-24 bg-muted rounded animate-pulse"></div>
+            </div>
+            
+            {/* Title skeleton */}
+            <div className="h-8 w-3/4 bg-muted rounded animate-pulse"></div>
+            
+            {/* Action buttons skeleton */}
+            <div className="flex items-center gap-2">
+              <div className="h-9 w-20 bg-muted rounded animate-pulse"></div>
+              <div className="h-9 w-16 bg-muted rounded animate-pulse"></div>
+              <div className="h-9 w-20 bg-muted rounded animate-pulse"></div>
+              <div className="h-9 w-9 bg-muted rounded animate-pulse"></div>
+            </div>
+            
+            {/* Content skeleton */}
+            <div className="bg-card rounded-lg border border-border p-4">
+              <div className="space-y-3">
+                <div className="h-4 w-full bg-muted rounded animate-pulse"></div>
+                <div className="h-4 w-5/6 bg-muted rounded animate-pulse"></div>
+                <div className="h-4 w-4/5 bg-muted rounded animate-pulse"></div>
+                <div className="h-4 w-3/4 bg-muted rounded animate-pulse"></div>
+              </div>
+            </div>
+          </div>
         </div>
       </MainLayout>
     )

@@ -51,9 +51,9 @@ export default function DiscoverPage() {
 	return (
 		<div className="w-full">
 			<div className="mb-6">
-				<h1 className="mb-2">
-					Discover Prompts
-				</h1>
+        <h1 className="mb-2 text-xl lg:text-2xl">
+          Discover Prompts
+        </h1>
 				<p className="text-gray-600 dark:text-gray-400 mb-6">
 					Discover and explore prompts from our community
 				</p>
