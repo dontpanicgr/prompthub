@@ -6,7 +6,7 @@ import { getCreatorsLeaderboard, type LeaderboardCreator } from '@/lib/database'
 import { Heart, Bookmark } from 'lucide-react'
 import Avatar from '@/components/ui/avatar'
 
-export default function LeaderboardPage() {
+export default function RankingsPage() {
   const [creators, setCreators] = useState<LeaderboardCreator[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -43,7 +43,7 @@ export default function LeaderboardPage() {
         const data = await getCreatorsLeaderboard()
         setCreators(data)
       } catch (e) {
-        console.error('Failed to load leaderboard', e)
+        console.error('Failed to load rankings', e)
       } finally {
         setLoading(false)
       }
@@ -114,5 +114,3 @@ export default function LeaderboardPage() {
     </MainLayout>
   )
 }
-
-

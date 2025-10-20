@@ -115,12 +115,9 @@ export default function CommentItem({
         {/* Comment Header */}
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-2">
-            <Avatar
-              src={comment.user.avatar_url}
-              alt={comment.user.name}
-              size="sm"
-              fallback={comment.user.name.charAt(0).toUpperCase()}
-            />
+            <div className="rounded-full bg-muted flex items-center justify-center text-muted-foreground w-16 h-16 text-xl shrink-0">
+              <span className="font-semibold">{comment.user.name?.charAt(0)?.toUpperCase() || 'U'}</span>
+            </div>
             <div>
               <div className="font-medium text-base">{comment.user.name}</div>
               <div className="text-sm text-muted-foreground">

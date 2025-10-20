@@ -7,12 +7,18 @@ import { supabase } from '@/lib/supabase'
 
 export function useComments(promptId: string) {
   const [comments, setComments] = useState<Comment[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [isInitialLoading, setIsInitialLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchComments = async () => {
+  const fetchComments = async (options: { initial?: boolean } = {}) => {
     try {
-      setIsLoading(true)
+      const isInitial = options.initial === true
+      if (isInitial) {
+        setIsInitialLoading(true)
+      } else {
+        setIsRefreshing(true)
+      }
       setError(null)
       const fetchedComments = await getCommentsForPrompt(promptId)
       // Map soft-deleted comments to a placeholder client-side
@@ -31,12 +37,13 @@ export function useComments(promptId: string) {
       console.error('Error fetching comments:', err)
       setError('Failed to load comments')
     } finally {
-      setIsLoading(false)
+      setIsInitialLoading(false)
+      setIsRefreshing(false)
     }
   }
 
   useEffect(() => {
-    fetchComments()
+    fetchComments({ initial: true })
 
     // Set up real-time subscription
     const channel = supabase
@@ -52,7 +59,7 @@ export function useComments(promptId: string) {
         (payload) => {
           console.log('Comment change received:', payload)
           
-          // Refetch comments when any change occurs
+          // Refetch comments in background when any change occurs
           fetchComments()
         }
       )
@@ -65,7 +72,8 @@ export function useComments(promptId: string) {
 
   return {
     comments,
-    isLoading,
+    isInitialLoading,
+    isRefreshing,
     error,
     refetch: fetchComments,
   }

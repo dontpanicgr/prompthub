@@ -16,7 +16,7 @@ import {
   X,
   ChevronDown,
   Compass,
-  Trophy,
+  Award,
   LogIn,
   Wrench,
   Eye,
@@ -39,11 +39,11 @@ export default function Navigation() {
   const { user, signOut } = useAuth()
 
   const navItems = [
-    { href: '/create', label: 'New Prompt', icon: Plus, highlight: true },
-    { href: '/', label: 'Browse', icon: Compass },
+    { href: '/add', label: 'Add Prompt', icon: Plus, highlight: true },
+  { href: '/discover', label: 'Discover', icon: Compass },
     { href: '/trending', label: 'Trending', icon: TrendingUp },
-    { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
-    { href: user ? `/user/${user.id}` : '/login', label: 'My Prompts', icon: User },
+    { href: '/rankings', label: 'Rankings', icon: Award },
+    { href: user ? `/user/${user.id}` : '/login', label: 'Profile', icon: User },
   ]
 
   const adminItems = [
@@ -182,12 +182,9 @@ export default function Navigation() {
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                     className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted transition-colors"
                   >
-                    <Avatar
-                      src={user.user_metadata?.avatar_url}
-                      alt={user.user_metadata?.name || 'User'}
-                      size="sm"
-                      fallback={user.user_metadata?.name?.charAt(0)?.toUpperCase() || 'U'}
-                    />
+                    <div className="rounded-full bg-muted flex items-center justify-center text-muted-foreground w-16 h-16 text-xl shrink-0">
+                      <span className="font-semibold">{(user.user_metadata?.name || user.email || 'U').charAt(0).toUpperCase()}</span>
+                    </div>
                     <span className="text-sm font-medium text-foreground">
                       {user.user_metadata?.name || user.email?.split('@')[0] || 'User'}
                     </span>

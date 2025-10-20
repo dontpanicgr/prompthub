@@ -7,7 +7,6 @@ import { useOfflineDetection } from '@/hooks/use-offline-detection'
 import Sidebar from './sidebar'
 import MobileTopHeader from './mobile-top-header'
 import MobileBottomNav from './mobile-bottom-nav'
-import MobileDrawer from './mobile-drawer'
 import EmailVerificationBanner from '@/components/ui/email-verification-banner'
 
 interface MainLayoutWrapperProps {
@@ -19,20 +18,13 @@ export default function MainLayoutWrapper({ children }: MainLayoutWrapperProps) 
   const { isOnline } = useOfflineDetection()
   const pathname = usePathname()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true) // Always start collapsed to prevent blocking
-  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false)
   const [isHydrated, setIsHydrated] = useState(false)
 
   const handleSignOut = useCallback(async () => {
     await signOut()
   }, [signOut])
 
-  const handleMobileMenuClick = useCallback(() => {
-    setIsMobileDrawerOpen(true)
-  }, [])
-
-  const handleMobileDrawerClose = useCallback(() => {
-    setIsMobileDrawerOpen(false)
-  }, [])
+  // Drawer removed
 
   // Handle hydration and restore sidebar state asynchronously
   useEffect(() => {
@@ -99,18 +91,12 @@ export default function MainLayoutWrapper({ children }: MainLayoutWrapperProps) 
       <Sidebar user={sidebarUser} onSignOut={handleSignOut} />
       
       {/* Mobile Top Header */}
-      <MobileTopHeader onMenuClick={handleMobileMenuClick} />
+      <MobileTopHeader />
       
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav />
       
-      {/* Mobile Drawer */}
-      <MobileDrawer 
-        isOpen={isMobileDrawerOpen} 
-        onClose={handleMobileDrawerClose} 
-      />
-      
-      <main className={`bg-background min-h-screen lg:pt-0 pt-16 pb-20 lg:pb-0 transition-colors duration-150 ease-out ${sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}>
+      <main className={`bg-background min-h-screen lg:pt-0 pt-16 pb-20 lg:pb-0 transition-colors transition-[margin] duration-200 ease-in-out ${sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}>
         <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
           {/* Offline Banner */}
           {!isOnline && (

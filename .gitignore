@@ -49,5 +49,8 @@ next-env.d.ts
 fix-*.sql
 migrate-*.sql
 
+# local scripts (do not commit)
+scripts/
+
 # build artifacts
 tsconfig.tsbuildinfo

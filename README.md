@@ -53,6 +53,8 @@ DEEPSEEK_API_KEY=sk-your-deepseek-key-here
 GOOGLE_AI_STUDIO_API_KEY=your-google-ai-studio-key
 GROQ_API_KEY=gsk_your-groq-key
 OPENROUTER_API_KEY=sk-or-v1-your-openrouter-key
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-jwt
 
 # BYOK encryption (required for storing user keys securely)
 BYOK_ENC_KEY=your-32-character-encryption-key-here

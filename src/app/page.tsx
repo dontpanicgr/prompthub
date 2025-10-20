@@ -54,7 +54,7 @@ export default function BrowsePage() {
     <div className="w-full">
       <div className="mb-6">
         <h1 className="mb-2">
-          Browse Prompts
+          Discover Prompts
         </h1>
         <p className="text-gray-600 dark:text-gray-400 mb-6">
           Discover and explore prompts from our community
@@ -70,7 +70,7 @@ export default function BrowsePage() {
           setSelectedCategories={setSelectedCategories}
           onSearch={handleSearch}
           placeholder="Search prompts..."
-          toggleTooltip="Switch to list view"
+          toggleTooltip="Switch layout"
         />
       </div>
       

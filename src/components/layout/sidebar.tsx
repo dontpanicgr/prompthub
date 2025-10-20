@@ -17,7 +17,7 @@ import {
   PanelLeft,
   Settings,
   Compass,
-  Trophy,
+  Award,
   PanelLeftClose,
   PanelRightClose
 } from 'lucide-react'
@@ -155,11 +155,11 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
   }, [])
 
   const navItems = [
-    { href: '/create', label: 'New Prompt', icon: Plus },
-    { href: '/', label: 'Browse', icon: Compass },
+    { href: '/add', label: 'Add Prompt', icon: Plus },
+    { href: '/discover', label: 'Discover', icon: Compass },
     { href: '/trending', label: 'Trending', icon: TrendingUp },
-    { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
-    authUser ? { href: `/user/${authUser.id}`, label: 'My Prompts', icon: User } : null,
+    { href: '/rankings', label: 'Rankings', icon: Award },
+    authUser ? { href: `/user/${authUser.id}`, label: 'Profile', icon: User } : null,
   ].filter(Boolean) as Array<{ href: string; label: string; icon: any }>
 
   return (
@@ -178,7 +178,7 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
         h-screen overflow-hidden
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         ${isCollapsed ? 'w-16 max-w-16 min-w-16 cursor-pointer' : 'w-64 max-w-64 min-w-64'}
-        ${isInitialized ? 'transform transition-all duration-150 ease-out' : ''}
+        ${isInitialized ? 'transform transition-[width,transform] duration-200 ease-in-out' : ''}
       `}
         onClick={(e) => {
           // Only expand if clicking on empty areas (not on interactive elements)
@@ -323,16 +323,12 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
                       setUserButtonRect(rect)
                       setIsUserMenuOpen(!isUserMenuOpen)
                     }}
-                    className={`${isCollapsed ? 'w-10' : 'w-full'} flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-2 px-3'} h-10 text-sm font-medium text-muted-foreground ${isCollapsed ? 'hover:bg-nav-active hover:text-nav-foreground' : 'hover:bg-nav-hover hover:text-nav-foreground'} rounded-lg transition-colors group relative`}
+                    className={`${isCollapsed ? 'w-10' : 'w-full'} flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-2 px-1'} h-10 text-sm font-medium text-muted-foreground ${isCollapsed ? 'hover:bg-nav-active hover:text-nav-foreground' : 'hover:bg-nav-hover hover:text-nav-foreground'} rounded-lg transition-colors group relative`}
                     title={isCollapsed ? 'User menu' : undefined}
                   >
-                    <Avatar
-                      src={user.avatar_url}
-                      alt={user.name}
-                      size="xs"
-                      fallback={user.name?.charAt(0)?.toUpperCase() || 'U'}
-                      className="flex-shrink-0"
-                    />
+                    <div className="rounded-full bg-muted flex items-center justify-center text-muted-foreground w-8 h-8 text-sm shrink-0">
+                      <span className="font-semibold">{user.name?.charAt(0)?.toUpperCase() || 'U'}</span>
+                    </div>
                     {!isCollapsed && (
                       <span className="truncate">{user.name}</span>
                     )}

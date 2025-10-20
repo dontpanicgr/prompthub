@@ -119,7 +119,7 @@ export default function TrendingPage() {
         <h1 className="mb-2">
           Trending Prompts
         </h1>
-        <p className="text-gray-400 mb-6">
+        <p className="text-gray-600 dark:text-gray-400 mb-6">
           Discover the most liked and bookmarked prompts from the community
         </p>
 
@@ -133,7 +133,7 @@ export default function TrendingPage() {
           setSelectedCategories={setSelectedCategories}
           onSearch={handleSearch}
           placeholder="Search prompts..."
-          toggleTooltip={layoutPref === 'table' ? 'Switch to card view' : 'Switch to list view'}
+          toggleTooltip={layoutPref === 'table' ? 'Switch to card view' : 'Switch layout'}
         />
 
       </div>

@@ -16,14 +16,8 @@ import dynamic from 'next/dynamic'
 
 const MarkdownRenderer = dynamic(() => import('@/components/ui/markdown-renderer'), {
   ssr: false,
-  loading: () => (
-    <div className="bg-card rounded-lg border border-border p-4">
-      <div className="h-6 bg-muted rounded w-[33%] mb-3 animate-pulse" />
-      <div className="h-4 bg-muted rounded w-full mb-2 animate-pulse" />
-      <div className="h-4 bg-muted rounded w-[83%] mb-2 animate-pulse" />
-      <div className="h-4 bg-muted rounded w-[66%] animate-pulse" />
-    </div>
-  )
+  // Avoid a second loading state; the page-level loader already handles initial load
+  loading: () => null
 })
 
 interface Prompt {

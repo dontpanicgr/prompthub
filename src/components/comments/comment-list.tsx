@@ -12,7 +12,7 @@ interface CommentListProps {
 }
 
 export default function CommentList({ promptId, currentUserId }: CommentListProps) {
-  const { comments, isLoading, error, refetch } = useComments(promptId)
+  const { comments, isInitialLoading, isRefreshing, error, refetch } = useComments(promptId)
   const [visibleCount, setVisibleCount] = useState(10)
 
   const handleCommentAdded = () => {
@@ -27,7 +27,7 @@ export default function CommentList({ promptId, currentUserId }: CommentListProp
     refetch()
   }
 
-  if (isLoading) {
+  if (isInitialLoading) {
     return (
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">Comments</h3>

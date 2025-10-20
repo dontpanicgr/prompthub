@@ -35,7 +35,7 @@ export default function CreatePromptPage() {
       <div className="w-full">
         <div className="max-w-4xl mx-auto mb-6">
           <h1 className="mb-2">
-            Create New Prompt
+            Add Prompt
           </h1>
           <p className="text-muted-foreground">
             Share your AI prompt with the community

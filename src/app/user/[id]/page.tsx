@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState, useCallback } from 'react'
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react'
 import { notFound, useRouter, useSearchParams } from 'next/navigation'
 import MainLayout from '@/components/layout/main-layout'
 import UserPromptsGrid from '@/components/prompts/user-prompts-grid'
@@ -74,6 +74,10 @@ export default function UserPage({ params }: UserPageProps) {
   })
   const [isPrivate, setIsPrivate] = useState(false)
   const [updatingPrivacy, setUpdatingPrivacy] = useState(false)
+
+  // Track last fetch key to avoid duplicate fetches (e.g., React StrictMode in dev)
+  const lastFetchKeyRef = useRef<string | null>(null)
+  const lastTabRef = useRef<TabType>('created')
 
   // Get tab from URL search params
   useEffect(() => {
@@ -155,9 +159,20 @@ export default function UserPage({ params }: UserPageProps) {
   useEffect(() => {
     if (!user || !isOwnProfile) return
 
+    const currentKey = `${user.id}:${activeTab}`
+    const isDuplicate = lastFetchKeyRef.current === currentKey
+    if (isDuplicate) return
+    lastFetchKeyRef.current = currentKey
+
+    const tabChanged = lastTabRef.current !== activeTab
+    lastTabRef.current = activeTab
+
     const fetchPrompts = async () => {
       try {
-        setPromptsLoading(true)
+        // Only show skeleton if first load for this tab or no data yet
+        if (tabChanged || prompts.length === 0) {
+          setPromptsLoading(true)
+        }
         let fetchedPrompts: Prompt[] = []
 
         switch (activeTab) {
@@ -413,12 +428,14 @@ export default function UserPage({ params }: UserPageProps) {
   return (
     <MainLayout>
       <div className="w-full">
-        {/* Header: avatar, details, actions */}
-        <div className="mb-6">
-          <div className="flex items-start justify-between gap-4">
+        {/* Header: avatar, details, actions (mobile full-width) */}
+        <div className="mb-0">
+          <div className="-mx-4 lg:mx-0">
+            <div className="bg-background lg:bg-transparent">
+              <div className="flex items-start justify-between p-4 gap-4">
             {/* Left: Avatar + details */}
             <div className="flex items-start gap-4">
-              <div className="rounded-[20px] bg-muted flex items-center justify-center text-muted-foreground w-14 h-16 text-xl shrink-0">
+              <div className="rounded-full bg-muted flex items-center justify-center text-muted-foreground w-16 h-16 text-xl shrink-0">
                 <span className="font-semibold">{user?.name?.[0]?.toUpperCase() || 'U'}</span>
               </div>
               <div>
@@ -455,9 +472,9 @@ export default function UserPage({ params }: UserPageProps) {
             <div className="flex items-center gap-2">
               {isOwnProfile ? (
                 <>
-                  <Button onClick={() => window.location.href = '/create'}>
-                    <Plus size={16} className="mr-2" />
-                    New Prompt
+                  <Button className="hidden sm:inline-flex gap-0" onClick={() => window.location.href = '/create'}>
+                    <Plus size={16} />
+                    Add
                   </Button>
                   <FloatingMenu
                     align="end"
@@ -524,14 +541,18 @@ export default function UserPage({ params }: UserPageProps) {
                 </>
               )}
             </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Tabs - only show for own profile */}
+        {/* Tabs - only show for own profile (mobile full-width) */}
         {isOwnProfile && (
-          <div className="mb-6">
-            <div className="border-b border-border">
-              <nav className="flex space-x-8">
+          <div className="mb-4">
+            <div className="-mx-4 lg:mx-0">
+              <div className="ml-4 lg:ml-0">
+                <div className="border-b border-border">
+                <nav className="flex space-x-8">
                 {tabs.map(({ key, label, icon: Icon }) => {
                   const isActive = activeTab === key
                   
@@ -550,7 +571,9 @@ export default function UserPage({ params }: UserPageProps) {
                     </button>
                   )
                 })}
-              </nav>
+                  </nav>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -684,9 +707,9 @@ export default function UserPage({ params }: UserPageProps) {
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Visibility</DialogTitle>
+            <DialogTitle>Edit profile</DialogTitle>
             <DialogDescription>
-              Configure profile visibility public or private
+              Configure profile details and visibility
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -729,47 +752,49 @@ export default function UserPage({ params }: UserPageProps) {
                 placeholder="https://yourwebsite.com"
               />
             </div>
-            <div className="flex items-center justify-between pt-2">
-              <div className="space-y-0.5">
-                <label className="text-sm font-medium">Private profile</label>
-                <p className="text-xs text-muted-foreground">
-                  Hide your profile and prompts from others
-                </p>
+            {/* Visibility Section */}
+            <div className="space-y-3">
+              <div>
+                <h3 className="text-sm font-medium">Visibility</h3>
+                <p className="text-xs text-muted-foreground">Configure profile visibility public or private</p>
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleTogglePrivacy}
-                  disabled={updatingPrivacy}
-                  className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                    isPrivate
-                      ? 'bg-destructive/10 text-destructive border border-destructive/30'
-                      : 'bg-muted text-muted-foreground hover:text-foreground'
-                  } ${updatingPrivacy ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                >
-                  {isPrivate ? <EyeOff size={14} /> : <Eye size={14} />}
-                  {isPrivate ? 'Private' : 'Public'}
-                </button>
-              </div>
-            </div>
-            
-            {/* Info box */}
-            <div className="bg-muted/50 border border-border rounded-lg p-4 space-y-2">
-              <div className="flex items-start gap-2">
-                <span className="text-base">👁️</span>
-                <div className="text-sm">
-                  <span className="font-medium">Public:</span> Your profile is visible; your public prompts are visible to all.
+              
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleTogglePrivacy}
+                    disabled={updatingPrivacy}
+                    className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                      !isPrivate
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-muted-foreground hover:text-foreground'
+                    } ${updatingPrivacy ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                  >
+                    <Eye size={14} />
+                    Public
+                  </button>
                 </div>
               </div>
-              <div className="flex items-start gap-2">
-                <span className="text-base">😮</span>
-                <div className="text-sm">
-                  <span className="font-medium">Private:</span> Your profile is visible; your prompts are hidden.
+              
+              {/* Visibility Options */}
+              <div className="space-y-3">
+                <div className="flex items-start gap-2">
+                  <Eye size={16} className="text-muted-foreground mt-0.5" />
+                  <div className="text-sm">
+                    <span className="font-medium">Public:</span> Your profile is visible; your public prompts are visible to all.
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="text-base">💡</span>
-                <div className="text-sm">
-                  You can also make individual prompts private and keep your profile public.
+                <div className="flex items-start gap-2">
+                  <span className="text-base">😮</span>
+                  <div className="text-sm">
+                    <span className="font-medium">Private:</span> Your profile is visible; your prompts are hidden.
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-base">💡</span>
+                  <div className="text-sm">
+                    You can also make individual prompts private and keep your profile public.
+                  </div>
                 </div>
               </div>
             </div>

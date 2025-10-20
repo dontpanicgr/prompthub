@@ -19,7 +19,7 @@ import {
   LogOut,
   LogIn,
   Compass,
-  Trophy
+  Award
 } from 'lucide-react'
 
 interface MobileDrawerProps {
@@ -36,10 +36,10 @@ export default function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
 
 
   const navItems = [
-    { href: '/create', label: 'New Prompt', icon: Plus },
+    { href: '/add', label: 'Add Prompt', icon: Plus },
     { href: '/', label: 'Browse', icon: Compass },
     { href: '/trending', label: 'Trending', icon: TrendingUp },
-    { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
+    { href: '/rankings', label: 'Rankings', icon: Award },
     { href: user ? `/user/${user.id}` : '/login', label: 'My Prompts', icon: User, children: user ? [
       { href: `/user/${user.id}?tab=created`, label: 'Created' },
       { href: `/user/${user.id}?tab=liked`, label: 'Liked' },

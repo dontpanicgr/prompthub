@@ -32,12 +32,9 @@ export default function UserBioCard({ user, stats, className = '', showStats = t
       <Link href={`/user/${user.id}`} className="block">
         <div className="flex flex-col items-start">
           <div className="mb-4">
-            <Avatar
-              src={user.avatar_url}
-              alt={user.name}
-              size="xl"
-              fallback={getInitials(user.name)}
-            />
+            <div className="rounded-full bg-muted flex items-center justify-center text-muted-foreground w-16 h-16 text-xl shrink-0">
+              <span className="font-semibold">{getInitials(user.name)}</span>
+            </div>
           </div>
           <div className="w-full">
           <h2 className="text-xl font-semibold text-card-foreground truncate mb-2">

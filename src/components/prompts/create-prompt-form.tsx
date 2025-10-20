@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Save, X, Eye, EyeOff } from 'lucide-react'
+import { Save, X, Eye, EyeOff, Plus } from 'lucide-react'
 import { useAuth } from '@/components/auth-provider'
 import { createPrompt } from '@/lib/database'
 import { analytics } from '@/lib/analytics'
@@ -138,7 +138,7 @@ export default function CreatePromptForm() {
 
       if (newPrompt) {
         // Track successful form submission
-        analytics.trackFormSubmission('Create Prompt', true)
+        analytics.trackFormSubmission('Add Prompt', true)
         analytics.trackCustomEvent('Prompt Created', {
           promptId: newPrompt.id,
           model: formData.model,
@@ -158,7 +158,7 @@ export default function CreatePromptForm() {
       console.error('Error creating prompt:', error)
       
       // Track failed form submission
-      analytics.trackFormSubmission('Create Prompt', false)
+      analytics.trackFormSubmission('Add Prompt', false)
       analytics.trackError(error as Error, 'create-prompt-form')
       
       // TODO: Show error message to user
@@ -168,7 +168,7 @@ export default function CreatePromptForm() {
   }
 
   const handleCancel = () => {
-    analytics.trackButtonClick('Cancel Create Prompt', 'create-prompt-form')
+    analytics.trackButtonClick('Cancel Add Prompt', 'create-prompt-form')
     router.back()
   }
 
@@ -354,8 +354,8 @@ export default function CreatePromptForm() {
                 disabled={isSubmitting}
                 className="flex items-center gap-2 h-10"
               >
-                <Save size={18} />
-                {isSubmitting ? 'Creating...' : 'Create Prompt'}
+                <Plus size={18} />
+                {isSubmitting ? 'Adding...' : 'Add'}
               </Button>
               <Button
                 type="button"

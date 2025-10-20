@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, use as usePromise } from 'react'
+import { useEffect, useRef, useState, use as usePromise } from 'react'
 import { notFound } from 'next/navigation'
 import MainLayout from '@/components/layout/main-layout'
 import dynamic from 'next/dynamic'
@@ -18,6 +18,8 @@ export default function PromptPage({ params }: PromptPageProps) {
   const [prompt, setPrompt] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const { user } = useAuth()
+  const fetchedPublicRef = useRef<string | null>(null)
+  const initialLoadCompleteRef = useRef(false)
 
   const PromptDetails = dynamic(() => import('@/components/prompts/prompt-details'), {
     ssr: false,
@@ -27,6 +29,11 @@ export default function PromptPage({ params }: PromptPageProps) {
   // Fetch immediately using route param; then refresh auth flags in background when user loads
   useEffect(() => {
     let isActive = true
+    // Guard against StrictMode double-invoke and subsequent re-renders
+    if (fetchedPublicRef.current === id && initialLoadCompleteRef.current) {
+      return () => { isActive = false }
+    }
+    fetchedPublicRef.current = id
 
     const fetchPublicFirst = async () => {
       try {
@@ -49,7 +56,10 @@ export default function PromptPage({ params }: PromptPageProps) {
         console.error('Error fetching prompt:', error)
         notFound()
       } finally {
-        if (isActive) setLoading(false)
+        if (isActive) {
+          setLoading(false)
+          initialLoadCompleteRef.current = true
+        }
       }
     }
 
@@ -87,7 +97,7 @@ export default function PromptPage({ params }: PromptPageProps) {
 
   return (
     <MainLayout>
-      <div className="w-full max-w-6xl mx-auto">
+      <div className="w-full max-w-4xl mx-auto">
         <PromptDetails prompt={prompt} />
       </div>
     </MainLayout>

@@ -40,13 +40,9 @@ export default function UserMenu({ user, onSignOut, isCollapsed = false }: UserM
         className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} w-full p-2 rounded-lg hover:bg-muted transition-colors group relative`}
         title={isCollapsed ? user.name : undefined}
       >
-        <Avatar
-          src={user.avatar_url}
-          alt={user.name}
-          size="sm"
-          fallback={user.name?.charAt(0)?.toUpperCase() || 'U'}
-          className="flex-shrink-0"
-        />
+        <div className="rounded-full bg-muted flex items-center justify-center text-muted-foreground w-16 h-16 text-xl shrink-0">
+          <span className="font-semibold">{user.name?.charAt(0)?.toUpperCase() || 'U'}</span>
+        </div>
         {!isCollapsed && (
           <div className="flex-1 min-w-0 text-left">
             <p className="text-sm font-medium text-foreground truncate">

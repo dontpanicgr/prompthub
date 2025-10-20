@@ -23,6 +23,26 @@ const nextConfig: NextConfig = {
   },
   // Enable static optimization
   output: 'standalone',
+  // Add redirects
+  async redirects() {
+    return [
+      {
+        source: '/',
+        destination: '/discover',
+        permanent: true,
+      },
+      {
+        source: '/leaderboard',
+        destination: '/rankings',
+        permanent: true,
+      },
+      {
+        source: '/create',
+        destination: '/add',
+        permanent: true,
+      },
+    ]
+  },
   // Optimize bundle splitting
   webpack: (config, { isServer }) => {
     if (!isServer) {

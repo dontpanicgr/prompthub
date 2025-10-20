@@ -201,7 +201,7 @@ export default function SearchFilters({
 
         {/* Layout toggle (Card/List) */}
         <div className="flex items-center">
-          <Tooltip content={toggleTooltip || (layout === 'table' ? 'Switch to card view' : 'Switch to list view')}>
+          <Tooltip content={toggleTooltip || (layout === 'table' ? 'Switch to card view' : 'Switch layout')}>
             <Button
               type="button"
               variant="outline"

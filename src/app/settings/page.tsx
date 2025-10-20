@@ -573,10 +573,10 @@ export default function SettingsPage() {
               <CardContent className="space-y-4">
                 <div className="flex flex-col gap-2">
                   <div className="flex flex-col md:flex-row items-stretch md:items-end gap-2">
-                    <div className="w-full md:w-48">
+                    <div className="w-full md:flex-1">
                       <label className="text-sm font-medium">Provider</label>
                       <Select value={newProviderType} onValueChange={setNewProviderType}>
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select a provider" />
                         </SelectTrigger>
                         <SelectContent>
@@ -594,9 +594,10 @@ export default function SettingsPage() {
                         value={newProviderKey}
                         onChange={(e) => setNewProviderKey(e.target.value)}
                         placeholder="Paste your API key"
+                        className="w-full"
                       />
                     </div>
-                    <div className="flex gap-2 md:pb-[2px]">
+                    <div className="flex gap-2 shrink-0 md:pb-[2px]">
                       <Button variant="outline" size="sm" onClick={handleTestKey} disabled={testingConnection}>
                         {testingConnection ? 'Testing…' : 'Test'}
                       </Button>
@@ -894,10 +895,10 @@ export default function SettingsPage() {
     <MainLayout>
       <div className="w-full">
         <div className="mb-6">
-          <h1>
+          <h1 className="mb-2">
             Settings
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
             Manage your account settings and preferences
           </p>
         </div>
