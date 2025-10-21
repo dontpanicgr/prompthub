@@ -212,3 +212,5 @@ If you encounter any issues, please open an issue on GitHub or contact the devel
 ---
 
 Built with ❤️ for the AI community
+
+*Repository successfully renamed from prompthub to lexee*
