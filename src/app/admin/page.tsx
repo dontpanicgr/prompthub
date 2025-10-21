@@ -43,10 +43,10 @@ export default function AdminAnalyticsPage() {
           const metrics = await response.json()
           setAnalytics(metrics)
         } else {
-          console.error('Failed to fetch metrics:', response.statusText)
+          console.error('Failed to fetch metrics')
         }
       } catch (error) {
-        console.error('Failed to fetch analytics:', error)
+        console.error('Failed to fetch analytics')
       } finally {
         setLoading(false)
       }

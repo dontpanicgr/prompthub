@@ -13,6 +13,7 @@ Create a `.env.local` file in your project root:
 ```bash
 # In your .env.local file
 ADMIN_EMAILS=your-email@example.com,another-admin@example.com
+ADMIN_DEFAULT_PASSWORD=your-secure-default-password
 ```
 
 ### Step 2: Restart Development Server
@@ -25,9 +26,10 @@ yarn dev
 
 **Security Benefits:**
 - ✅ Email addresses are never exposed in client-side code
+- ✅ Default passwords are never exposed in client-side code
 - ✅ Server-side validation prevents bypassing
 - ✅ Easy to manage multiple admins
-- ✅ No code changes needed to add/remove admins
+- ✅ No code changes needed to add/remove admins or change passwords
 - ✅ Can be different for different environments
 - ✅ Safe for public repositories
 
@@ -79,6 +81,7 @@ const ADMIN_EMAILS = [
 ```bash
 # Add to .env.local
 ADMIN_EMAILS=admin1@example.com,admin2@example.com,admin3@example.com
+ADMIN_DEFAULT_PASSWORD=your-secure-default-password
 ```
 
 ### Using Hardcoded Array:

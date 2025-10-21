@@ -5,239 +5,155 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
-import { Textarea } from '@/components/ui/textarea'
 import { 
-  Settings,
-  Save,
-  Shield,
-  Mail,
-  Database,
-  Bell
+  Lock,
+  Eye,
+  EyeOff
 } from 'lucide-react'
 
 export default function AdminSettingsPage() {
-  const [settings, setSettings] = useState({
-    siteName: 'PromptHub',
-    siteDescription: 'A platform for sharing and discovering AI prompts',
-    allowRegistration: true,
-    requireEmailVerification: true,
-    allowComments: true,
-    allowLikes: true,
-    allowBookmarks: true,
-    maxPromptsPerUser: 100,
-    maxProjectsPerUser: 10,
-    adminEmails: 'admin@example.com,admin2@example.com',
-    maintenanceMode: false,
-    analyticsEnabled: true,
-    emailNotifications: true
+  // Password change state
+  const [passwordData, setPasswordData] = useState({
+    newPassword: '',
+    confirmPassword: ''
   })
+  const [showPasswords, setShowPasswords] = useState({
+    new: false,
+    confirm: false
+  })
+  const [passwordLoading, setPasswordLoading] = useState(false)
+  const [passwordMessage, setPasswordMessage] = useState('')
 
-  const handleSave = () => {
-    // In a real app, this would save to the database
-    // Show success message
+  const handlePasswordChange = async () => {
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setPasswordMessage('Passwords do not match')
+      return
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      setPasswordMessage('Password must be at least 6 characters')
+      return
+    }
+
+    setPasswordLoading(true)
+    setPasswordMessage('')
+
+    try {
+      const response = await fetch('/api/admin/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: localStorage.getItem('admin_email'),
+          newPassword: passwordData.newPassword
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setPasswordMessage('Password updated successfully!')
+        setPasswordData({
+          newPassword: '',
+          confirmPassword: ''
+        })
+      } else {
+        setPasswordMessage('Failed to update password')
+      }
+    } catch (error) {
+      setPasswordMessage('Request failed')
+    } finally {
+      setPasswordLoading(false)
+    }
   }
 
   return (
     <div className="p-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Admin Settings</h1>
-        <p className="text-gray-600 mt-2">Configure platform settings and preferences</p>
+        <h1 className="text-3xl font-bold text-foreground">Admin Settings</h1>
+        <p className="text-muted-foreground mt-2">Manage your admin account settings</p>
       </div>
 
-      <div className="space-y-6">
-        {/* General Settings */}
+      <div className="max-w-2xl">
+        {/* Password Change */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Settings className="h-5 w-5" />
-              General Settings
+              <Lock className="h-5 w-5" />
+              Change Admin Password
             </CardTitle>
-            <CardDescription>Basic platform configuration</CardDescription>
+            <CardDescription>Update your admin account password</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="siteName">Site Name</Label>
-                <Input
-                  id="siteName"
-                  value={settings.siteName}
-                  onChange={(e) => setSettings({...settings, siteName: e.target.value})}
-                />
+                <Label htmlFor="newPassword">New Password</Label>
+                <div className="relative">
+                  <Input
+                    id="newPassword"
+                    type={showPasswords.new ? "text" : "password"}
+                    value={passwordData.newPassword}
+                    onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
+                    placeholder="Enter new password"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPasswords({...showPasswords, new: !showPasswords.new})}
+                  >
+                    {showPasswords.new ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                </div>
               </div>
+              
               <div>
-                <Label htmlFor="maxPromptsPerUser">Max Prompts Per User</Label>
-                <Input
-                  id="maxPromptsPerUser"
-                  type="number"
-                  value={settings.maxPromptsPerUser}
-                  onChange={(e) => setSettings({...settings, maxPromptsPerUser: parseInt(e.target.value)})}
-                />
+                <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showPasswords.confirm ? "text" : "password"}
+                    value={passwordData.confirmPassword}
+                    onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                    placeholder="Confirm new password"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPasswords({...showPasswords, confirm: !showPasswords.confirm})}
+                  >
+                    {showPasswords.confirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                </div>
               </div>
             </div>
-            
-            <div>
-              <Label htmlFor="siteDescription">Site Description</Label>
-              <Textarea
-                id="siteDescription"
-                value={settings.siteDescription}
-                onChange={(e) => setSettings({...settings, siteDescription: e.target.value})}
-                rows={3}
-              />
+
+            {passwordMessage && (
+              <div className={`p-3 rounded-md text-sm ${
+                passwordMessage.includes('successfully') 
+                  ? 'bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800' 
+                  : 'bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800'
+              }`}>
+                {passwordMessage}
+              </div>
+            )}
+
+            <div className="flex justify-end">
+              <Button 
+                onClick={handlePasswordChange}
+                disabled={passwordLoading || !passwordData.newPassword || !passwordData.confirmPassword}
+                className="flex items-center gap-2"
+              >
+                <Lock className="h-4 w-4" />
+                {passwordLoading ? 'Updating...' : 'Update Password'}
+              </Button>
             </div>
           </CardContent>
         </Card>
-
-        {/* User Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5" />
-              User Settings
-            </CardTitle>
-            <CardDescription>Configure user registration and permissions</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="allowRegistration">Allow User Registration</Label>
-                <p className="text-sm text-gray-500">Allow new users to register accounts</p>
-              </div>
-              <Switch
-                id="allowRegistration"
-                checked={settings.allowRegistration}
-                onCheckedChange={(checked) => setSettings({...settings, allowRegistration: checked})}
-              />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="requireEmailVerification">Require Email Verification</Label>
-                <p className="text-sm text-gray-500">Users must verify their email before accessing the platform</p>
-              </div>
-              <Switch
-                id="requireEmailVerification"
-                checked={settings.requireEmailVerification}
-                onCheckedChange={(checked) => setSettings({...settings, requireEmailVerification: checked})}
-              />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="allowComments">Allow Comments</Label>
-                <p className="text-sm text-gray-500">Users can comment on prompts</p>
-              </div>
-              <Switch
-                id="allowComments"
-                checked={settings.allowComments}
-                onCheckedChange={(checked) => setSettings({...settings, allowComments: checked})}
-              />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="allowLikes">Allow Likes</Label>
-                <p className="text-sm text-gray-500">Users can like prompts</p>
-              </div>
-              <Switch
-                id="allowLikes"
-                checked={settings.allowLikes}
-                onCheckedChange={(checked) => setSettings({...settings, allowLikes: checked})}
-              />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="allowBookmarks">Allow Bookmarks</Label>
-                <p className="text-sm text-gray-500">Users can bookmark prompts</p>
-              </div>
-              <Switch
-                id="allowBookmarks"
-                checked={settings.allowBookmarks}
-                onCheckedChange={(checked) => setSettings({...settings, allowBookmarks: checked})}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Admin Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Mail className="h-5 w-5" />
-              Admin Settings
-            </CardTitle>
-            <CardDescription>Configure admin access and notifications</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="adminEmails">Admin Emails</Label>
-              <Input
-                id="adminEmails"
-                value={settings.adminEmails}
-                onChange={(e) => setSettings({...settings, adminEmails: e.target.value})}
-                placeholder="admin@example.com,admin2@example.com"
-              />
-              <p className="text-sm text-gray-500 mt-1">Comma-separated list of admin email addresses</p>
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="maintenanceMode">Maintenance Mode</Label>
-                <p className="text-sm text-gray-500">Temporarily disable the platform for maintenance</p>
-              </div>
-              <Switch
-                id="maintenanceMode"
-                checked={settings.maintenanceMode}
-                onCheckedChange={(checked) => setSettings({...settings, maintenanceMode: checked})}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Analytics Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Database className="h-5 w-5" />
-              Analytics & Monitoring
-            </CardTitle>
-            <CardDescription>Configure analytics and monitoring settings</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="analyticsEnabled">Enable Analytics</Label>
-                <p className="text-sm text-gray-500">Track user behavior and platform metrics</p>
-              </div>
-              <Switch
-                id="analyticsEnabled"
-                checked={settings.analyticsEnabled}
-                onCheckedChange={(checked) => setSettings({...settings, analyticsEnabled: checked})}
-              />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="emailNotifications">Email Notifications</Label>
-                <p className="text-sm text-gray-500">Send email notifications for important events</p>
-              </div>
-              <Switch
-                id="emailNotifications"
-                checked={settings.emailNotifications}
-                onCheckedChange={(checked) => setSettings({...settings, emailNotifications: checked})}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Save Button */}
-        <div className="flex justify-end">
-          <Button onClick={handleSave} className="flex items-center gap-2">
-            <Save className="h-4 w-4" />
-            Save Settings
-          </Button>
-        </div>
       </div>
     </div>
   )

@@ -1,241 +1,278 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Badge } from '@/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { MODEL_CONFIG } from '@/lib/model-registry'
 import { 
   Bot, 
   Send, 
-  CheckCircle, 
-  XCircle, 
   Loader2,
-  Key,
-  Trash2,
-  Plus
+  Activity,
+  MessageSquare,
+  Sparkles
 } from 'lucide-react'
 
-interface AIKey {
-  id: string
-  provider: string
-  key: string
-  status: 'active' | 'inactive' | 'testing'
-  lastUsed?: string
-}
-
 export default function AITestPage() {
-  const [keys, setKeys] = useState<AIKey[]>([])
-  const [newKey, setNewKey] = useState({ provider: '', key: '' })
-  const [testPrompt, setTestPrompt] = useState('')
-  const [testResult, setTestResult] = useState<any>(null)
-  const [testing, setTesting] = useState(false)
+  // AI Suggest state
+  const [text, setText] = useState('Write a friendly welcome email to a new user named Alex. Keep it concise.')
+  const [variant, setVariant] = useState<'rewrite' | 'clarify' | 'shorten' | 'expand' | 'variables'>('rewrite')
+  const [suggestion, setSuggestion] = useState('')
+  const [loadingSuggest, setLoadingSuggest] = useState(false)
+  
+  // Chat state
+  const [chatPrompt, setChatPrompt] = useState('Say hello in one short sentence.')
+  const [chatResponse, setChatResponse] = useState('')
+  const [loadingChat, setLoadingChat] = useState(false)
+  
+  // Model selection
+  const [currentModel, setCurrentModel] = useState(MODEL_CONFIG.ACTIVE_MODEL)
 
-  const addKey = () => {
-    if (newKey.provider && newKey.key) {
-      const key: AIKey = {
-        id: Date.now().toString(),
-        provider: newKey.provider,
-        key: newKey.key,
-        status: 'inactive',
-        lastUsed: undefined
+  // Model switching function
+  const switchModel = (modelKey: string) => {
+    setCurrentModel(modelKey)
+    MODEL_CONFIG.ACTIVE_MODEL = modelKey // Update global config
+  }
+
+  const callSuggest = useCallback(async () => {
+    try {
+      setLoadingSuggest(true)
+      setSuggestion('')
+      
+      // Get admin token from localStorage
+      const adminToken = localStorage.getItem('admin_token')
+      if (!adminToken) {
+        throw new Error('Admin session expired. Please sign in again.')
       }
-      setKeys([...keys, key])
-      setNewKey({ provider: '', key: '' })
-    }
-  }
 
-  const testKey = async (keyId: string) => {
-    setKeys(keys.map(k => k.id === keyId ? { ...k, status: 'testing' } : k))
-    
-    try {
-      const response = await fetch('/api/ai/test-key', {
+      console.log('[admin-ai-test] calling /api/ai/suggest', { variant, textLen: text.length })
+      const res = await fetch('/api/ai/suggest', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: keys.find(k => k.id === keyId)?.key })
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        },
+        body: JSON.stringify({ text, variant, model: currentModel })
       })
-      
-      const result = await response.json()
-      
-      setKeys(keys.map(k => 
-        k.id === keyId 
-          ? { ...k, status: result.success ? 'active' : 'inactive', lastUsed: new Date().toISOString() }
-          : k
-      ))
-    } catch (error) {
-      setKeys(keys.map(k => k.id === keyId ? { ...k, status: 'inactive' } : k))
-    }
-  }
 
-  const testPromptWithAI = async () => {
-    if (!testPrompt.trim()) return
-    
-    setTesting(true)
-    try {
-      const response = await fetch('/api/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          prompt: testPrompt,
-          model: 'gpt-3.5-turbo'
-        })
-      })
-      
-      const result = await response.json()
-      setTestResult(result)
-    } catch (error) {
-      setTestResult({ error: 'Failed to test prompt' })
+      const body = await res.json()
+      console.log('[admin-ai-test] suggest status:', res.status, 'body:', body)
+      if (!res.ok) {
+        throw new Error('Request failed')
+      }
+      setSuggestion(body.suggestion || '')
+    } catch (e) {
+      console.error('[admin-ai-test] suggest error:', e)
+      const errorMessage = (e as Error).message
+      if (errorMessage.includes('Admin session expired')) {
+        // The admin layout will handle redirecting to login
+        window.location.reload()
+      } else {
+        alert('Request failed')
+      }
     } finally {
-      setTesting(false)
+      setLoadingSuggest(false)
     }
-  }
+  }, [text, variant, currentModel])
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'active': return <CheckCircle className="h-4 w-4 text-green-500" />
-      case 'inactive': return <XCircle className="h-4 w-4 text-red-500" />
-      case 'testing': return <Loader2 className="h-4 w-4 text-yellow-500 animate-spin" />
-      default: return <XCircle className="h-4 w-4 text-gray-500" />
-    }
-  }
+  const callChat = useCallback(async () => {
+    try {
+      setLoadingChat(true)
+      setChatResponse('')
+      
+      // Get admin token from localStorage
+      const adminToken = localStorage.getItem('admin_token')
+      if (!adminToken) {
+        throw new Error('Admin session expired. Please sign in again.')
+      }
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'active': return <Badge className="bg-green-100 text-green-800">Active</Badge>
-      case 'inactive': return <Badge className="bg-red-100 text-red-800">Inactive</Badge>
-      case 'testing': return <Badge className="bg-yellow-100 text-yellow-800">Testing</Badge>
-      default: return <Badge className="bg-gray-100 text-gray-800">Unknown</Badge>
+      const messages = [
+        { role: 'system', content: 'You are a helpful assistant.' },
+        { role: 'user', content: chatPrompt }
+      ]
+
+      console.log('[admin-ai-test] calling /api/chat/completions', { messagesLen: messages.length })
+      const res = await fetch('/api/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        },
+        body: JSON.stringify({ messages, model: currentModel, temperature: 0.3, stream: false })
+      })
+
+      const body = await res.json()
+      console.log('[admin-ai-test] chat status:', res.status, 'body:', body)
+      if (!res.ok) {
+        throw new Error('Request failed')
+      }
+      setChatResponse(body.content || '')
+    } catch (e) {
+      console.error('[admin-ai-test] chat error:', e)
+      const errorMessage = (e as Error).message
+      if (errorMessage.includes('Admin session expired')) {
+        // The admin layout will handle redirecting to login
+        window.location.reload()
+      } else {
+        alert('Request failed')
+      }
+    } finally {
+      setLoadingChat(false)
     }
-  }
+  }, [chatPrompt, currentModel])
 
   return (
     <div className="p-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">AI Testing</h1>
-        <p className="text-gray-600 mt-2">Test AI keys and prompt completions</p>
+        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+          <Activity className="h-8 w-8" />
+          AI Test
+        </h1>
+        <p className="text-gray-600 mt-2">Test AI Suggest and Chat endpoints with detailed logs. Open DevTools to view logs.</p>
       </div>
 
+      {/* Model Switcher */}
+      <Card className="mb-6">
+        <CardContent className="px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-medium">Choose your model</h3>
+              <p className="text-sm text-muted-foreground">Switch between free and paid models</p>
+            </div>
+            <div className="w-48">
+              <Select value={currentModel} onValueChange={switchModel}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select model" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={MODEL_CONFIG.PRESETS.FREE}>
+                    DeepSeek V3.1 (Free)
+                  </SelectItem>
+                  <SelectItem value={MODEL_CONFIG.PRESETS.PAID}>
+                    GPT-3.5 Turbo (Paid)
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* AI Keys Management */}
+        {/* AI Suggest Test */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Key className="h-5 w-5" />
-              AI Keys
+              <Sparkles className="h-5 w-5" />
+              AI Suggest
             </CardTitle>
-            <CardDescription>Manage your AI provider keys</CardDescription>
+            <CardDescription>Test AI text suggestions with different variants</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Add New Key */}
-            <div className="space-y-3">
-              <div>
-                <Label htmlFor="provider">Provider</Label>
-                <Input
-                  id="provider"
-                  placeholder="e.g., OpenAI, Anthropic"
-                  value={newKey.provider}
-                  onChange={(e) => setNewKey({ ...newKey, provider: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="key">API Key</Label>
-                <Input
-                  id="key"
-                  type="password"
-                  placeholder="Enter API key"
-                  value={newKey.key}
-                  onChange={(e) => setNewKey({ ...newKey, key: e.target.value })}
-                />
-              </div>
-              <Button onClick={addKey} className="w-full">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Key
-              </Button>
-            </div>
-
-            {/* Keys List */}
             <div className="space-y-2">
-              {keys.map((key) => (
-                <div key={key.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    {getStatusIcon(key.status)}
-                    <div>
-                      <p className="font-medium">{key.provider}</p>
-                      <p className="text-sm text-gray-500">
-                        {key.key.substring(0, 8)}...
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {getStatusBadge(key.status)}
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => testKey(key.id)}
-                      disabled={key.status === 'testing'}
-                    >
-                      Test
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => setKeys(keys.filter(k => k.id !== key.id))}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+              <Label htmlFor="text">Text to process</Label>
+              <Textarea 
+                id="text"
+                value={text} 
+                onChange={(e) => setText(e.target.value)} 
+                className="min-h-[120px]" 
+                placeholder="Enter text to process..."
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="variant">Variant</Label>
+                <Select value={variant} onValueChange={(v: any) => setVariant(v)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="rewrite">Rewrite</SelectItem>
+                    <SelectItem value="clarify">Clarify</SelectItem>
+                    <SelectItem value="shorten">Shorten</SelectItem>
+                    <SelectItem value="expand">Expand</SelectItem>
+                    <SelectItem value="variables">Add Variables</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>&nbsp;</Label>
+                <Button 
+                  onClick={callSuggest} 
+                  disabled={loadingSuggest} 
+                  className="w-full"
+                >
+                  {loadingSuggest ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-4 w-4 mr-2" />
+                  )}
+                  {loadingSuggest ? 'Generating…' : 'Generate Suggestion'}
+                </Button>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="suggestion">Suggestion</Label>
+              <Textarea 
+                id="suggestion"
+                readOnly 
+                value={suggestion} 
+                className="min-h-[120px] bg-muted/40" 
+                placeholder="Generated suggestion will appear here..."
+              />
             </div>
           </CardContent>
         </Card>
 
-        {/* Prompt Testing */}
+        {/* Chat Test */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Bot className="h-5 w-5" />
-              Prompt Testing
+              <MessageSquare className="h-5 w-5" />
+              Chat
             </CardTitle>
-            <CardDescription>Test prompts with AI models</CardDescription>
+            <CardDescription>Test AI chat completions</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="prompt">Test Prompt</Label>
-              <Textarea
-                id="prompt"
-                placeholder="Enter a prompt to test..."
-                value={testPrompt}
-                onChange={(e) => setTestPrompt(e.target.value)}
-                rows={4}
+            <div className="space-y-2">
+              <Label htmlFor="chat-prompt">Prompt</Label>
+              <Input 
+                id="chat-prompt"
+                value={chatPrompt} 
+                onChange={(e) => setChatPrompt(e.target.value)} 
+                placeholder="Enter your message..."
               />
             </div>
+            
             <Button 
-              onClick={testPromptWithAI} 
-              disabled={testing || !testPrompt.trim()}
+              onClick={callChat} 
+              disabled={loadingChat} 
               className="w-full"
             >
-              {testing ? (
+              {loadingChat ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
                 <Send className="h-4 w-4 mr-2" />
               )}
-              {testing ? 'Testing...' : 'Test Prompt'}
+              {loadingChat ? 'Sending…' : 'Send Message'}
             </Button>
-
-            {/* Test Result */}
-            {testResult && (
-              <div className="mt-4">
-                <h4 className="font-medium mb-2">Result:</h4>
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <pre className="text-sm whitespace-pre-wrap">
-                    {JSON.stringify(testResult, null, 2)}
-                  </pre>
-                </div>
-              </div>
-            )}
+            
+            <div className="space-y-2">
+              <Label htmlFor="chat-response">Response</Label>
+              <Textarea 
+                id="chat-response"
+                readOnly 
+                value={chatResponse} 
+                className="min-h-[120px] bg-muted/40" 
+                placeholder="AI response will appear here..."
+              />
+            </div>
           </CardContent>
         </Card>
       </div>

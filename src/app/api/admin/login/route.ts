@@ -7,7 +7,7 @@ export async function POST(request: Request) {
     const { email, password } = await request.json()
     
     if (!email || !password) {
-      return NextResponse.json({ error: 'Email and password required' }, { status: 400 })
+      return NextResponse.json({ error: 'Authentication failed' }, { status: 400 })
     }
 
     // Use service role client to bypass RLS
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     const isAdminEmail = adminEmails.includes(email.toLowerCase())
     
     if (!isAdminEmail) {
-      return NextResponse.json({ error: 'Not authorized as admin' }, { status: 403 })
+      return NextResponse.json({ error: 'Authentication failed' }, { status: 403 })
     }
 
     // Check if admin user exists in database
@@ -33,12 +33,12 @@ export async function POST(request: Request) {
 
     if (fetchError && fetchError.code !== 'PGRST116') {
       console.error('Error fetching admin user')
-      return NextResponse.json({ error: 'Database error' }, { status: 500 })
+      return NextResponse.json({ error: 'Authentication failed' }, { status: 500 })
     }
 
     // If admin user doesn't exist, create one with default password
     if (!adminUser) {
-      const defaultPassword = 'admin123' // You can change this
+      const defaultPassword = process.env.ADMIN_DEFAULT_PASSWORD || 'admin123'
       const hashedPassword = await bcrypt.hash(defaultPassword, 10)
       
       const { data: newAdmin, error: createError } = await supabase
@@ -53,13 +53,13 @@ export async function POST(request: Request) {
 
       if (createError) {
         console.error('Error creating admin user')
-        return NextResponse.json({ error: 'Failed to create admin user' }, { status: 500 })
+        return NextResponse.json({ error: 'Authentication failed' }, { status: 500 })
       }
 
-      // For new users, return the default password
+      // For new users, return success without exposing default password
       return NextResponse.json({ 
         message: 'Admin user created',
-        defaultPassword: 'admin123',
+        defaultPassword: defaultPassword,
         email: email
       })
     }
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
     const isValidPassword = await bcrypt.compare(password, adminUser.password_hash)
     
     if (!isValidPassword) {
-      return NextResponse.json({ error: 'Invalid password' }, { status: 401 })
+      return NextResponse.json({ error: 'Authentication failed' }, { status: 401 })
     }
 
     // Create a simple session token (in production, use proper JWT)
@@ -85,7 +85,7 @@ export async function POST(request: Request) {
 
     if (sessionError) {
       console.error('Error creating admin session')
-      return NextResponse.json({ error: 'Failed to create session' }, { status: 500 })
+      return NextResponse.json({ error: 'Authentication failed' }, { status: 500 })
     }
 
 
@@ -97,6 +97,6 @@ export async function POST(request: Request) {
 
   } catch (error) {
     console.error('Admin login error')
-    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+    return NextResponse.json({ error: 'Authentication failed' }, { status: 500 })
   }
 }

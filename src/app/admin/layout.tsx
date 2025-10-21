@@ -16,7 +16,9 @@ import {
   Menu,
   X,
   ArrowLeft,
-  Activity
+  Activity,
+  Shield,
+  Cog
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -29,6 +31,7 @@ const navigation = [
   { name: 'AI Test', href: '/admin/ai-test', icon: Activity },
   { name: 'Components', href: '/admin/components', icon: FileText },
   { name: 'Diagnostics', href: '/admin/diagnostics', icon: Settings },
+  { name: 'Settings', href: '/admin/settings', icon: Cog },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -44,7 +47,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [password, setPassword] = useState('')
   const [loginLoading, setLoginLoading] = useState(false)
   const [loginError, setLoginError] = useState('')
-  const [loginSuccess, setLoginSuccess] = useState('')
 
   useEffect(() => {
     const checkAdminSession = async () => {
@@ -96,7 +98,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     e.preventDefault()
     setLoginLoading(true)
     setLoginError('')
-    setLoginSuccess('')
 
     try {
       const response = await fetch('/api/admin/login', {
@@ -111,8 +112,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       if (response.ok) {
         if (data.defaultPassword) {
-          setLoginSuccess(`Admin user created! Default password: ${data.defaultPassword}. Please login again.`)
+          // Silently create admin user and redirect to login
           setPassword('')
+          // Don't show any success message about default password
         } else {
           // Store session token in localStorage and cookies
           localStorage.setItem('admin_token', data.token)
@@ -125,10 +127,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           setPassword('')
         }
       } else {
-        setLoginError(data.error || 'Login failed')
+        // Don't show specific error messages
+        setLoginError('Authentication failed')
       }
     } catch (error) {
-      setLoginError('Network error. Please try again.')
+      setLoginError('Authentication failed')
     } finally {
       setLoginLoading(false)
     }
@@ -201,12 +204,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   </Alert>
                 )}
 
-                {loginSuccess && (
-                  <Alert>
-                    <AlertDescription>{loginSuccess}</AlertDescription>
-                  </Alert>
-                )}
-
                 <Button type="submit" className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 rounded-lg shadow-lg transition-all duration-200" disabled={loginLoading}>
                   {loginLoading ? 'Authenticating...' : 'Access Admin Portal'}
                 </Button>
@@ -219,11 +216,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </Link>
               </div>
 
-              <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <p className="text-xs text-blue-800 dark:text-blue-200">
-                  <strong>Security Notice:</strong> Only authorized administrators can access this portal. Contact your system administrator for access.
-                </p>
-              </div>
             </CardContent>
           </Card>
         </div>

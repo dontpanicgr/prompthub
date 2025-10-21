@@ -9,6 +9,7 @@ import { DeepSeekProvider } from '@/lib/providers/deepseek'
 import { OpenAICompatibleProvider } from '@/lib/providers/openaiCompatible'
 import { keyResolver } from '@/lib/key-resolver'
 import { getModelInfo, validateModel } from '@/lib/model-registry'
+import { authenticateUser } from '@/lib/auth-helper'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -55,7 +56,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get user from auth token
+    // Get user from auth token (supports both Supabase and Admin tokens)
     const authHeader = request.headers.get('authorization')
     const token = authHeader?.startsWith('Bearer ') ? authHeader.slice('Bearer '.length) : undefined
 
@@ -66,23 +67,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    })
-
-    const { data: userResult } = await supabase.auth.getUser()
-    const userId = userResult?.user?.id
-
-    if (!userId) {
+    const authResult = await authenticateUser(token)
+    if (!authResult) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       )
     }
+
+    const { userId, isAdmin } = authResult
 
     // Determine model and provider
     const model = modelId || 'claude-3-haiku'
