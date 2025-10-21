@@ -21,25 +21,27 @@ A modern prompt discovery and sharing platform built with Next.js, Supabase, and
 
 ## Getting Started
 
+> **Quick Setup**: For a streamlined setup experience, see [SETUP.md](./SETUP.md)
+
 ### Prerequisites
 
 - Node.js 18+ 
 - npm or yarn
 - Supabase account
+- Git (for cloning the repository)
 
 ### 1. Clone and Install
 
 ```bash
 git clone <your-repo-url>
-cd lexee-app
+cd prompthub
 npm install
 ```
 
-### 2. Set up Supabase
+### 2. Set up Environment Variables
 
-1. Create a new project at [supabase.com](https://supabase.com)
-2. Go to Settings > API to get your project URL and anon key
-3. Copy `.env.example` to `.env.local` and fill in your Supabase credentials:
+1. Copy `.env.example` to `.env.local`
+2. Fill in your Supabase credentials and optional API keys
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url

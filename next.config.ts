@@ -82,14 +82,13 @@ const nextConfig: NextConfig = {
     }
     return config;
   },
-  // Turbopack configuration (for development and build with --turbopack flag)
+  // Turbopack configuration to match webpack fallbacks
   turbopack: {
     resolveAlias: {
-      // Turbopack uses string paths for aliases, not boolean fallbacks
-      // These aliases point to empty modules for client-side compatibility
-      fs: require.resolve('./src/lib/empty-module.js'),
-      net: require.resolve('./src/lib/empty-module.js'),
-      tls: require.resolve('./src/lib/empty-module.js'),
+      // Point to empty modules for client-side compatibility
+      fs: require.resolve('node:fs'),
+      net: require.resolve('node:net'),
+      tls: require.resolve('node:tls'),
     },
   },
 };

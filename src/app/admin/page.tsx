@@ -1,9 +1,12 @@
 'use client'
 
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { useAuth } from '@/components/auth-provider'
 import { 
   Palette, 
   BarChart3, 
@@ -12,8 +15,16 @@ import {
   Settings, 
   TestTube,
   ExternalLink,
-  ArrowLeft
+  ArrowLeft,
+  Shield,
+  Lock
 } from 'lucide-react'
+
+// Add your email address here
+const ADMIN_EMAILS = [
+  'your-email@example.com', // Replace with your actual email
+  // Add more admin emails if needed
+]
 
 const demoPages = [
   {
@@ -57,6 +68,71 @@ const categories = [
 ]
 
 export default function AdminPage() {
+  const { user, loading } = useAuth()
+  const router = useRouter()
+  const [isAuthorized, setIsAuthorized] = useState(false)
+  const [checkingAuth, setCheckingAuth] = useState(true)
+
+  useEffect(() => {
+    if (loading) return
+
+    if (!user) {
+      // Not logged in, redirect to login with return URL
+      router.push(`/login?redirect=${encodeURIComponent('/admin')}`)
+      return
+    }
+
+    // Check if user is admin
+    const isAdmin = ADMIN_EMAILS.includes(user.email?.toLowerCase() || '')
+    setIsAuthorized(isAdmin)
+    setCheckingAuth(false)
+
+    if (!isAdmin) {
+      // Not authorized, redirect to home
+      router.push('/')
+      return
+    }
+  }, [user, loading, router])
+
+  // Show loading while checking auth
+  if (loading || checkingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Checking authorization...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show unauthorized message (briefly before redirect)
+  if (!isAuthorized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
+              <Lock className="h-6 w-6 text-red-600 dark:text-red-400" />
+            </div>
+            <CardTitle className="text-xl">Access Denied</CardTitle>
+            <CardDescription>
+              You don't have permission to access this page.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center">
+            <Button asChild>
+              <Link href="/">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Go Home
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-6xl mx-auto p-8">
@@ -69,10 +145,17 @@ export default function AdminPage() {
                 Back to App
               </Button>
             </Link>
+            <div className="flex items-center gap-2">
+              <Shield className="h-6 w-6 text-amber-500" />
+              <h1 className="text-4xl font-bold">Admin Dashboard</h1>
+              <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
+                Admin Only
+              </Badge>
+            </div>
           </div>
-          <h1 className="text-4xl font-bold mb-2">Admin Dashboard</h1>
           <p className="text-xl text-muted-foreground">
-            Demo pages, test utilities, and development tools
+            Demo pages, test utilities, and development tools.
+            <span className="text-amber-600 dark:text-amber-400 font-medium"> Restricted to authorized administrators only.</span>
           </p>
         </div>
 

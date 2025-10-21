@@ -70,11 +70,27 @@ export async function middleware(request: NextRequest) {
   }
 
   // Only perform auth lookups for protected routes to avoid stalling all requests
-  const isProtected = path.startsWith('/settings') || path.startsWith('/project/')
+  const isProtected = path.startsWith('/settings') || path.startsWith('/project/') || path.startsWith('/admin')
   if (isProtected) {
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      // Example protection (currently not enforcing redirect):
+      
+      // For admin routes, check if user is authorized
+      if (path.startsWith('/admin')) {
+        if (!user) {
+          return NextResponse.redirect(new URL(`/login?redirect=${encodeURIComponent(path)}`, request.url))
+        }
+        
+        // Check if user is admin (you can add your email here)
+        const adminEmails = process.env.ADMIN_EMAILS?.split(',') || []
+        const isAdmin = adminEmails.includes(user.email?.toLowerCase() || '')
+        
+        if (!isAdmin) {
+          return NextResponse.redirect(new URL('/', request.url))
+        }
+      }
+      
+      // Example protection for other routes (currently not enforcing redirect):
       // if (!user) {
       //   return NextResponse.redirect(new URL('/', request.url))
       // }
