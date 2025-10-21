@@ -2,22 +2,34 @@
 
 This guide explains how to configure admin-only access for the PromptHub admin dashboard.
 
-## Setup Options
+## Secure Setup (Recommended)
 
-### Option 1: Environment Variable (Recommended)
+The admin system uses **server-side environment variables** for maximum security. Your email addresses are never exposed in the client-side code.
 
-Add your email to the environment variables:
+### Step 1: Create Environment File
+
+Create a `.env.local` file in your project root:
 
 ```bash
 # In your .env.local file
 ADMIN_EMAILS=your-email@example.com,another-admin@example.com
 ```
 
-**Benefits:**
+### Step 2: Restart Development Server
+
+```bash
+npm run dev
+# or
+yarn dev
+```
+
+**Security Benefits:**
+- ✅ Email addresses are never exposed in client-side code
+- ✅ Server-side validation prevents bypassing
 - ✅ Easy to manage multiple admins
 - ✅ No code changes needed to add/remove admins
-- ✅ Works with both client-side and server-side protection
 - ✅ Can be different for different environments
+- ✅ Safe for public repositories
 
 ### Option 2: Hardcoded in Code
 

@@ -3,12 +3,21 @@
 import { useEffect, useState } from 'react'
 import MainLayout from '@/components/layout/main-layout'
 import { getCreatorsLeaderboard, type LeaderboardCreator } from '@/lib/database'
-import { Heart, Bookmark } from 'lucide-react'
-import Avatar from '@/components/ui/avatar'
+import { Heart, Bookmark, Calendar1, CalendarDays, Trophy } from 'lucide-react'
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
+
+type TimePeriod = 'month' | 'year' | 'overall'
+
+const tabs = [
+  { key: 'month' as const, label: 'This Month', icon: Calendar1 },
+  { key: 'year' as const, label: 'This Year', icon: CalendarDays },
+  { key: 'overall' as const, label: 'Overall', icon: Trophy },
+]
 
 export default function RankingsPage() {
   const [creators, setCreators] = useState<LeaderboardCreator[]>([])
   const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState<TimePeriod>('overall')
 
   const medalForRank = (rank: number) => {
     if (rank === 0) return '🥇'
@@ -36,27 +45,61 @@ export default function RankingsPage() {
     return 'just now'
   }
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        setLoading(true)
-        const data = await getCreatorsLeaderboard()
-        setCreators(data)
-      } catch (e) {
-        console.error('Failed to load rankings', e)
-      } finally {
-        setLoading(false)
-      }
+  const loadRankings = async (timePeriod: TimePeriod) => {
+    try {
+      setLoading(true)
+      const data = await getCreatorsLeaderboard(timePeriod)
+      setCreators(data)
+    } catch (e) {
+      console.error('Failed to load rankings', e)
+    } finally {
+      setLoading(false)
     }
-    load()
-  }, [])
+  }
+
+  useEffect(() => {
+    loadRankings(activeTab)
+  }, [activeTab])
+
+  const handleTabChange = (tab: TimePeriod) => {
+    setActiveTab(tab)
+  }
 
   return (
     <MainLayout>
       <div className="w-full">
-        <div className="mb-6">
-          <h1 className="mb-2 text-xl lg:text-2xl">Rankings</h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">Top creators by likes and bookmarks</p>
+        {/* Rankings Header - Edge to Edge on Mobile */}
+        <div className="mb-4">
+          <div className="-mx-4 lg:mx-0">
+            <div className="bg-background lg:bg-transparent px-4 lg:px-0 border-b border-border">
+              <div className="mb-4">
+                <h1 className="mb-2 text-xl lg:text-2xl font-bold">Rankings</h1>
+                <p className="text-gray-600 dark:text-gray-400">Top creators by likes and bookmarks</p>
+              </div>
+              
+              {/* Tabs */}
+              <nav className="flex space-x-6 overflow-x-auto">
+                {tabs.map(({ key, label, icon: Icon }) => {
+                  const isActive = activeTab === key
+                  
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => handleTabChange(key)}
+                      className={`flex items-center gap-2 py-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${
+                        isActive
+                          ? 'border-primary text-primary'
+                          : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+                      }`}
+                    >
+                      <Icon size={16} />
+                      <span className="hidden sm:inline">{label}</span>
+                    </button>
+                  )
+                })}
+              </nav>
+            </div>
+          </div>
         </div>
 
         {loading ? (
@@ -73,7 +116,7 @@ export default function RankingsPage() {
               <a
                 key={row.creator.id}
                 href={`/user/${row.creator.id}`}
-                className="flex items-center justify-between gap-4 bg-card border border-border rounded-lg p-4 hover:bg-muted/40 transition-colors"
+                className="flex items-center gap-4 bg-card border border-border rounded-lg p-4 hover:bg-muted/40 transition-colors"
               >
                 {/* Left: rank badge + avatar + user name */}
                 <div className="flex items-center gap-3 min-w-0">
@@ -81,34 +124,25 @@ export default function RankingsPage() {
                     {idx + 1}
                   </div>
                   {/* User Avatar */}
-                  <Avatar 
-                    src={row.creator.avatar_url} 
-                    alt={row.creator.name || 'Unknown'} 
-                    size="md"
-                    className="shrink-0"
-                  />
+                  <Avatar className="shrink-0 h-10 w-10">
+                    <AvatarImage src={row.creator.avatar_url} alt={row.creator.name || 'Unknown'} />
+                    <AvatarFallback>{row.creator.name?.charAt(0) || 'U'}</AvatarFallback>
+                  </Avatar>
                   <div className="min-w-0">
                     <div className="truncate font-medium text-card-foreground flex items-center">
                       <span className="truncate">{row.creator.name || 'Unknown'}</span>
                       {medalForRank(idx) && <span className="ml-1">{medalForRank(idx)}</span>}
                     </div>
-                    <div className="text-sm text-muted-foreground truncate">
-                      {row.promptsCreated} {row.promptsCreated === 1 ? 'prompt' : 'prompts'} created · Joined {timeAgo(row.joinedAt)}
+                    <div className="text-sm text-muted-foreground truncate flex items-center gap-1">
+                      <Heart size={14} className="text-muted-foreground" />
+                      <span>{row.likes} Likes</span>
+                      <span>•</span>
+                      <Bookmark size={14} className="text-muted-foreground" />
+                      <span>{row.bookmarks} Bookmarks</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Right: likes + bookmarks (icons + counts) */}
-                <div className="flex items-center gap-3 shrink-0 text-base text-card-foreground">
-                  <div className="flex items-center gap-1">
-                    <Heart size={20} className="text-muted-foreground" />
-                    <span className="font-semibold">{row.likes}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Bookmark size={20} className="text-muted-foreground" />
-                    <span className="font-semibold">{row.bookmarks}</span>
-                  </div>
-                </div>
               </a>
             ))}
           </div>

@@ -255,7 +255,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
         <div className="mb-6">
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="font-bold text-2xl mb-2">{project.name}</h1>
+              <h1 className="text-xl lg:text-2xl font-bold mb-2">{project.name}</h1>
               {project.description && (
                 <p className="text-gray-600 dark:text-gray-400 mb-6">{project.description}</p>
               )}

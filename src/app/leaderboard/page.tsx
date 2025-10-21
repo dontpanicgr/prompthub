@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import MainLayout from '@/components/layout/main-layout'
 import { getCreatorsLeaderboard, type LeaderboardCreator } from '@/lib/database'
 import { Heart, Bookmark } from 'lucide-react'
-import Avatar from '@/components/ui/avatar'
 
 export default function LeaderboardPage() {
   const [creators, setCreators] = useState<LeaderboardCreator[]>([])
@@ -40,7 +39,7 @@ export default function LeaderboardPage() {
     const load = async () => {
       try {
         setLoading(true)
-        const data = await getCreatorsLeaderboard()
+        const data = await getCreatorsLeaderboard('overall')
         setCreators(data)
       } catch (e) {
         console.error('Failed to load leaderboard', e)
@@ -55,7 +54,7 @@ export default function LeaderboardPage() {
     <MainLayout>
       <div className="w-full">
         <div className="mb-6">
-          <h1 className="mb-2 text-xl lg:text-2xl">Rankings</h1>
+          <h1 className="mb-2 text-xl lg:text-2xl font-bold">Rankings</h1>
           <p className="text-gray-600 dark:text-gray-400 mb-6">Top creators by likes and bookmarks</p>
         </div>
 

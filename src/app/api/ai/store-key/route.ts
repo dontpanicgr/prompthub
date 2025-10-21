@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
     }
 
   } catch (error) {
-    console.error('Store key error:', error)
+    console.error('Store key error')
     
     if (error instanceof Error) {
       return NextResponse.json(

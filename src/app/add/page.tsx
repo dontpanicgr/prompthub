@@ -9,7 +9,7 @@ export default function AddPromptPage() {
     <MainLayout>
       <div className="w-full max-w-4xl mx-auto">
         <div className="mb-6">
-        <h1 className="mb-2 text-xl lg:text-2xl">
+        <h1 className="mb-2 text-xl lg:text-2xl font-bold">
           Add Prompt
         </h1>
           <p className="text-gray-600 dark:text-gray-400 mb-6">

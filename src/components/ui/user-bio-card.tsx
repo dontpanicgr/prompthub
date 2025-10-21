@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import Avatar from '@/components/ui/avatar'
 
 interface UserBioCardProps {
   user: {

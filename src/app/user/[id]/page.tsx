@@ -11,10 +11,11 @@ import { getUserEngagementStats, getUserPrompts, getLikedPrompts, getBookmarkedP
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { FloatingMenu } from '@/components/ui/dropdown-menu'
-import { MoreVertical, Share2, Link as LinkIcon, Flag, List, Heart, Bookmark, Folder, Plus, Edit, Settings, Eye, EyeOff } from 'lucide-react'
+import { MoreVertical, Share2, Link as LinkIcon, Flag, Sparkles, Heart, Bookmark, Folder, Plus, Edit, Settings, Eye, EyeOff } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { Switch } from '@/components/ui/switch'
 import { PrivateBadge } from '@/components/ui/private-badge'
 import { toast } from 'sonner'
 import { useAuth } from '@/components/auth-provider'
@@ -31,7 +32,7 @@ interface UserPageProps {
 type TabType = 'created' | 'liked' | 'bookmarked' | 'projects'
 
 const tabs = [
-  { key: 'created' as const, label: 'Created', icon: List },
+  { key: 'created' as const, label: 'My prompts', icon: Sparkles },
   { key: 'liked' as const, label: 'Liked', icon: Heart },
   { key: 'bookmarked' as const, label: 'Bookmarked', icon: Bookmark },
   { key: 'projects' as const, label: 'Projects', icon: Folder },
@@ -411,10 +412,79 @@ export default function UserPage({ params }: UserPageProps) {
   if (userLoading || (isOwnProfile && authLoading)) {
     return (
       <MainLayout>
-        <div className="w-full p-6">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 dark:bg-gray-800 rounded w-32 mb-6"></div>
-            <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-64 mb-6"></div>
+        <div className="w-full">
+          {/* Mobile Profile Header Skeleton - Edge to Edge on Mobile */}
+          <div className="mb-4">
+            <div className="-mx-4 lg:mx-0">
+              <div className="bg-background lg:bg-transparent px-4 lg:px-0 border-b border-border animate-pulse">
+                {/* 1. Avatar and Action Row Skeleton */}
+                <div className="flex items-center justify-between mb-4 gap-3">
+                  {/* Avatar Skeleton */}
+                  <div className="rounded-full bg-gray-200 dark:bg-gray-800 w-12 h-12 shrink-0"></div>
+                  
+                  {/* Actions Skeleton */}
+                  <div className="flex items-center gap-2 flex-1 justify-end min-w-0">
+                    <div className="hidden sm:block bg-gray-200 dark:bg-gray-800 rounded h-8 w-16"></div>
+                    <div className="bg-gray-200 dark:bg-gray-800 rounded h-9 w-9"></div>
+                  </div>
+                </div>
+
+                {/* 2. Name Skeleton */}
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="h-6 bg-gray-200 dark:bg-gray-800 rounded w-24"></div>
+                </div>
+
+                {/* 3. Metadata Skeleton */}
+                <div className="space-y-3 mb-4">
+                  {/* Stats Skeleton */}
+                  <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
+                    <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-20"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-16"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-20"></div>
+                  </div>
+                  
+                  {/* Bio Skeleton */}
+                  <div className="space-y-2">
+                    <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-full"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-3/4"></div>
+                  </div>
+                </div>
+
+                {/* 4. Tabs Skeleton - only show for own profile */}
+                {isOwnProfile && (
+                  <div>
+                    <div className="flex space-x-6">
+                      <div className="h-10 bg-gray-200 dark:bg-gray-800 rounded w-16"></div>
+                      <div className="h-10 bg-gray-200 dark:bg-gray-800 rounded w-16"></div>
+                      <div className="h-10 bg-gray-200 dark:bg-gray-800 rounded w-20"></div>
+                      <div className="h-10 bg-gray-200 dark:bg-gray-800 rounded w-16"></div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Content Skeleton */}
+          <div className="space-y-4 animate-pulse">
+            <div className="h-10 bg-gray-200 dark:bg-gray-800 rounded w-full"></div>
+            <div className="flex gap-2">
+              <div className="h-8 bg-gray-200 dark:bg-gray-800 rounded-full w-20"></div>
+              <div className="h-8 bg-gray-200 dark:bg-gray-800 rounded-full w-16"></div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="bg-card text-card-foreground rounded-lg border border-border p-6">
+                  <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded mb-4"></div>
+                  <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded mb-2"></div>
+                  <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded mb-4"></div>
+                  <div className="flex justify-between items-center">
+                    <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-16"></div>
+                    <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-20"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </MainLayout>
@@ -428,27 +498,110 @@ export default function UserPage({ params }: UserPageProps) {
   return (
     <MainLayout>
       <div className="w-full">
-        {/* Header: avatar, details, actions (mobile full-width) */}
-        <div className="mb-0">
+        {/* Mobile Profile Header - Edge to Edge on Mobile */}
+        <div className="mb-4">
           <div className="-mx-4 lg:mx-0">
-            <div className="bg-background lg:bg-transparent">
-              <div className="flex items-start justify-between mb-4 gap-4">
-            {/* Left: Avatar + details */}
-            <div className="flex items-start gap-4">
-              <div className="rounded-full bg-muted flex items-center justify-center text-muted-foreground w-16 h-16 text-xl shrink-0">
-                <span className="font-semibold">{user?.name?.[0]?.toUpperCase() || 'U'}</span>
-              </div>
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <h1>{user.name}</h1>
-                  {isOwnProfile && isPrivate && (
-                    <PrivateBadge size="sm" />
+            <div className="bg-background lg:bg-transparent px-4 lg:px-0 border-b border-border">
+              {/* 1. Avatar and Action Row */}
+              <div className="flex items-center justify-between mb-4 gap-3">
+                {/* Avatar */}
+                <div className="rounded-full bg-muted flex items-center justify-center text-muted-foreground w-12 h-12 text-lg shrink-0">
+                  <span className="font-semibold">{user?.name?.[0]?.toUpperCase() || 'U'}</span>
+                </div>
+                
+                {/* Actions */}
+                <div className="flex items-center gap-2 flex-1 justify-end min-w-0">
+                  {isOwnProfile ? (
+                    <>
+                      <Button 
+                        size="sm" 
+                        className="hidden sm:inline-flex gap-1 flex-shrink-0" 
+                        onClick={() => window.location.href = '/create'}
+                      >
+                        <Plus size={14} />
+                        Add
+                      </Button>
+                      <FloatingMenu
+                        align="end"
+                        trigger={
+                          <Button variant="outline" size="icon" aria-label="More actions" className="flex-shrink-0">
+                            <MoreVertical size={16} />
+                          </Button>
+                        }
+                        items={[
+                          { label: 'Share', icon: <Share2 size={16} /> },
+                          { label: 'Copy Link', icon: <LinkIcon size={16} /> },
+                          { label: 'separator', separator: true },
+                          { 
+                            label: 'Edit', 
+                            icon: <Edit size={16} />,
+                            onClick: () => setIsEditOpen(true)
+                          },
+                          { 
+                            label: isPrivate ? 'Switch to public' : 'Switch to private', 
+                            icon: isPrivate ? <EyeOff size={16} /> : <Eye size={16} />,
+                            onClick: handleTogglePrivacy
+                          },
+                          { 
+                            label: 'Settings', 
+                            icon: <Settings size={16} />,
+                            onClick: () => window.location.href = '/settings'
+                          },
+                        ]}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button size="sm" className="flex-shrink-0">
+                            Contact
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Messaging is coming soon</DialogTitle>
+                            <DialogDescription>
+                              We&apos;re building in-app messaging so you can contact creators directly. Reserve your seat for the beta to get early access.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="flex flex-col items-center text-center gap-4">
+                            <img src="/globe.svg" alt="Coming soon" className="w-24 h-24 opacity-80" />
+                            <Button className="mt-2">Reserve your seat for beta</Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                      <FloatingMenu
+                        align="end"
+                        trigger={
+                          <Button variant="outline" size="icon" aria-label="More actions" className="flex-shrink-0">
+                            <MoreVertical size={16} />
+                          </Button>
+                        }
+                        items={[
+                          { label: 'Share', icon: <Share2 size={16} /> },
+                          { label: 'Copy Link', icon: <LinkIcon size={16} /> },
+                        ]}
+                      />
+                    </>
                   )}
                 </div>
-                {/* Stats line under username */}
-                <div className="text-sm text-muted-foreground mb-2 flex items-center gap-4">
+              </div>
+
+              {/* 2. Name */}
+              <div className="flex items-center gap-2 mb-3">
+                <h1 className="text-xl lg:text-2xl font-bold truncate">{user.name}</h1>
+                {isOwnProfile && isPrivate && (
+                  <PrivateBadge size="sm" />
+                )}
+              </div>
+
+              {/* 3. Metadata (likes, description etc) */}
+              <div className="space-y-3 mb-4">
+                {/* Stats */}
+                <div className="text-sm text-muted-foreground flex items-center gap-3 sm:gap-4 flex-wrap">
                   <span className="inline-flex items-center gap-1.5">
-                    <List size={14} className="text-muted-foreground" />
+                    <Sparkles size={14} className="text-muted-foreground" />
                     {statsLoading ? '-' : stats.prompts_created} Prompts
                   </span>
                   <span className="inline-flex items-center gap-1.5">
@@ -460,123 +613,54 @@ export default function UserPage({ params }: UserPageProps) {
                     {statsLoading ? '-' : stats.bookmarks_received} Bookmarked
                   </span>
                 </div>
+                
+                {/* Bio */}
                 {user.bio && (
-                  <p className="text-sm text-muted-foreground mb-2">{user.bio}</p>
+                  <p className="text-sm text-muted-foreground">{user.bio}</p>
                 )}
+                
+                {/* Website */}
                 {user.website_url && (
-                  <a href={user.website_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline block">{user.website_url}</a>
+                  <a 
+                    href={user.website_url} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-sm text-primary hover:underline inline-block"
+                  >
+                    {user.website_url}
+                  </a>
                 )}
               </div>
-            </div>
-            {/* Right: actions */}
-            <div className="flex items-center gap-2">
-              {isOwnProfile ? (
-                <>
-                  <Button className="hidden sm:inline-flex gap-0" onClick={() => window.location.href = '/create'}>
-                    <Plus size={16} />
-                    Add
-                  </Button>
-                  <FloatingMenu
-                    align="end"
-                    trigger={
-                      <Button variant="outline" size="icon" aria-label="More actions">
-                        <MoreVertical />
-                      </Button>
-                    }
-                    items={[
-                      { 
-                        label: 'Edit', 
-                        icon: <Edit />,
-                        onClick: () => setIsEditOpen(true)
-                      },
-                      { 
-                        label: isPrivate ? 'Profile is private' : 'Profile is public', 
-                        icon: isPrivate ? <EyeOff /> : <Eye />,
-                        onClick: handleTogglePrivacy
-                      },
-                      { 
-                        label: 'Settings', 
-                        icon: <Settings />,
-                        onClick: () => window.location.href = '/settings'
-                      },
-                      { label: 'separator', separator: true },
-                      { label: 'Share', icon: <Share2 /> },
-                      { label: 'Copy Link', icon: <LinkIcon /> },
-                    ]}
-                  />
-                </>
-              ) : (
-                <>
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button>
-                        Contact
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Messaging is coming soon</DialogTitle>
-                        <DialogDescription>
-                          We&apos;re building in-app messaging so you can contact creators directly. Reserve your seat for the beta to get early access.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="flex flex-col items-center text-center gap-4">
-                        <img src="/globe.svg" alt="Coming soon" className="w-24 h-24 opacity-80" />
-                        <Button className="mt-2">Reserve your seat for beta</Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                  <FloatingMenu
-                    align="end"
-                    trigger={
-                      <Button variant="outline" size="icon" aria-label="More actions">
-                        <MoreVertical />
-                      </Button>
-                    }
-                    items={[
-                      { label: 'Share', icon: <Share2 /> },
-                      { label: 'Copy Link', icon: <LinkIcon /> },
-                    ]}
-                  />
-                </>
+
+              {/* 4. Tabs (if applicable) - only show for own profile */}
+              {isOwnProfile && (
+                <div>
+                  <nav className="flex space-x-6 overflow-x-auto">
+                    {tabs.map(({ key, label, icon: Icon }) => {
+                      const isActive = activeTab === key
+                      
+                      return (
+                        <button
+                          key={key}
+                          onClick={() => handleTabChange(key)}
+                          className={`flex items-center gap-2 py-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${
+                            isActive
+                              ? 'border-primary text-primary'
+                              : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+                          }`}
+                        >
+                          <Icon size={16} />
+                          <span className="hidden sm:inline">{label}</span>
+                        </button>
+                      )
+                    })}
+                  </nav>
+                </div>
               )}
-            </div>
-              </div>
             </div>
           </div>
         </div>
 
-        {/* Tabs - only show for own profile (mobile full-width) */}
-        {isOwnProfile && (
-          <div className="mb-4">
-            <div className="-mx-4 lg:mx-0">
-              <div className="ml-4 lg:ml-0">
-                <div className="border-b border-border">
-                <nav className="flex space-x-8">
-                {tabs.map(({ key, label, icon: Icon }) => {
-                  const isActive = activeTab === key
-                  
-                  return (
-                    <button
-                      key={key}
-                      onClick={() => handleTabChange(key)}
-                      className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                        isActive
-                          ? 'border-primary text-primary'
-                          : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-                      }`}
-                    >
-                      <Icon size={16} />
-                      {label}
-                    </button>
-                  )
-                })}
-                  </nav>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Search and Filters - only for prompt tabs */}
         {isOwnProfile && activeTab !== 'projects' && (
@@ -705,7 +789,7 @@ export default function UserPage({ params }: UserPageProps) {
 
       {/* Edit Profile Modal */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>Edit profile</DialogTitle>
             <DialogDescription>
@@ -753,48 +837,38 @@ export default function UserPage({ params }: UserPageProps) {
               />
             </div>
             {/* Visibility Section */}
-            <div className="space-y-3">
-              <div>
-                <h3 className="text-sm font-medium">Visibility</h3>
-                <p className="text-xs text-muted-foreground">Configure profile visibility public or private</p>
-              </div>
-              
+            <div className="space-y-6">
               <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <label className="text-sm font-medium">Private profile</label>
+                  <p className="text-sm text-muted-foreground">
+                    Hide your profile and prompts from others (visible only to you).
+                  </p>
+                </div>
                 <div className="flex items-center gap-2">
-                  <button
-                    onClick={handleTogglePrivacy}
+                  <Switch
+                    checked={isPrivate}
+                    onChange={async (checked) => {
+                      try {
+                        setUpdatingPrivacy(true)
+                        setIsPrivate(checked)
+                        const { error } = await supabase
+                          .from('profiles')
+                          .update({ is_private: checked, updated_at: new Date().toString() })
+                          .eq('id', user!.id)
+                        if (error) throw error
+                        const message = checked ? 'Profile set to private' : 'Profile set to public'
+                        toast.success(message)
+                      } catch (e: any) {
+                        console.error(e)
+                        setIsPrivate((prev) => !prev)
+                        toast.error('Failed to update privacy')
+                      } finally {
+                        setUpdatingPrivacy(false)
+                      }
+                    }}
                     disabled={updatingPrivacy}
-                    className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                      !isPrivate
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted text-muted-foreground hover:text-foreground'
-                    } ${updatingPrivacy ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                  >
-                    <Eye size={14} />
-                    Public
-                  </button>
-                </div>
-              </div>
-              
-              {/* Visibility Options */}
-              <div className="space-y-3">
-                <div className="flex items-start gap-2">
-                  <Eye size={16} className="text-muted-foreground mt-0.5" />
-                  <div className="text-sm">
-                    <span className="font-medium">Public:</span> Your profile is visible; your public prompts are visible to all.
-                  </div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-base">😮</span>
-                  <div className="text-sm">
-                    <span className="font-medium">Private:</span> Your profile is visible; your prompts are hidden.
-                  </div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-base">💡</span>
-                  <div className="text-sm">
-                    You can also make individual prompts private and keep your profile public.
-                  </div>
+                  />
                 </div>
               </div>
             </div>

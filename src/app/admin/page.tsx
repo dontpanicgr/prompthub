@@ -1,324 +1,254 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { useAuth } from '@/components/auth-provider'
+import { getAdminMetrics, type AdminMetrics } from '@/lib/admin-metrics'
 import { 
-  Palette, 
-  BarChart3, 
-  Zap, 
-  Code, 
-  Settings, 
-  TestTube,
-  ExternalLink,
-  ArrowLeft,
-  Shield,
-  Lock
+  FileText, 
+  Users, 
+  Heart, 
+  MessageSquare, 
+  Bookmark, 
+  FolderOpen,
+  TrendingUp,
+  Activity
 } from 'lucide-react'
 
-// Add your email address here
-const ADMIN_EMAILS = [
-  'your-email@example.com', // Replace with your actual email
-  // Add more admin emails if needed
-]
-
-const demoPages = [
-  {
-    title: 'Model Badge Demo',
-    description: 'Visual showcase of all AI model badges with different configurations and interactive controls',
-    href: '/model-badge-demo',
-    icon: Palette,
-    status: 'ready',
-    category: 'Components'
-  },
-  {
-    title: 'Analytics Test',
-    description: 'Test page for analytics tracking and event monitoring',
-    href: '/analytics-test',
-    icon: BarChart3,
-    status: 'ready',
-    category: 'Analytics'
-  },
-  {
-    title: 'UI Components Demo',
-    description: 'Comprehensive showcase of buttons, typography, cards, and other UI components',
-    href: '/ui-demo',
-    icon: Code,
-    status: 'ready',
-    category: 'Components'
-  },
-  {
-    title: 'Skeleton Test',
-    description: 'Test page for skeleton loading states and animations',
-    href: '/skeleton-test',
-    icon: Zap,
-    status: 'ready',
-    category: 'Loading'
-  }
-]
-
-const categories = [
-  { name: 'Components', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' },
-  { name: 'Analytics', color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' },
-  { name: 'Loading', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' }
-]
-
-export default function AdminPage() {
-  const { user, loading } = useAuth()
-  const router = useRouter()
-  const [isAuthorized, setIsAuthorized] = useState(false)
-  const [checkingAuth, setCheckingAuth] = useState(true)
+export default function AdminAnalyticsPage() {
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (loading) return
-
-    if (!user) {
-      // Not logged in, redirect to login with return URL
-      router.push(`/login?redirect=${encodeURIComponent('/admin')}`)
-      return
+    // Simulate API call to fetch analytics data
+    const fetchAnalytics = async () => {
+      try {
+        // In a real app, this would be an API call
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        
+        setAnalytics({
+          totalPrompts: 1247,
+          totalUsers: 342,
+          totalLikes: 8934,
+          totalComments: 2156,
+          totalBookmarks: 1876,
+          totalProjects: 89,
+          promptsToday: 23,
+          usersToday: 8,
+          likesToday: 156,
+          commentsToday: 34,
+          bookmarksToday: 67,
+          projectsToday: 3,
+          topPrompt: "Advanced React Patterns",
+          topUser: "john_doe",
+          growthRate: 12.5
+        })
+      } catch (error) {
+        console.error('Failed to fetch analytics:', error)
+      } finally {
+        setLoading(false)
+      }
     }
 
-    // Check if user is admin
-    const isAdmin = ADMIN_EMAILS.includes(user.email?.toLowerCase() || '')
-    setIsAuthorized(isAdmin)
-    setCheckingAuth(false)
+    fetchAnalytics()
+  }, [])
 
-    if (!isAdmin) {
-      // Not authorized, redirect to home
-      router.push('/')
-      return
-    }
-  }, [user, loading, router])
-
-  // Show loading while checking auth
-  if (loading || checkingAuth) {
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Checking authorization...</p>
+      <div className="p-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="h-32 bg-gray-200 rounded"></div>
+            ))}
+          </div>
         </div>
       </div>
     )
   }
 
-  // Show unauthorized message (briefly before redirect)
-  if (!isAuthorized) {
+  if (!analytics) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
-              <Lock className="h-6 w-6 text-red-600 dark:text-red-400" />
-            </div>
-            <CardTitle className="text-xl">Access Denied</CardTitle>
-            <CardDescription>
-              You don't have permission to access this page.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
-            <Button asChild>
-              <Link href="/">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Go Home
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="p-6">
+        <div className="text-center">
+          <p className="text-gray-500">Failed to load analytics data</p>
+        </div>
       </div>
     )
   }
+
+  const metrics = [
+    {
+      title: 'Total Prompts',
+      value: analytics.totalPrompts.toLocaleString(),
+      change: `+${analytics.promptsToday} today`,
+      icon: FileText,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-100'
+    },
+    {
+      title: 'Total Users',
+      value: analytics.totalUsers.toLocaleString(),
+      change: `+${analytics.usersToday} today`,
+      icon: Users,
+      color: 'text-green-600',
+      bgColor: 'bg-green-100'
+    },
+    {
+      title: 'Total Likes',
+      value: analytics.totalLikes.toLocaleString(),
+      change: `+${analytics.likesToday} today`,
+      icon: Heart,
+      color: 'text-red-600',
+      bgColor: 'bg-red-100'
+    },
+    {
+      title: 'Total Comments',
+      value: analytics.totalComments.toLocaleString(),
+      change: `+${analytics.commentsToday} today`,
+      icon: MessageSquare,
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-100'
+    },
+    {
+      title: 'Total Bookmarks',
+      value: analytics.totalBookmarks.toLocaleString(),
+      change: `+${analytics.bookmarksToday} today`,
+      icon: Bookmark,
+      color: 'text-yellow-600',
+      bgColor: 'bg-yellow-100'
+    },
+    {
+      title: 'Total Projects',
+      value: analytics.totalProjects.toLocaleString(),
+      change: `+${analytics.projectsToday} today`,
+      icon: FolderOpen,
+      color: 'text-indigo-600',
+      bgColor: 'bg-indigo-100'
+    }
+  ]
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-6xl mx-auto p-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-4 mb-4">
-            <Link href="/">
-              <Button variant="ghost" size="sm" className="gap-2">
-                <ArrowLeft className="h-4 w-4" />
-                Back to App
-              </Button>
-            </Link>
-            <div className="flex items-center gap-2">
-              <Shield className="h-6 w-6 text-amber-500" />
-              <h1 className="text-4xl font-bold">Admin Dashboard</h1>
-              <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
-                Admin Only
-              </Badge>
-            </div>
-          </div>
-          <p className="text-xl text-muted-foreground">
-            Demo pages, test utilities, and development tools.
-            <span className="text-amber-600 dark:text-amber-400 font-medium"> Restricted to authorized administrators only.</span>
-          </p>
-        </div>
+    <div className="p-6">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
+        <p className="text-gray-600 mt-2">Overview of your platform's key metrics and performance</p>
+      </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2">
-                <TestTube className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-2xl font-bold">{demoPages.length}</p>
-                  <p className="text-sm text-muted-foreground">Demo Pages</p>
+      {/* Key Metrics Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        {metrics.map((metric) => {
+          const Icon = metric.icon
+          return (
+            <Card key={metric.title}>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">{metric.title}</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-2">{metric.value}</p>
+                    <p className="text-sm text-green-600 mt-1">{metric.change}</p>
+                  </div>
+                  <div className={`p-3 rounded-full ${metric.bgColor}`}>
+                    <Icon className={`h-6 w-6 ${metric.color}`} />
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2">
-                <Settings className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-2xl font-bold">{categories.length}</p>
-                  <p className="text-sm text-muted-foreground">Categories</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2">
-                <Code className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-2xl font-bold">12</p>
-                  <p className="text-sm text-muted-foreground">AI Models</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2">
-                <Palette className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-2xl font-bold">100%</p>
-                  <p className="text-sm text-muted-foreground">Ready</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          )
+        })}
+      </div>
 
-        {/* Demo Pages Grid */}
-        <div className="space-y-6">
-          <h2 className="text-2xl font-semibold">Demo Pages</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {demoPages.map((page) => {
-              const Icon = page.icon
-              return (
-                <Card key={page.href} className="group hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-primary/10 rounded-lg">
-                          <Icon className="h-6 w-6 text-primary" />
-                        </div>
-                        <div>
-                          <CardTitle className="text-lg">{page.title}</CardTitle>
-                          <Badge 
-                            variant="secondary" 
-                            className={`text-xs ${categories.find(c => c.name === page.category)?.color}`}
-                          >
-                            {page.category}
-                          </Badge>
-                        </div>
-                      </div>
-                      <Badge variant="outline" className="text-xs">
-                        {page.status}
-                      </Badge>
-                    </div>
-                    <CardDescription className="mt-2">
-                      {page.description}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Link href={page.href}>
-                      <Button className="w-full group-hover:bg-primary/90 transition-colors">
-                        Open Demo
-                        <ExternalLink className="h-4 w-4 ml-2" />
-                      </Button>
-                    </Link>
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="mt-12">
-          <h2 className="text-2xl font-semibold mb-6">Quick Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Link href="/model-badge-demo">
-              <Button variant="outline" className="w-full h-20 flex flex-col gap-2">
-                <Palette className="h-6 w-6" />
-                <span>Model Badges</span>
-              </Button>
-            </Link>
-            <Link href="/ui-demo">
-              <Button variant="outline" className="w-full h-20 flex flex-col gap-2">
-                <Code className="h-6 w-6" />
-                <span>UI Components</span>
-              </Button>
-            </Link>
-            <Link href="/analytics-test">
-              <Button variant="outline" className="w-full h-20 flex flex-col gap-2">
-                <BarChart3 className="h-6 w-6" />
-                <span>Analytics</span>
-              </Button>
-            </Link>
-            <Link href="/skeleton-test">
-              <Button variant="outline" className="w-full h-20 flex flex-col gap-2">
-                <Zap className="h-6 w-6" />
-                <span>Loading States</span>
-              </Button>
-            </Link>
-          </div>
-        </div>
-
-        {/* Development Info */}
-        <Card className="mt-12">
+      {/* Additional Analytics Cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        {/* Growth Rate */}
+        <Card>
           <CardHeader>
-            <CardTitle>Development Information</CardTitle>
-            <CardDescription>
-              Useful information for developers working on this project
-            </CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Growth Rate
+            </CardTitle>
+            <CardDescription>Platform growth over the last 30 days</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <CardContent>
+            <div className="text-3xl font-bold text-green-600 mb-2">
+              +{analytics.growthRate}%
+            </div>
+            <p className="text-sm text-gray-600">
+              Compared to previous month
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Top Content */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5" />
+              Top Content
+            </CardTitle>
+            <CardDescription>Most popular content this week</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
               <div>
-                <h4 className="font-medium mb-2">Available Routes</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• /admin - This admin dashboard</li>
-                  <li>• /model-badge-demo - Model badge showcase</li>
-                  <li>• /ui-demo - UI components demo</li>
-                  <li>• /analytics-test - Analytics testing</li>
-                  <li>• /skeleton-test - Loading states test</li>
-                </ul>
+                <p className="text-sm font-medium text-gray-900">Top Prompt</p>
+                <p className="text-sm text-gray-600 truncate">{analytics.topPrompt}</p>
               </div>
               <div>
-                <h4 className="font-medium mb-2">Tech Stack</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• Next.js 15 (App Router)</li>
-                  <li>• TypeScript</li>
-                  <li>• Tailwind CSS</li>
-                  <li>• Supabase</li>
-                  <li>• Lucide React Icons</li>
-                </ul>
+                <p className="text-sm font-medium text-gray-900">Top User</p>
+                <p className="text-sm text-gray-600">@{analytics.topUser}</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Recent Activity */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5" />
+            Recent Activity
+          </CardTitle>
+          <CardDescription>Latest platform activity and events</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+              <div className="p-2 bg-blue-100 rounded-full">
+                <FileText className="h-4 w-4 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium">New prompt created</p>
+                <p className="text-xs text-gray-500">"Advanced React Patterns" by john_doe</p>
+              </div>
+              <span className="text-xs text-gray-500">2 min ago</span>
+            </div>
+            
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+              <div className="p-2 bg-green-100 rounded-full">
+                <Users className="h-4 w-4 text-green-600" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium">New user registered</p>
+                <p className="text-xs text-gray-500">jane_smith joined the platform</p>
+              </div>
+              <span className="text-xs text-gray-500">15 min ago</span>
+            </div>
+            
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+              <div className="p-2 bg-red-100 rounded-full">
+                <Heart className="h-4 w-4 text-red-600" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium">High engagement</p>
+                <p className="text-xs text-gray-500">Prompt "AI Best Practices" reached 100 likes</p>
+              </div>
+              <span className="text-xs text-gray-500">1 hour ago</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

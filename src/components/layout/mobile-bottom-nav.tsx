@@ -5,6 +5,8 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { useTheme } from '@/components/theme-provider'
 import { useAuth } from '@/components/auth-provider'
+import { supabase } from '@/lib/supabase'
+import { toast } from 'sonner'
 import { 
   Compass, 
   TrendingUp, 
@@ -15,7 +17,9 @@ import {
   Moon,
   Sun,
   LogOut,
-  User
+  User,
+  Eye,
+  EyeOff
 } from 'lucide-react'
 
 // Configuration constants
@@ -64,11 +68,55 @@ export default function MobileBottomNav() {
   const { theme, setTheme } = useTheme()
   const { user, signOut, signingOut } = useAuth()
   const [isSheetOpen, setIsSheetOpen] = useState(false)
+  const [isPrivate, setIsPrivate] = useState<boolean>(false)
+  const [updatingPrivacy, setUpdatingPrivacy] = useState<boolean>(false)
 
   // Close menu when pathname changes (navigation occurs)
   useEffect(() => {
     setIsSheetOpen(false)
   }, [pathname])
+
+  // Load privacy status
+  useEffect(() => {
+    const loadPrivacy = async () => {
+      try {
+        if (!user?.id) return
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('is_private')
+          .eq('id', user.id)
+          .single()
+        if (!error && data) {
+          setIsPrivate(!!data.is_private)
+        }
+      } catch {}
+    }
+    loadPrivacy()
+  }, [user?.id])
+
+  const togglePrivacy = async () => {
+    if (!user?.id || updatingPrivacy) return
+    try {
+      setUpdatingPrivacy(true)
+      const next = !isPrivate
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_private: next, updated_at: new Date().toISOString() })
+        .eq('id', user.id)
+      if (!error) {
+        setIsPrivate(next)
+        const message = next ? 'Profile set to private' : 'Profile set to public'
+        toast.success(message)
+      } else {
+        toast.error('Failed to update privacy')
+      }
+    } catch (e) {
+      console.error(e)
+      toast.error('Failed to update privacy')
+    } finally {
+      setUpdatingPrivacy(false)
+    }
+  }
 
   return (
     <nav 
@@ -138,7 +186,7 @@ export default function MobileBottomNav() {
           <div className={`fixed inset-x-0 bottom-16 ${NAV_CONFIG.sheetZIndex}`}>
             <div className={`${NAV_CONFIG.borderRadius} border border-border bg-background`}>
               <div className="p-2">
-                {/* Only show Settings and Profile for logged in users */}
+                {/* Only show menu items for logged in users */}
                 {user && (
                   <>
                     <button
@@ -154,6 +202,24 @@ export default function MobileBottomNav() {
                     <button
                       className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-base text-foreground hover:bg-muted transition-colors"
                       onClick={() => {
+                        setTheme(theme === 'dark' ? 'light' : 'dark')
+                        setIsSheetOpen(false)
+                      }}
+                    >
+                      {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                      {theme === 'dark' ? 'Lights on' : 'Lights off'}
+                    </button>
+                    <button
+                      onClick={togglePrivacy}
+                      disabled={updatingPrivacy}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-base text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+                    >
+                      {isPrivate ? <EyeOff size={18} /> : <Eye size={18} />}
+                      {isPrivate ? 'Switch to public' : 'Switch to private'}
+                    </button>
+                    <button
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-base text-foreground hover:bg-muted transition-colors"
+                      onClick={() => {
                         setIsSheetOpen(false)
                         router.push('/settings')
                       }}
@@ -163,16 +229,6 @@ export default function MobileBottomNav() {
                     </button>
                   </>
                 )}
-                <button
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-base text-foreground hover:bg-muted transition-colors"
-                  onClick={() => {
-                    setTheme(theme === 'dark' ? 'light' : 'dark')
-                    setIsSheetOpen(false)
-                  }}
-                >
-                  {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-                  {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-                </button>
                 {user ? (
                   <button
                     className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-base text-red-600 dark:text-red-400 hover:bg-muted/60 transition-colors disabled:opacity-50"

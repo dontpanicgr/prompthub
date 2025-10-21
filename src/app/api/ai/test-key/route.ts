@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     }
 
   } catch (error) {
-    console.error('Test key error:', error)
+    console.error('Test key error')
     
     if (error instanceof Error) {
       return NextResponse.json(

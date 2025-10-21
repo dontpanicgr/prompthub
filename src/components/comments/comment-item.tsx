@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import MarkdownRenderer from '@/components/ui/markdown-renderer'
 import { toast } from 'sonner'
-import Avatar from '@/components/ui/avatar'
 import CommentForm from './comment-form'
 import {
   DropdownMenu,

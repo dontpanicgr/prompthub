@@ -96,7 +96,7 @@ export class KeyResolver {
       // Decrypt the key
       const masterKey = process.env.BYOK_ENC_KEY
       if (!masterKey) {
-        console.warn('BYOK_ENC_KEY not configured, cannot decrypt user keys')
+        console.warn('Encryption key not configured')
         return null
       }
 
@@ -106,13 +106,13 @@ export class KeyResolver {
       )
 
       if (decryptError || !decryptedData) {
-        console.error('Failed to decrypt user key:', decryptError)
+        console.error('Failed to decrypt user key')
         return null
       }
 
       return decryptedData
     } catch (error) {
-      console.error('Error retrieving BYOK key:', error)
+      console.error('Error retrieving BYOK key')
       return null
     }
   }
@@ -228,7 +228,7 @@ export class KeyResolver {
         .eq('user_id', userId)
 
       if (error) {
-        console.error('Error fetching user keys:', error)
+        console.error('Error fetching user keys')
         return []
       }
 
@@ -239,7 +239,7 @@ export class KeyResolver {
         lastUsedAt: key.last_used_at
       })) || []
     } catch (error) {
-      console.error('Error fetching user keys:', error)
+      console.error('Error fetching user keys')
       return []
     }
   }

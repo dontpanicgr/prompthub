@@ -103,7 +103,7 @@ export default function MarkdownRenderer({ content, className = '' }: MarkdownRe
           ),
           // Style headings
           h1: ({ children, ...props }) => (
-            <h1 className="text-2xl font-bold mb-1" {...props}>
+            <h1 className="text-xl lg:text-2xl font-bold mb-1" {...props}>
               {children}
             </h1>
           ),

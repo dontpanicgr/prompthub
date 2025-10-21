@@ -27,7 +27,7 @@ const CommentList = dynamic(() => import('@/components/comments/comment-list'), 
       <h3 className="text-lg font-semibold">Comments</h3>
       <div className="space-y-3">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="bg-card rounded-lg border border-border p-4 animate-pulse">
+          <div key={`skeleton-${i}`} className="bg-card rounded-lg border border-border p-4 animate-pulse">
             <div className="flex items-center gap-2 mb-3">
               <div className="w-8 h-8 rounded-full bg-muted"></div>
               <div className="space-y-1">
@@ -167,6 +167,8 @@ export default function PromptDetails({ prompt }: PromptDetailsProps) {
 
   return (
     <div className="w-full">
+      <h1 className="text-xl lg:text-2xl font-bold mb-3">{prompt.title}</h1>
+      
       <div className="mb-3 text-sm text-muted-foreground flex flex-wrap items-center gap-2">
         {Array.isArray(prompt.categories) && prompt.categories.length > 0 && (
           <div className="flex items-center gap-1">
@@ -203,9 +205,13 @@ export default function PromptDetails({ prompt }: PromptDetailsProps) {
         </Link>
       </div>
 
-      <h1 className="text-2xl font-semibold mb-3">{prompt.title}</h1>
+      <div className="bg-card rounded-lg border border-border p-4 mb-4">
+        <div className="prose max-w-none text-card-foreground">
+          <MarkdownRenderer content={prompt.body} />
+        </div>
+      </div>
 
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex items-center gap-2 mb-6">
         <Button onClick={handleCopy} variant="outline" size="sm" className="h-9 gap-2 border px-4">
           <Copy size={16} />
           Copy
@@ -231,14 +237,15 @@ export default function PromptDetails({ prompt }: PromptDetailsProps) {
           triggerClassName="w-9 h-9 inline-flex items-center justify-center rounded-md bg-card border border-border"
         />
       </div>
-      <div className="bg-card rounded-lg border border-border p-4 mb-6">
-        <MarkdownRenderer content={prompt.body} className="text-card-foreground" />
-      </div>
+
+      <div className="border-b"></div>
 
       <div className="mt-6">
         {/* Client-only comments - only load after main content is ready */}
         {showComments && (
-          <CommentList promptId={prompt.id} currentUserId={user?.id} />
+          <div key={`comments-wrapper-${prompt.id}`}>
+            <CommentList promptId={prompt.id} currentUserId={user?.id} />
+          </div>
         )}
       </div>
     </div>

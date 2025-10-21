@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     const keys = await keyResolver.getUserKeys(userId)
     return NextResponse.json({ keys })
   } catch (error) {
-    console.error('List keys error:', error)
+    console.error('List keys error')
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }

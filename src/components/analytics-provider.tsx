@@ -118,8 +118,7 @@ export function MixpanelAnalytics() {
         window.mixpanel = mixpanel.default
         
         if (process.env.NODE_ENV === 'development') {
-          const masked = MIXPANEL_TOKEN.slice(0, 4) + '...' + MIXPANEL_TOKEN.slice(-4)
-          console.log('Mixpanel initialized', { apiHost: apiHost || 'default', token: masked })
+          console.log('Mixpanel initialized', { apiHost: apiHost || 'default' })
         }
       } catch (error) {
         console.error('Failed to initialize Mixpanel:', error)

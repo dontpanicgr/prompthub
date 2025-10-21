@@ -45,50 +45,34 @@ export async function middleware(request: NextRequest) {
   
   // Check if this is a login page with OAuth tokens (only redirect on OAuth success)
   if (path === '/login' && (url.href.includes('access_token=') || url.href.includes('code='))) {
-    console.log('🔍 MIDDLEWARE: OAuth redirect detected')
-    console.log('🔍 URL:', url.href)
     
     try {
       // Let Supabase process the OAuth tokens and get session
       const { data: { session }, error } = await supabase.auth.getSession()
       
-      console.log('🔍 Session result:', { hasSession: !!session, hasUser: !!session?.user, error })
       
       if (session?.user) {
         // Extract redirect parameter
         const redirectParam = url.searchParams.get('redirect')
         const cleanRedirect = redirectParam ? redirectParam.replace(/#.*$/, '') : '/'
         
-        console.log('🔍 Redirecting to:', cleanRedirect)
         
         // Redirect immediately without rendering login page
         return NextResponse.redirect(new URL(cleanRedirect, request.url))
       }
     } catch (error) {
-      console.log('🔍 OAuth processing failed:', error)
+      console.log('OAuth processing failed')
     }
   }
 
+  // Admin routes are handled by the admin layout component
+  // No middleware redirect needed - the layout will show login form if not authenticated
+
   // Only perform auth lookups for protected routes to avoid stalling all requests
-  const isProtected = path.startsWith('/settings') || path.startsWith('/project/') || path.startsWith('/admin')
+  const isProtected = path.startsWith('/settings') || path.startsWith('/project/')
   if (isProtected) {
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      
-      // For admin routes, check if user is authorized
-      if (path.startsWith('/admin')) {
-        if (!user) {
-          return NextResponse.redirect(new URL(`/login?redirect=${encodeURIComponent(path)}`, request.url))
-        }
-        
-        // Check if user is admin (you can add your email here)
-        const adminEmails = process.env.ADMIN_EMAILS?.split(',') || []
-        const isAdmin = adminEmails.includes(user.email?.toLowerCase() || '')
-        
-        if (!isAdmin) {
-          return NextResponse.redirect(new URL('/', request.url))
-        }
-      }
       
       // Example protection for other routes (currently not enforcing redirect):
       // if (!user) {

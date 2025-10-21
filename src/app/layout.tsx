@@ -7,7 +7,7 @@ import { Toaster } from "@/components/ui/sonner";
 import ErrorBoundary from "@/components/ui/error-boundary";
 import { Analytics } from '@vercel/analytics/next';
 import { AnalyticsProvider, GoogleAnalytics, MixpanelAnalytics } from '@/components/analytics-provider';
-import MainLayoutWrapper from '@/components/layout/main-layout-wrapper';
+import ConditionalLayoutWrapper from '@/components/layout/conditional-layout-wrapper';
 import '@/lib/analytics' // Import analytics to enable tracking
 
 // Wrapper component to handle Vercel Analytics errors gracefully
@@ -115,9 +115,9 @@ export default function RootLayout({
             <AuthProvider>
               <Suspense fallback={<div />}>
                 <AnalyticsProvider>
-                  <MainLayoutWrapper>
+                  <LayoutWrapper>
                     {children}
-                  </MainLayoutWrapper>
+                  </LayoutWrapper>
                 </AnalyticsProvider>
               </Suspense>
             </AuthProvider>
@@ -134,4 +134,9 @@ export default function RootLayout({
       </body>
     </html>
   );
+}
+
+// Layout wrapper component that conditionally renders the appropriate layout
+function LayoutWrapper({ children }: { children: React.ReactNode }) {
+  return <ConditionalLayoutWrapper>{children}</ConditionalLayoutWrapper>
 }

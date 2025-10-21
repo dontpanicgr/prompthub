@@ -112,13 +112,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Resolve API key
-    console.log('Resolving key for provider:', modelInfo.provider)
     const resolvedKey = await keyResolver.resolveKey({
       userId,
       provider: modelInfo.provider,
       modelId: model
     })
-    console.log('Resolved key source:', resolvedKey.source)
 
     // Create provider instance
     let provider

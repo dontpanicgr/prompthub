@@ -11,7 +11,6 @@ import {
 } from 'lucide-react'
 import { useTheme } from '@/components/theme-provider'
 import { useAuth } from '@/components/auth-provider'
-import Avatar from '@/components/ui/avatar'
 
 interface UserMenuProps {
   user?: {

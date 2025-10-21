@@ -65,7 +65,7 @@ export async function DELETE(request: NextRequest) {
     }
 
   } catch (error) {
-    console.error('Remove key error:', error)
+    console.error('Remove key error')
     
     if (error instanceof Error) {
       return NextResponse.json(

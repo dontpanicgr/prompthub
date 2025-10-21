@@ -234,7 +234,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Development helper to clear all auth state
   const clearAuthState = async () => {
     if (process.env.NODE_ENV === 'development') {
-      console.log('Clearing all auth state for development...')
       setUser(null)
       setLoading(false)
       await supabase.auth.signOut()
@@ -244,8 +243,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem('sb-' + supabase.supabaseUrl.split('//')[1].split('.')[0] + '-auth-token')
         sessionStorage.clear()
       }
-      
-      console.log('Auth state cleared')
     }
   }
 

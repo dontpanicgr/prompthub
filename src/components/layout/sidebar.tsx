@@ -26,7 +26,6 @@ import { supabase } from '@/lib/supabase'
 import { Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTheme } from '@/components/theme-provider'
-import Avatar from '@/components/ui/avatar'
 
 interface SidebarProps {
   user?: {
@@ -108,7 +107,7 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
           window.dispatchEvent(new CustomEvent('privacy-mode-change', { detail: { isPrivate: next } }))
         } catch {}
         try {
-          toast.success(next ? 'Private mode enabled' : 'Public mode enabled')
+          toast.success(next ? 'Profile set to private' : 'Profile set to public')
         } catch {}
       }
     } finally {
@@ -396,6 +395,14 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
             bottom: `${window.innerHeight - userButtonRect.top + 8}px`
           }}
         >
+          <Link
+            href={`/user/${user.id}`}
+            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground"
+            onClick={() => setIsUserMenuOpen(false)}
+          >
+            <User size={16} />
+            Profile
+          </Link>
           <button
             onClick={toggleTheme}
             className="w-full flex items-center gap-3 px-4 py-2 text-sm text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground"
@@ -409,7 +416,7 @@ export default function Sidebar({ user, onSignOut }: SidebarProps) {
             className="w-full flex items-center gap-3 px-4 py-2 text-sm text-muted-foreground hover:bg-nav-hover hover:text-nav-foreground disabled:opacity-50"
           >
             {isPrivate ? <EyeOff size={16} /> : <Eye size={16} />}
-            {isPrivate ? 'Profile is private' : 'Profile is public'}
+            {isPrivate ? 'Switch to public' : 'Switch to private'}
           </button>
           <Link
             href="/settings"

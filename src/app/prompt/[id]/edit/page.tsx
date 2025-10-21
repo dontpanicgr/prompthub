@@ -168,7 +168,7 @@ export default function EditPromptPage({ params }: EditPromptPageProps) {
       <MainLayout>
         <div className="p-6">
           <div className="text-center py-12">
-            <h1 className="mb-2 text-xl lg:text-2xl">
+            <h1 className="mb-2 text-xl lg:text-2xl font-bold">
               Prompt not found
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
@@ -184,7 +184,7 @@ export default function EditPromptPage({ params }: EditPromptPageProps) {
     <MainLayout>
       <div className="w-full">
         <div className="max-w-4xl mx-auto mb-6">
-          <h1 className="mb-2 text-xl lg:text-2xl">
+          <h1 className="mb-2 text-xl lg:text-2xl font-bold">
             Edit Prompt
           </h1>
           <p className="text-muted-foreground">

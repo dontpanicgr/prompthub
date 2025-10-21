@@ -968,7 +968,7 @@ export async function getPublicPromptsByCategorySlug(slug: string, userId?: stri
 }
 
 // Get creators leaderboard based on engagement on their public prompts
-export async function getCreatorsLeaderboard(): Promise<LeaderboardCreator[]> {
+export async function getCreatorsLeaderboard(timePeriod: 'month' | 'year' | 'overall' = 'overall'): Promise<LeaderboardCreator[]> {
   try {
     // Fetch public prompts with creator info (including privacy)
     const { data: prompts, error: promptsError } = await supabase
@@ -1010,10 +1010,32 @@ export async function getCreatorsLeaderboard(): Promise<LeaderboardCreator[]> {
       creatorPromptCount.set(p.creator_id, current + 1)
     })
 
+    // Calculate date range based on time period
+    const now = new Date()
+    let startDate: Date | null = null
+    
+    if (timePeriod === 'month') {
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+    } else if (timePeriod === 'year') {
+      startDate = new Date(now.getFullYear(), 0, 1)
+    }
+    // For 'overall', startDate remains null (no filtering)
+
+    // Build time-based queries for likes and bookmarks
+    let likesQuery = supabase.from('likes').select('prompt_id, created_at').in('prompt_id', allPromptIds)
+    let bookmarksQuery = supabase.from('bookmarks').select('prompt_id, created_at').in('prompt_id', allPromptIds)
+
+    // Apply time filtering if needed
+    if (startDate) {
+      const startDateISO = startDate.toISOString()
+      likesQuery = likesQuery.gte('created_at', startDateISO)
+      bookmarksQuery = bookmarksQuery.gte('created_at', startDateISO)
+    }
+
     // Fetch likes and bookmarks related to these prompts
     const [likesRes, bookmarksRes] = await Promise.all([
-      supabase.from('likes').select('prompt_id').in('prompt_id', allPromptIds),
-      supabase.from('bookmarks').select('prompt_id').in('prompt_id', allPromptIds)
+      likesQuery,
+      bookmarksQuery
     ])
 
     const likes = likesRes.data || []

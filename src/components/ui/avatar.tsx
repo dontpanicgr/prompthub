@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, forwardRef } from 'react'
 import { User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { 
@@ -12,142 +12,115 @@ import {
   isRateLimitedDomain 
 } from '@/lib/avatar-utils'
 
-interface AvatarProps {
+interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
+  children?: React.ReactNode
+}
+
+interface AvatarImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   src?: string | null
-  alt: string
-  fallback?: string
-  className?: string
-  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
+  alt?: string
   lazy?: boolean
 }
 
-const sizeClasses = {
-  xs: 'w-6 h-6 text-xs',
-  sm: 'w-8 h-8 text-sm', 
-  md: 'w-10 h-10 text-base',
-  lg: 'w-12 h-12 text-lg',
-  xl: 'w-16 h-16 text-xl'
+interface AvatarFallbackProps extends React.HTMLAttributes<HTMLDivElement> {
+  children?: React.ReactNode
 }
 
-export default function Avatar({ 
-  src, 
-  alt, 
-  fallback, 
-  className = '', 
-  size = 'md',
-  lazy = true 
-}: AvatarProps) {
-  const [imageLoaded, setImageLoaded] = useState(false)
-  const [imageError, setImageError] = useState(false)
-  const [shouldLoad, setShouldLoad] = useState(!lazy)
-  const imgRef = useRef<HTMLImageElement>(null)
+const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
+  ({ className, children, ...props }, ref) => (
+    <div
+      ref={ref}
+      className={cn(
+        'relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full',
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </div>
+  )
+)
+Avatar.displayName = 'Avatar'
 
-  // Get initials from name or fallback
-  const getInitials = (name: string) => {
-    return name?.charAt(0)?.toUpperCase() || fallback || 'U'
-  }
+const AvatarImage = forwardRef<HTMLImageElement, AvatarImageProps>(
+  ({ className, src, alt, lazy = true, ...props }, ref) => {
+    const [imageLoaded, setImageLoaded] = useState(false)
+    const [imageError, setImageError] = useState(false)
+    const [shouldLoad, setShouldLoad] = useState(!lazy)
 
-  // Check cache first
-  useEffect(() => {
-    if (!src || !lazy) return
+    // Check cache first
+    useEffect(() => {
+      if (!src || !lazy) return
 
-    const cached = getCachedAvatarState(src)
-    if (cached) {
-      setImageLoaded(cached.loaded)
-      setImageError(cached.error)
-      if (cached.loaded || cached.error) {
-        setShouldLoad(true)
+      const cached = getCachedAvatarState(src)
+      if (cached) {
+        setImageLoaded(cached.loaded)
+        setImageError(cached.error)
+        if (cached.loaded || cached.error) {
+          setShouldLoad(true)
+        }
+      }
+    }, [src, lazy])
+
+    // Intersection Observer for lazy loading
+    useEffect(() => {
+      if (!lazy || !src || shouldLoad) return
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              setShouldLoad(true)
+              observer.disconnect()
+            }
+          })
+        },
+        { rootMargin: '50px' }
+      )
+
+      if (ref && 'current' in ref && ref.current) {
+        observer.observe(ref.current)
+      }
+
+      return () => observer.disconnect()
+    }, [lazy, src, shouldLoad])
+
+    const handleImageLoad = () => {
+      setImageLoaded(true)
+      setImageError(false)
+      if (src) {
+        setCachedAvatarState(src, true, false)
       }
     }
-  }, [src, lazy])
 
-  // Intersection Observer for lazy loading
-  useEffect(() => {
-    if (!lazy || !src || shouldLoad) return
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setShouldLoad(true)
-            observer.disconnect()
-          }
-        })
-      },
-      { rootMargin: '50px' }
-    )
-
-    if (imgRef.current) {
-      observer.observe(imgRef.current)
+    const handleImageError = () => {
+      setImageError(true)
+      setImageLoaded(false)
+      if (src) {
+        setCachedAvatarState(src, false, true)
+      }
     }
 
-    return () => observer.disconnect()
-  }, [lazy, src, shouldLoad])
-
-  const handleImageLoad = () => {
-    setImageLoaded(true)
-    setImageError(false)
-    if (src) {
-      setCachedAvatarState(src, true, false)
+    // Don't render if lazy loading and not in view
+    if (lazy && !shouldLoad) {
+      return null
     }
-  }
 
-  const handleImageError = () => {
-    setImageError(true)
-    setImageLoaded(false)
-    if (src) {
-      setCachedAvatarState(src, false, true)
+    // Check rate limiting for external URLs
+    const shouldLoadImage = src && (!isRateLimitedDomain(src) || canMakeRequest(src))
+    const optimizedSrc = src ? optimizeGoogleAvatarUrl(src) : null
+
+    // Don't render if no src, error, not loaded yet, or rate limited
+    if (!src || imageError || !imageLoaded || !shouldLoadImage) {
+      return null
     }
-  }
 
-  // Don't render anything if lazy loading and not in view
-  if (lazy && !shouldLoad) {
     return (
-      <div 
-        ref={imgRef}
-        className={cn(
-          'rounded-full bg-muted flex items-center justify-center',
-          sizeClasses[size],
-          className
-        )}
-      >
-        <div className="animate-pulse bg-muted-foreground/20 rounded-full w-full h-full" />
-      </div>
-    )
-  }
-
-  // Check rate limiting for external URLs
-  const shouldLoadImage = src && (!isRateLimitedDomain(src) || canMakeRequest(src))
-  const optimizedSrc = src ? optimizeGoogleAvatarUrl(src) : null
-
-  // Show fallback if no src, error, not loaded yet, or rate limited
-  if (!src || imageError || !imageLoaded || !shouldLoadImage) {
-    return (
-      <div 
-        className={cn(
-          'rounded-full bg-muted flex items-center justify-center text-muted-foreground',
-          sizeClasses[size],
-          className
-        )}
-      >
-        {imageError ? (
-          <User size={size === 'xs' ? 12 : size === 'sm' ? 14 : size === 'lg' ? 20 : size === 'xl' ? 24 : 16} />
-        ) : (
-          <span className="font-semibold">
-            {getInitials(alt)}
-          </span>
-        )}
-      </div>
-    )
-  }
-
-  return (
-    <div className={cn('rounded-full overflow-hidden', sizeClasses[size], className)}>
       <img
-        ref={imgRef}
+        ref={ref}
+        className={cn('aspect-square h-full w-full object-cover', className)}
         src={optimizedSrc}
         alt={alt}
-        className="w-full h-full object-cover"
         onLoad={handleImageLoad}
         onError={handleImageError}
         loading={lazy ? 'lazy' : 'eager'}
@@ -157,7 +130,27 @@ export default function Avatar({
             recordRequest(src)
           }
         }}
+        {...props}
       />
+    )
+  }
+)
+AvatarImage.displayName = 'AvatarImage'
+
+const AvatarFallback = forwardRef<HTMLDivElement, AvatarFallbackProps>(
+  ({ className, children, ...props }, ref) => (
+    <div
+      ref={ref}
+      className={cn(
+        'flex h-full w-full items-center justify-center rounded-full bg-muted text-muted-foreground',
+        className
+      )}
+      {...props}
+    >
+      {children || <User className="h-4 w-4" />}
     </div>
   )
-}
+)
+AvatarFallback.displayName = 'AvatarFallback'
+
+export { Avatar, AvatarImage, AvatarFallback }

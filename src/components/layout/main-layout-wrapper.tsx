@@ -98,7 +98,7 @@ export default function MainLayoutWrapper({ children }: MainLayoutWrapperProps) 
       <MobileBottomNav />
       
       <main className={`bg-background min-h-screen lg:pt-0 pt-16 pb-20 lg:pb-0 transition-colors transition-[margin] duration-200 ease-in-out ${sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}>
-        <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
+        <div className="w-full max-w-6xl mx-auto px-4 sm:px-4 py-4 sm:py-4">
           {/* Offline Banner */}
           {!isOnline && (
             <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center gap-2 text-red-800 dark:text-red-200">

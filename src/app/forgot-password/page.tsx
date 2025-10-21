@@ -50,7 +50,7 @@ function ForgotPasswordContent() {
               <div className="w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <CheckCircle size={32} className="text-green-600 dark:text-green-400" />
               </div>
-              <h1 className="mb-2 text-xl lg:text-2xl">
+              <h1 className="mb-2 text-xl lg:text-2xl font-bold">
                 Check your email
               </h1>
               <p className="text-muted-foreground mb-6">
@@ -82,7 +82,7 @@ function ForgotPasswordContent() {
           <div className="bg-card text-card-foreground rounded-2xl p-8 border border-border">
             {/* Header */}
             <div className="text-center mb-8">
-              <h1 className="mb-2 text-xl lg:text-2xl">
+              <h1 className="mb-2 text-xl lg:text-2xl font-bold">
                 Forgot your password?
               </h1>
               <p className="text-muted-foreground">
