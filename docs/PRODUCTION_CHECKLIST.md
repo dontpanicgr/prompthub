@@ -1,6 +1,6 @@
 # Production Deployment Checklist
 
-This checklist covers all the configurations needed to deploy PromptHub to production.
+This checklist covers all the configurations needed to deploy Lexee to production.
 
 ## 🔐 Environment Variables
 

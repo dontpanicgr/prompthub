@@ -2,7 +2,23 @@
 
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { getAdminMetrics, type AdminMetrics } from '@/lib/admin-metrics'
+interface AdminMetrics {
+  totalPrompts: number
+  totalUsers: number
+  totalLikes: number
+  totalComments: number
+  totalBookmarks: number
+  totalProjects: number
+  promptsToday: number
+  usersToday: number
+  likesToday: number
+  commentsToday: number
+  bookmarksToday: number
+  projectsToday: number
+  topPrompt: string
+  topUser: string
+  growthRate: number
+}
 import { 
   FileText, 
   Users, 
@@ -15,33 +31,19 @@ import {
 } from 'lucide-react'
 
 export default function AdminAnalyticsPage() {
-  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
+  const [analytics, setAnalytics] = useState<AdminMetrics | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Simulate API call to fetch analytics data
     const fetchAnalytics = async () => {
       try {
-        // In a real app, this would be an API call
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        
-        setAnalytics({
-          totalPrompts: 1247,
-          totalUsers: 342,
-          totalLikes: 8934,
-          totalComments: 2156,
-          totalBookmarks: 1876,
-          totalProjects: 89,
-          promptsToday: 23,
-          usersToday: 8,
-          likesToday: 156,
-          commentsToday: 34,
-          bookmarksToday: 67,
-          projectsToday: 3,
-          topPrompt: "Advanced React Patterns",
-          topUser: "john_doe",
-          growthRate: 12.5
-        })
+        const response = await fetch('/api/admin/metrics')
+        if (response.ok) {
+          const metrics = await response.json()
+          setAnalytics(metrics)
+        } else {
+          console.error('Failed to fetch metrics:', response.statusText)
+        }
       } catch (error) {
         console.error('Failed to fetch analytics:', error)
       } finally {

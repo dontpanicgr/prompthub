@@ -1,13 +1,13 @@
-# Setup Guide for PromptHub
+# Setup Guide for Lexee
 
-This guide will help you set up PromptHub on a new device or environment.
+This guide will help you set up Lexee on a new device or environment.
 
 ## Quick Start
 
 1. **Clone the repository**
    ```bash
    git clone <your-repo-url>
-   cd prompthub
+   cd lexee
    ```
 
 2. **Install dependencies**
@@ -108,7 +108,7 @@ Copy `.env.example` to `.env.local` and configure:
 ## File Structure
 
 ```
-prompthub/
+lexee/
 ├── src/
 │   ├── app/           # Next.js App Router pages
 │   ├── components/    # React components

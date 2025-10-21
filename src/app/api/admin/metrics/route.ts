@@ -1,24 +1,7 @@
-import { supabase } from './supabase'
+import { NextResponse } from 'next/server'
+import { supabase } from '@/lib/supabase'
 
-export interface AdminMetrics {
-  totalPrompts: number
-  totalUsers: number
-  totalLikes: number
-  totalComments: number
-  totalBookmarks: number
-  totalProjects: number
-  promptsToday: number
-  usersToday: number
-  likesToday: number
-  commentsToday: number
-  bookmarksToday: number
-  projectsToday: number
-  topPrompt: string
-  topUser: string
-  growthRate: number
-}
-
-export async function getAdminMetrics(): Promise<AdminMetrics> {
+export async function GET() {
   try {
     // Get today's date for filtering
     const today = new Date()
@@ -100,7 +83,7 @@ export async function getAdminMetrics(): Promise<AdminMetrics> {
     const lastMonthCount = lastMonthPrompts.count || 0
     const growthRate = lastMonthCount > 0 ? ((thisMonthCount - lastMonthCount) / lastMonthCount) * 100 : 0
 
-    return {
+    const metrics = {
       totalPrompts: promptsResult.count || 0,
       totalUsers: usersResult.count || 0,
       totalLikes: likesResult.count || 0,
@@ -117,25 +100,13 @@ export async function getAdminMetrics(): Promise<AdminMetrics> {
       topUser: topUserResult.data?.name || 'No users yet',
       growthRate: Math.round(growthRate * 10) / 10
     }
+
+    return NextResponse.json(metrics)
   } catch (error) {
     console.error('Error fetching admin metrics:', error)
-    // Return default values on error
-    return {
-      totalPrompts: 0,
-      totalUsers: 0,
-      totalLikes: 0,
-      totalComments: 0,
-      totalBookmarks: 0,
-      totalProjects: 0,
-      promptsToday: 0,
-      usersToday: 0,
-      likesToday: 0,
-      commentsToday: 0,
-      bookmarksToday: 0,
-      projectsToday: 0,
-      topPrompt: 'Error loading data',
-      topUser: 'Error loading data',
-      growthRate: 0
-    }
+    return NextResponse.json(
+      { error: 'Failed to fetch metrics' },
+      { status: 500 }
+    )
   }
 }

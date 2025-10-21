@@ -34,7 +34,7 @@ A modern prompt discovery and sharing platform built with Next.js, Supabase, and
 
 ```bash
 git clone <your-repo-url>
-cd prompthub
+cd lexee
 npm install
 ```
 

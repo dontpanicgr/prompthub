@@ -16,7 +16,8 @@ import {
   Menu,
   X,
   Shield,
-  ArrowLeft
+  ArrowLeft,
+  Activity
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -25,14 +26,11 @@ import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
 const navigation = [
-  { name: 'Analytics', href: '/admin', icon: BarChart3 },
-  { name: 'Prompts', href: '/admin/prompts', icon: FileText },
-  { name: 'Users', href: '/admin/users', icon: Users },
-  { name: 'Likes', href: '/admin/likes', icon: Heart },
-  { name: 'Comments', href: '/admin/comments', icon: MessageSquare },
-  { name: 'Bookmarks', href: '/admin/bookmarks', icon: Bookmark },
-  { name: 'Projects', href: '/admin/projects', icon: FolderOpen },
-  { name: 'Settings', href: '/admin/settings', icon: Settings },
+  { name: 'Dashboard', href: '/admin', icon: BarChart3 },
+  { name: 'Debug Auth', href: '/debug-auth', icon: Shield },
+  { name: 'AI Test', href: '/admin/ai-test', icon: Activity },
+  { name: 'Components', href: '/admin/components', icon: FileText },
+  { name: 'Diagnostics', href: '/admin/diagnostics', icon: Settings },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
