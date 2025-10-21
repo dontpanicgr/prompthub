@@ -15,7 +15,6 @@ import {
   LogOut,
   Menu,
   X,
-  Shield,
   ArrowLeft,
   Activity
 } from 'lucide-react'
@@ -27,7 +26,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: BarChart3 },
-  { name: 'Debug Auth', href: '/debug-auth', icon: Shield },
   { name: 'AI Test', href: '/admin/ai-test', icon: Activity },
   { name: 'Components', href: '/admin/components', icon: FileText },
   { name: 'Diagnostics', href: '/admin/diagnostics', icon: Settings },
@@ -147,10 +145,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // Show loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
         </div>
       </div>
     )
@@ -159,15 +157,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // Show login form if not authenticated
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-full max-w-md">
           <Card className="shadow-2xl border-0">
             <CardHeader className="text-center pb-8">
               <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
                 <Shield className="h-8 w-8 text-white" />
               </div>
-              <CardTitle className="text-3xl font-bold text-gray-900">Admin Portal</CardTitle>
-              <CardDescription className="text-gray-600 mt-2">
+              <CardTitle className="text-3xl font-bold text-foreground">Admin Portal</CardTitle>
+              <CardDescription className="text-muted-foreground mt-2">
                 Secure access to administrative controls
               </CardDescription>
             </CardHeader>
@@ -215,14 +213,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </form>
 
               <div className="mt-8 text-center">
-                <Link href="/" className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 transition-colors group">
+                <Link href="/" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors group">
                   <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
                   Return to main application
                 </Link>
               </div>
 
-              <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-xs text-blue-800">
+              <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <p className="text-xs text-blue-800 dark:text-blue-200">
                   <strong>Security Notice:</strong> Only authorized administrators can access this portal. Contact your system administrator for access.
                 </p>
               </div>
@@ -235,13 +233,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   // Show admin interface if authenticated
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="min-h-screen bg-background">
       {/* Mobile sidebar */}
       <div className={`fixed inset-0 z-50 lg:hidden ${sidebarOpen ? 'block' : 'hidden'}`}>
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
-        <div className="fixed inset-y-0 left-0 flex w-64 flex-col bg-white shadow-2xl">
-          <div className="flex h-16 items-center justify-between px-4 border-b border-gray-200">
-            <h1 className="text-xl font-bold text-gray-900">Admin Portal</h1>
+        <div className="fixed inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
+        <div className="fixed inset-y-0 left-0 flex w-64 flex-col bg-card shadow-2xl">
+          <div className="flex h-16 items-center justify-between px-4 border-b border-border">
+            <h1 className="text-xl font-bold text-card-foreground">Admin Portal</h1>
             <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(false)}>
               <X className="h-6 w-6" />
             </Button>
@@ -255,8 +253,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   href={item.href}
                   className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${
                     isActive
-                      ? 'bg-blue-100 text-blue-900'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                   }`}
                   onClick={() => setSidebarOpen(false)}
                 >
@@ -266,11 +264,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               )
             })}
           </nav>
-          <div className="border-t border-gray-200 p-4">
+          <div className="border-t border-border p-4">
             <div className="flex items-center">
               <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900">{adminEmail}</p>
-                <p className="text-xs text-gray-500">Administrator</p>
+                <p className="text-sm font-medium text-card-foreground">{adminEmail}</p>
+                <p className="text-xs text-muted-foreground">Administrator</p>
               </div>
               <Button variant="ghost" size="sm" onClick={handleLogout}>
                 <LogOut className="h-4 w-4" />
@@ -282,9 +280,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
-        <div className="flex flex-col flex-grow bg-white border-r border-gray-200 shadow-xl">
-          <div className="flex h-16 items-center px-4 border-b border-gray-200">
-            <h1 className="text-xl font-bold text-gray-900">Admin Portal</h1>
+        <div className="flex flex-col flex-grow bg-card border-r border-border shadow-xl">
+          <div className="flex h-16 items-center px-4 border-b border-border">
+            <h1 className="text-xl font-bold text-card-foreground">Admin Portal</h1>
           </div>
           <nav className="flex-1 space-y-1 px-2 py-4">
             {navigation.map((item) => {
@@ -295,8 +293,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   href={item.href}
                   className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${
                     isActive
-                      ? 'bg-blue-100 text-blue-900'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                   }`}
                 >
                   <item.icon className="mr-3 h-5 w-5" />
@@ -305,11 +303,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               )
             })}
           </nav>
-          <div className="border-t border-gray-200 p-4">
+          <div className="border-t border-border p-4">
             <div className="flex items-center">
               <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900">{adminEmail}</p>
-                <p className="text-xs text-gray-500">Administrator</p>
+                <p className="text-sm font-medium text-card-foreground">{adminEmail}</p>
+                <p className="text-xs text-muted-foreground">Administrator</p>
               </div>
               <Button variant="ghost" size="sm" onClick={handleLogout}>
                 <LogOut className="h-4 w-4" />
@@ -322,11 +320,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Main content */}
       <div className="lg:pl-64">
         {/* Mobile header */}
-        <div className="sticky top-0 z-10 flex h-16 items-center justify-between bg-white px-4 shadow-lg lg:hidden border-b border-gray-200">
+        <div className="sticky top-0 z-10 flex h-16 items-center justify-between bg-card px-4 shadow-lg lg:hidden border-b border-border">
           <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(true)}>
             <Menu className="h-6 w-6" />
           </Button>
-          <h1 className="text-lg font-semibold text-gray-900">Admin Portal</h1>
+          <h1 className="text-lg font-semibold text-card-foreground">Admin Portal</h1>
           <div className="w-6" />
         </div>
 

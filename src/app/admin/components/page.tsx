@@ -90,8 +90,8 @@ export default function ComponentsPage() {
   return (
     <div className="p-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Component Library</h1>
-        <p className="text-gray-600 mt-2">UI components showcase and testing</p>
+        <h1 className="text-3xl font-bold text-foreground">Component Library</h1>
+        <p className="text-muted-foreground mt-2">UI components showcase and testing</p>
       </div>
 
       <div className="space-y-8">
@@ -108,7 +108,7 @@ export default function ComponentsPage() {
               {/* Basic Usage */}
               <div>
                 <h4 className="font-medium mb-3">Basic Usage</h4>
-                <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
                   <pre className="flex-1 text-sm">{component.code}</pre>
                   <Button
                     size="sm"
@@ -130,7 +130,7 @@ export default function ComponentsPage() {
                   <h4 className="font-medium mb-3">Variants</h4>
                   <div className="space-y-3">
                     {component.variants.map((variant, index) => (
-                      <div key={index} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                      <div key={index} className="flex items-center gap-2 p-3 bg-muted rounded-lg">
                         <div className="w-24">
                           <Badge variant="outline">{variant.name}</Badge>
                         </div>
@@ -155,7 +155,7 @@ export default function ComponentsPage() {
               {/* Live Preview */}
               <div>
                 <h4 className="font-medium mb-3">Live Preview</h4>
-                <div className="p-4 border rounded-lg bg-white">
+                <div className="p-4 border rounded-lg bg-card">
                   {component.name === 'Button' && (
                     <div className="flex gap-2 flex-wrap">
                       <Button>Default</Button>
@@ -213,29 +213,29 @@ export default function ComponentsPage() {
             <div className="flex items-start gap-3">
               <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
               <div>
-                <h4 className="font-medium">Consistent Styling</h4>
-                <p className="text-sm text-gray-600">All components follow the same design system</p>
+                <h4 className="font-medium text-foreground">Consistent Styling</h4>
+                <p className="text-sm text-muted-foreground">All components follow the same design system</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
               <div>
-                <h4 className="font-medium">Accessible</h4>
-                <p className="text-sm text-gray-600">Built with accessibility in mind</p>
+                <h4 className="font-medium text-foreground">Accessible</h4>
+                <p className="text-sm text-muted-foreground">Built with accessibility in mind</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
               <div>
-                <h4 className="font-medium">Responsive</h4>
-                <p className="text-sm text-gray-600">Works on all screen sizes</p>
+                <h4 className="font-medium text-foreground">Responsive</h4>
+                <p className="text-sm text-muted-foreground">Works on all screen sizes</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
               <div>
-                <h4 className="font-medium">Customizable</h4>
-                <p className="text-sm text-gray-600">Easy to customize with props</p>
+                <h4 className="font-medium text-foreground">Customizable</h4>
+                <p className="text-sm text-muted-foreground">Easy to customize with props</p>
               </div>
             </div>
           </div>

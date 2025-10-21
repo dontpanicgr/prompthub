@@ -140,8 +140,8 @@ export default function DiagnosticsPage() {
   return (
     <div className="p-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">System Diagnostics</h1>
-        <p className="text-gray-600 mt-2">Monitor system health and performance</p>
+        <h1 className="text-3xl font-bold text-foreground">System Diagnostics</h1>
+        <p className="text-muted-foreground mt-2">Monitor system health and performance</p>
       </div>
 
       {/* Summary Cards */}
@@ -150,7 +150,7 @@ export default function DiagnosticsPage() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Passed</p>
+                <p className="text-sm font-medium text-muted-foreground">Passed</p>
                 <p className="text-2xl font-bold text-green-600">{counts.pass}</p>
               </div>
               <CheckCircle className="h-8 w-8 text-green-500" />
@@ -162,7 +162,7 @@ export default function DiagnosticsPage() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Failed</p>
+                <p className="text-sm font-medium text-muted-foreground">Failed</p>
                 <p className="text-2xl font-bold text-red-600">{counts.fail}</p>
               </div>
               <XCircle className="h-8 w-8 text-red-500" />
@@ -174,7 +174,7 @@ export default function DiagnosticsPage() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Warnings</p>
+                <p className="text-sm font-medium text-muted-foreground">Warnings</p>
                 <p className="text-2xl font-bold text-yellow-600">{counts.warning}</p>
               </div>
               <AlertTriangle className="h-8 w-8 text-yellow-500" />
@@ -186,7 +186,7 @@ export default function DiagnosticsPage() {
           <CardContent className="p4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Running</p>
+                <p className="text-sm font-medium text-muted-foreground">Running</p>
                 <p className="text-2xl font-bold text-blue-600">{counts.loading}</p>
               </div>
               <RefreshCw className="h-8 w-8 text-blue-500" />
@@ -217,8 +217,8 @@ export default function DiagnosticsPage() {
           <Card>
             <CardContent className="p-8 text-center">
               <Activity className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Diagnostics Run</h3>
-              <p className="text-gray-600">Click "Run Diagnostics" to check system health</p>
+              <h3 className="text-lg font-medium text-foreground mb-2">No Diagnostics Run</h3>
+              <p className="text-muted-foreground">Click "Run Diagnostics" to check system health</p>
             </CardContent>
           </Card>
         ) : (
@@ -229,13 +229,13 @@ export default function DiagnosticsPage() {
                   <div className="flex items-start gap-4">
                     {getStatusIcon(item.status)}
                     <div className="flex-1">
-                      <h3 className="font-medium text-gray-900">{item.name}</h3>
-                      <p className="text-sm text-gray-600 mt-1">{item.message}</p>
+                      <h3 className="font-medium text-foreground">{item.name}</h3>
+                      <p className="text-sm text-muted-foreground mt-1">{item.message}</p>
                       {item.details && (
-                        <p className="text-xs text-gray-500 mt-2">{item.details}</p>
+                        <p className="text-xs text-muted-foreground mt-2">{item.details}</p>
                       )}
                       {item.lastChecked && (
-                        <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
+                        <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
                           <Clock className="h-3 w-3" />
                           Last checked: {new Date(item.lastChecked).toLocaleString()}
                         </p>
@@ -263,20 +263,20 @@ export default function DiagnosticsPage() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <h4 className="font-medium mb-2">Environment</h4>
-              <p className="text-sm text-gray-600">{process.env.NODE_ENV || 'development'}</p>
+              <h4 className="font-medium mb-2 text-foreground">Environment</h4>
+              <p className="text-sm text-muted-foreground">{process.env.NODE_ENV || 'development'}</p>
             </div>
             <div>
-              <h4 className="font-medium mb-2">Platform</h4>
-              <p className="text-sm text-gray-600">Next.js 15.5.3</p>
+              <h4 className="font-medium mb-2 text-foreground">Platform</h4>
+              <p className="text-sm text-muted-foreground">Next.js 15.5.3</p>
             </div>
             <div>
-              <h4 className="font-medium mb-2">Database</h4>
-              <p className="text-sm text-gray-600">Supabase</p>
+              <h4 className="font-medium mb-2 text-foreground">Database</h4>
+              <p className="text-sm text-muted-foreground">Supabase</p>
             </div>
             <div>
-              <h4 className="font-medium mb-2">Runtime</h4>
-              <p className="text-sm text-gray-600">Node.js</p>
+              <h4 className="font-medium mb-2 text-foreground">Runtime</h4>
+              <p className="text-sm text-muted-foreground">Node.js</p>
             </div>
           </div>
         </CardContent>
