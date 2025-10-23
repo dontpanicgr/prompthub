@@ -603,11 +603,11 @@ export default function SettingsPage() {
                         className="w-full"
                       />
                     </div>
-                    <div className="flex gap-2 shrink-0 md:pb-[2px]">
-                      <Button variant="outline" size="sm" onClick={handleTestKey} disabled={testingConnection}>
+                    <div className="flex gap-2 shrink-0">
+                      <Button variant="outline" size="sm" className="h-10" onClick={handleTestKey} disabled={testingConnection}>
                         {testingConnection ? 'Testing…' : 'Test'}
                       </Button>
-                      <Button size="sm" onClick={handleSaveKey}>
+                      <Button size="sm" className="h-10" onClick={handleSaveKey}>
                         Add
                       </Button>
                     </div>

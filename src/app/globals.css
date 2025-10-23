@@ -326,6 +326,15 @@
   .max-w-6xl {
     max-width: 72rem; /* 1152px */
   }
+
+  /* Hide scrollbars utility */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* Internet Explorer 10+ */
+    scrollbar-width: none;  /* Firefox */
+  }
+  .scrollbar-hide::-webkit-scrollbar { 
+    display: none;  /* Safari and Chrome */
+  }
 }
 
 /* Override highlight.js default background to be transparent */

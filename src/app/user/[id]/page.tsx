@@ -635,7 +635,7 @@ export default function UserPage({ params }: UserPageProps) {
               {/* 4. Tabs (if applicable) - only show for own profile */}
               {isOwnProfile && (
                 <div>
-                  <nav className="flex space-x-6 overflow-x-auto">
+                  <nav className="flex space-x-6 overflow-x-auto scrollbar-hide">
                     {tabs.map(({ key, label, icon: Icon }) => {
                       const isActive = activeTab === key
                       
@@ -650,7 +650,7 @@ export default function UserPage({ params }: UserPageProps) {
                           }`}
                         >
                           <Icon size={16} />
-                          <span className="hidden sm:inline">{label}</span>
+                          <span>{label}</span>
                         </button>
                       )
                     })}

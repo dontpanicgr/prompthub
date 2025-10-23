@@ -114,7 +114,7 @@ export default function CommentItem({
         {/* Comment Header */}
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-2">
-            <div className="rounded-full bg-muted flex items-center justify-center text-muted-foreground w-16 h-16 text-xl shrink-0">
+            <div className="rounded-full bg-muted flex items-center justify-center text-muted-foreground w-10 h-10 text-sm shrink-0">
               <span className="font-semibold">{comment.user.name?.charAt(0)?.toUpperCase() || 'U'}</span>
             </div>
             <div>

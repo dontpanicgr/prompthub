@@ -17,7 +17,7 @@ const tabs = [
 export default function RankingsPage() {
   const [creators, setCreators] = useState<LeaderboardCreator[]>([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<TimePeriod>('overall')
+  const [activeTab, setActiveTab] = useState<TimePeriod>('month')
 
   const medalForRank = (rank: number) => {
     if (rank === 0) return '🥇'
@@ -78,7 +78,7 @@ export default function RankingsPage() {
               </div>
               
               {/* Tabs */}
-              <nav className="flex space-x-6 overflow-x-auto">
+              <nav className="flex space-x-6 overflow-x-auto scrollbar-hide">
                 {tabs.map(({ key, label, icon: Icon }) => {
                   const isActive = activeTab === key
                   
@@ -93,7 +93,7 @@ export default function RankingsPage() {
                       }`}
                     >
                       <Icon size={16} />
-                      <span className="hidden sm:inline">{label}</span>
+                      <span>{label}</span>
                     </button>
                   )
                 })}
