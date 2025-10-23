@@ -43,27 +43,8 @@ export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname
   const url = request.nextUrl
   
-  // Check if this is a login page with OAuth tokens (only redirect on OAuth success)
-  if (path === '/login' && (url.href.includes('access_token=') || url.href.includes('code='))) {
-    
-    try {
-      // Let Supabase process the OAuth tokens and get session
-      const { data: { session }, error } = await supabase.auth.getSession()
-      
-      
-      if (session?.user) {
-        // Extract redirect parameter
-        const redirectParam = url.searchParams.get('redirect')
-        const cleanRedirect = redirectParam ? redirectParam.replace(/#.*$/, '') : '/'
-        
-        
-        // Redirect immediately without rendering login page
-        return NextResponse.redirect(new URL(cleanRedirect, request.url))
-      }
-    } catch (error) {
-      console.log('OAuth processing failed')
-    }
-  }
+  // Skip OAuth handling in middleware - let the callback route handle it properly
+  // The callback route will exchange the code for a session and redirect appropriately
 
   // Admin routes are handled by the admin layout component
   // No middleware redirect needed - the layout will show login form if not authenticated

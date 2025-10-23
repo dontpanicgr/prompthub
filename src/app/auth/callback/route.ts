@@ -12,8 +12,28 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}/auth/auth-code-error?error=${encodeURIComponent(error)}&description=${encodeURIComponent(error_description || '')}`)
   }
 
-  // Clean up the next parameter - remove hash fragments
-  const cleanNext = next.replace(/#.*$/, '') || '/'
+  // Create Supabase client to handle OAuth session
+  const supabase = await createClient()
+
+  // Get the code from the URL
+  const code = searchParams.get('code')
   
-  return NextResponse.redirect(`${origin}${cleanNext}`)
+  if (code) {
+    // Exchange the code for a session
+    const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+    
+    if (exchangeError) {
+      console.error('Error exchanging code for session:', exchangeError)
+      return NextResponse.redirect(`${origin}/auth/auth-code-error?error=exchange_failed&description=${encodeURIComponent(exchangeError.message)}`)
+    }
+
+    if (data.session) {
+      // Session created successfully, redirect to the intended destination
+      const cleanNext = next.replace(/#.*$/, '') || '/'
+      return NextResponse.redirect(`${origin}${cleanNext}`)
+    }
+  }
+
+  // If no code or session creation failed, redirect to home
+  return NextResponse.redirect(`${origin}/`)
 }
